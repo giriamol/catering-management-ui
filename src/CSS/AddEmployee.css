@@ -1,0 +1,123 @@
+.add-employee-page {
+    padding: 25px;
+}
+
+.add-employee-header {
+    margin-bottom: 20px;
+}
+
+.add-employee-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #222;
+}
+
+.add-employee-header p {
+    margin-top: 6px;
+    color: #777;
+    font-size: 14px;
+}
+
+.employee-form-card {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.employee-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: span 2;
+}
+
+.form-group label {
+    margin-bottom: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 14px;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #2563eb;
+}
+
+.form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.form-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.save-btn {
+    border: none;
+    padding: 11px 20px;
+    border-radius: 6px;
+    background-color: #2563eb;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.cancel-btn {
+    border: 1px solid #d1d5db;
+    padding: 11px 20px;
+    border-radius: 6px;
+    background-color: white;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    background-color: #f3f4f6;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+    .employee-form {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full-width {
+        grid-column: span 1;
+    }
+
+    .form-actions {
+        grid-column: span 1;
+    }
+}

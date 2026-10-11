@@ -1,0 +1,205 @@
+.employees-page {
+    padding: 25px;
+}
+
+/* Header */
+
+.employees-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.employees-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #222;
+}
+
+.employees-header p {
+    margin-top: 6px;
+    color: #777;
+    font-size: 14px;
+}
+
+/* Add Employee Button */
+
+.add-employee-btn {
+    border: none;
+    padding: 11px 18px;
+    border-radius: 6px;
+    background-color: #2563eb;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.add-employee-btn:hover {
+    background-color: #1d4ed8;
+}
+
+/* Employee Card */
+
+.employees-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Table */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.employees-table th {
+    background-color: #f5f7fa;
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+    color: #444;
+    border-bottom: 1px solid #ddd;
+}
+
+.employees-table td {
+    padding: 14px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+}
+
+.employees-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Status */
+
+.status-active {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background-color: #dcfce7;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-inactive {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background-color: #fee2e2;
+    color: #991b1b;
+    font-size: 12px;
+    font-weight: 600;
+}
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0 5px 0;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #555;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination-buttons button {
+    border: 1px solid #d1d5db;
+    background-color: white;
+    padding: 7px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pagination-buttons button:hover:not(:disabled) {
+    background-color: #f3f4f6;
+}
+
+.pagination-buttons button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-buttons .active-page {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+/* Search Section */
+.add-employe-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-employe-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.add-employe-header input {
+    width: 280px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.add-employe-header input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.add-employe-header input::placeholder {
+    color: #9ca3af;
+}
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-btn {
+    background-color: #2563eb;
+    color: white;
+}
+
+.delete-btn {
+    background-color: #dc2626;
+    color: white;
+}
+
+.edit-btn:hover {
+    opacity: 0.85;
+}
+
+.delete-btn:hover {
+    opacity: 0.85;
+}

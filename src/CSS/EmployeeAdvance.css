@@ -1,0 +1,552 @@
+.employee-advance-page {
+    padding: 25px;
+    min-height: 100vh;
+    background: linear-gradient(
+        135deg,
+        #f4f7fb,
+        #eef3f9
+    );
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.employee-advance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 22px 25px;
+
+    margin-bottom: 20px;
+
+    border-radius: 12px;
+
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color: white;
+
+    box-shadow:
+        0 5px 15px rgba(
+            0,
+            0,
+            0,
+            0.08
+        );
+}
+
+.employee-advance-header h1 {
+    margin: 0 0 5px;
+    font-size: 26px;
+}
+
+.employee-advance-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.add-advance-btn {
+    border: none;
+
+    background: white;
+
+    color: #1d4ed8;
+
+    padding: 11px 18px;
+
+    border-radius: 7px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.add-advance-btn:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(
+            0,
+            0,
+            0,
+            0.15
+        );
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.advance-filter-card {
+    background: white;
+
+    padding: 18px 20px;
+
+    border-radius: 10px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 3px 12px rgba(
+            0,
+            0,
+            0,
+            0.06
+        );
+}
+
+.advance-search {
+    max-width: 450px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.advance-search label {
+    font-weight: 600;
+
+    color: #374151;
+}
+
+.advance-search input {
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 6px;
+
+    outline: none;
+
+    font-size: 14px;
+}
+
+.advance-search input:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 2px rgba(
+            37,
+            99,
+            235,
+            0.1
+        );
+}
+
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
+.employee-advance-card {
+    background: white;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 3px 12px rgba(
+            0,
+            0,
+            0,
+            0.06
+        );
+
+    overflow: hidden;
+}
+
+.table-container {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.employee-advance-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 950px;
+}
+
+.employee-advance-table th {
+    background: #f3f4f6;
+
+    padding: 13px;
+
+    text-align: left;
+
+    font-size: 13px;
+
+    color: #374151;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.employee-advance-table td {
+    padding: 13px;
+
+    border-bottom: 1px solid #edf0f3;
+
+    font-size: 14px;
+
+    color: #374151;
+}
+
+.employee-advance-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+
+/* =========================================================
+   EMPLOYEE
+========================================================= */
+
+.employee-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.employee-info strong {
+    color: #111827;
+}
+
+.employee-info small {
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   AMOUNT
+========================================================= */
+
+.amount-column {
+    font-weight: 600;
+
+    color: #111827;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-adjusted,
+.status-pending {
+    display: inline-block;
+
+    padding: 5px 10px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+.status-adjusted {
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+.status-pending {
+    background: #fef3c7;
+
+    color: #92400e;
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.action-buttons {
+    display: flex;
+
+    gap: 7px;
+}
+
+.edit-btn,
+.delete-btn {
+    border: none;
+
+    padding: 7px 12px;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+.edit-btn {
+    background: #dbeafe;
+
+    color: #1d4ed8;
+}
+
+.edit-btn:hover {
+    background: #bfdbfe;
+}
+
+.delete-btn {
+    background: #fee2e2;
+
+    color: #b91c1c;
+}
+
+.delete-btn:hover {
+    background: #fecaca;
+}
+
+
+/* =========================================================
+   FORM CARD
+========================================================= */
+
+.employee-advance-form-card {
+    background: white;
+
+    padding: 28px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 15px rgba(
+            0,
+            0,
+            0,
+            0.07
+        );
+}
+
+
+/* =========================================================
+   FORM ROW
+========================================================= */
+
+.form-row {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 22px;
+
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.form-group.full-width {
+    width: 100%;
+}
+
+.form-group label {
+    font-weight: 600;
+
+    color: #374151;
+
+    font-size: 14px;
+}
+
+.required {
+    color: #dc2626;
+
+    margin-left: 3px;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 6px;
+
+    font-size: 14px;
+
+    outline: none;
+
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 2px rgba(
+            37,
+            99,
+            235,
+            0.1
+        );
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.checkbox-wrapper {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 40px;
+}
+
+.checkbox-wrapper input {
+    width: 18px;
+
+    height: 18px;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
+
+.form-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 25px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.save-btn,
+.cancel-btn {
+    border: none;
+
+    padding: 10px 20px;
+
+    border-radius: 6px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.save-btn {
+    background: #2563eb;
+
+    color: white;
+}
+
+.save-btn:hover {
+    background: #1d4ed8;
+}
+
+.cancel-btn {
+    background: #e5e7eb;
+
+    color: #374151;
+}
+
+.cancel-btn:hover {
+    background: #d1d5db;
+}
+
+
+/* =========================================================
+   LOADING / NO DATA
+========================================================= */
+
+.loading-message,
+.no-data {
+    text-align: center;
+
+    padding: 30px;
+
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .employee-advance-page {
+        padding: 15px;
+    }
+
+    .employee-advance-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .add-advance-btn {
+        width: 100%;
+    }
+
+}

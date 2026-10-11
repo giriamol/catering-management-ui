@@ -1,0 +1,190 @@
+.hotel-form-page {
+    padding: 20px;
+}
+
+/* =========================
+   Header
+========================= */
+
+.hotel-form-header {
+    margin-bottom: 25px;
+}
+
+.hotel-form-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.hotel-form-header p {
+    margin: 6px 0 0;
+    color: #777;
+    font-size: 14px;
+}
+
+/* =========================
+   Card
+========================= */
+
+.hotel-form-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 1000px;
+}
+
+/* =========================
+   Form Grid
+========================= */
+
+.hotel-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.hotel-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.hotel-form-group.full-width {
+    grid-column: span 2;
+}
+
+/* =========================
+   Labels
+========================= */
+
+.hotel-form-group label {
+    margin-bottom: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.hotel-form-group label span {
+    color: #dc3545;
+}
+
+/* =========================
+   Inputs
+========================= */
+
+.hotel-form-group input[type="text"],
+.hotel-form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.hotel-form-group input[type="text"]:focus,
+.hotel-form-group textarea:focus {
+    border-color: #007bff;
+}
+
+.hotel-form-group textarea {
+    resize: vertical;
+}
+
+/* =========================
+   Checkbox
+========================= */
+
+.hotel-checkbox-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.hotel-checkbox-label input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.hotel-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.hotel-save-btn,
+.hotel-cancel-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.hotel-save-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.hotel-save-btn:hover {
+    background-color: #0069d9;
+}
+
+.hotel-cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.hotel-cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+.hotel-save-btn:disabled,
+.hotel-cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 700px) {
+
+    .hotel-form-page {
+        padding: 10px;
+    }
+
+    .hotel-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hotel-form-group.full-width {
+        grid-column: span 1;
+    }
+
+    .hotel-form-card {
+        padding: 18px;
+    }
+
+    .hotel-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .hotel-save-btn,
+    .hotel-cancel-btn {
+        width: 100%;
+    }
+
+}
