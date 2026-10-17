@@ -7,58 +7,59 @@ import { getVendors } from "../api/vendorApi";
 
 import {
     createAssignment,
-    createVendorAssignment
+    createVendorAssignment,
 } from "../api/dailyHotelAssignmentApi";
 
+import DatePicker from "../components/DatePicker";
 import "../CSS/EmployeeHotelAssignment.css";
 
-// ====================================================
-// DATE HELPERS
-// ====================================================
 const getTodayDate = () => {
     const today = new Date();
 
     return [
         today.getFullYear(),
         String(today.getMonth() + 1).padStart(2, "0"),
-        String(today.getDate()).padStart(2, "0")
+        String(today.getDate()).padStart(2, "0"),
     ].join("-");
 };
 
 const normalizeDateForPayload = (value) => {
-    if (!value) {
-        throw new Error("Please select an assignment date.");
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+        throw new Error("Please select a valid assignment date.");
     }
 
-    const date = String(value).trim();
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        throw new Error("Invalid assignment date.");
-    }
-
-    const [year, month, day] = date.split("-").map(Number);
-    const check = new Date(year, month - 1, day);
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
 
     if (
-        check.getFullYear() !== year ||
-        check.getMonth() !== month - 1 ||
-        check.getDate() !== day
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
     ) {
         throw new Error("The selected assignment date is invalid.");
     }
 
-    return date;
+    return value;
 };
 
-// ====================================================
-// API RESPONSE HELPERS
-// ====================================================
+const formatDateForDisplay = (value) => {
+    if (!value) return "Not selected";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    return value;
+};
+
 const extractList = (response) => {
     const data = response?.data ?? response;
 
     if (Array.isArray(data)) return data;
 
-    const possibleLists = [
+    const lists = [
         data?.items,
         data?.Items,
         data?.data,
@@ -66,15 +67,13 @@ const extractList = (response) => {
         data?.$values,
         data?.vendors,
         data?.Vendors,
-        data?.vendorRates,
-        data?.VendorRates,
         data?.employees,
         data?.Employees,
         data?.hotels,
-        data?.Hotels
+        data?.Hotels,
     ];
 
-    return possibleLists.find(Array.isArray) ?? [];
+    return lists.find(Array.isArray) ?? [];
 };
 
 const getApiErrorMessage = (error, fallback) => {
@@ -92,9 +91,6 @@ const getApiErrorMessage = (error, fallback) => {
     );
 };
 
-// ====================================================
-// COMPONENT
-// ====================================================
 const Assignments = () => {
     const [memberType, setMemberType] = useState("InHouse");
     const [assignmentDate, setAssignmentDate] = useState(getTodayDate);
@@ -112,9 +108,7 @@ const Assignments = () => {
     const [pageError, setPageError] = useState("");
     const [rowData, setRowData] = useState({});
 
-    // ====================================================
-    // EMPLOYEE HELPERS
-    // ====================================================
+    // Employee helpers
     const getEmployeeId = (employee) =>
         employee?.employeeId ??
         employee?.EmployeeId ??
@@ -124,7 +118,7 @@ const Assignments = () => {
         employee?.Id;
 
     const getEmployeeName = (employee) => {
-        const directName =
+        const name =
             employee?.employeeName ??
             employee?.EmployeeName ??
             employee?.fullName ??
@@ -132,21 +126,18 @@ const Assignments = () => {
             employee?.name ??
             employee?.Name;
 
-        if (directName) return directName;
+        if (name) return name;
 
         return [
             employee?.firstName ?? employee?.FirstName,
             employee?.middleName ?? employee?.MiddleName,
-            employee?.lastName ?? employee?.LastName
+            employee?.lastName ?? employee?.LastName,
         ]
             .filter(Boolean)
             .join(" ");
     };
 
-    // ====================================================
-    // VENDOR HELPERS
-    // Supports vendor-rate records with nested vendor data.
-    // ====================================================
+    // Vendor helpers
     const getVendorObject = (record) =>
         record?.vendor ??
         record?.Vendor ??
@@ -177,7 +168,7 @@ const Assignments = () => {
     const getVendorName = (record) => {
         const vendor = getVendorObject(record);
 
-        const directName =
+        const name =
             vendor?.vendorName ??
             vendor?.VendorName ??
             vendor?.vendorFullName ??
@@ -193,29 +184,21 @@ const Assignments = () => {
             vendor?.name ??
             vendor?.Name;
 
-        if (directName) return directName;
+        if (name) return name;
 
-        const composedName = [
+        return [
             vendor?.firstName ?? vendor?.FirstName,
             vendor?.middleName ?? vendor?.MiddleName,
-            vendor?.lastName ?? vendor?.LastName
+            vendor?.lastName ?? vendor?.LastName,
         ]
             .filter(Boolean)
             .join(" ");
-
-        if (composedName) return composedName;
-
-        // Some rate records contain only a vendor ID.
-        // Do not display a rate or unrelated field as the name.
-        return "";
     };
 
     const getVendorRowKey = (vendor) =>
         `vendor-${getVendorId(vendor)}`;
 
-    // ====================================================
-    // HOTEL HELPERS
-    // ====================================================
+    // Hotel helpers
     const getHotelId = (hotel) =>
         hotel?.hotelId ??
         hotel?.HotelId ??
@@ -231,9 +214,7 @@ const Assignments = () => {
         hotel?.Name ??
         "";
 
-    // ====================================================
-    // LOAD EMPLOYEES
-    // ====================================================
+    // Load employees
     const loadEmployees = async () => {
         try {
             setLoadingEmployees(true);
@@ -242,28 +223,31 @@ const Assignments = () => {
             const response = await getAllEmployeeRateMasters(1, 2000);
             const list = extractList(response);
 
-            console.log("Employee API response:", response);
-            console.log("Loaded employee records:", list);
+            const validEmployees = list.filter((employee) => {
+                const id = getEmployeeId(employee);
+                return id !== undefined && id !== null && String(id).trim() !== "";
+            });
 
-            setEmployees(list);
+            const uniqueEmployees = Array.from(
+                new Map(
+                    validEmployees.map((employee) => [
+                        String(getEmployeeId(employee)),
+                        employee,
+                    ])
+                ).values()
+            );
+
+            setEmployees(uniqueEmployees);
         } catch (error) {
-            console.error(
-                "Error loading employees:",
-                error?.response?.data ?? error
-            );
-
+            console.error("Error loading employees:", error?.response?.data ?? error);
             setEmployees([]);
-            setPageError(
-                getApiErrorMessage(error, "Unable to load employees.")
-            );
+            setPageError(getApiErrorMessage(error, "Unable to load employees."));
         } finally {
             setLoadingEmployees(false);
         }
     };
 
-    // ====================================================
-    // LOAD VENDOR RATE RECORDS
-    // ====================================================
+    // Load vendors
     const loadVendors = async () => {
         try {
             setLoadingVendors(true);
@@ -272,108 +256,51 @@ const Assignments = () => {
             const response = await getVendors(1, 2000);
             const list = extractList(response);
 
-            console.log("Full vendor-rate API response:", response);
-            console.table(list);
-
-            if (list.length > 0) {
-                console.log("First vendor-rate record:", list[0]);
-                console.log(
-                    "Vendor-rate record properties:",
-                    Object.keys(list[0])
-                );
-                console.log(
-                    "Extracted vendor ID:",
-                    getVendorId(list[0])
-                );
-                console.log(
-                    "Extracted vendor name:",
-                    getVendorName(list[0])
-                );
-            }
-
             const validVendors = list.filter((record) => {
                 const id = getVendorId(record);
-
                 return id !== undefined && id !== null && id !== "";
             });
 
-            // Multiple rate records may exist for one vendor.
-            // Keep one record per vendor for the assignment list.
             const uniqueVendors = Array.from(
                 new Map(
                     validVendors.map((record) => [
                         String(getVendorId(record)),
-                        record
+                        record,
                     ])
                 ).values()
             );
 
             setVendors(uniqueVendors);
-
-            if (uniqueVendors.length === 0 && list.length > 0) {
-                console.warn(
-                    "Vendor-rate records were returned, but a vendor ID could not be identified."
-                );
-            }
-
-            if (uniqueVendors.some((record) => !getVendorName(record))) {
-                console.warn(
-                    "Some vendor-rate records have no recognized vendor-name property. Inspect the logged record to identify the actual field."
-                );
-            }
         } catch (error) {
-            console.error(
-                "Error loading vendor rates:",
-                error?.response?.data ?? error
-            );
-
+            console.error("Error loading vendors:", error?.response?.data ?? error);
             setVendors([]);
-            setPageError(
-                getApiErrorMessage(error, "Unable to load vendor records.")
-            );
+            setPageError(getApiErrorMessage(error, "Unable to load vendors."));
         } finally {
             setLoadingVendors(false);
         }
     };
 
-    // ====================================================
-    // LOAD HOTELS
-    // ====================================================
+    // Load hotels
     const loadHotels = async () => {
         try {
             setLoadingHotels(true);
 
             const response = await getHotels(1, 2000);
-            const list = extractList(response);
-
-            console.log("Hotel API response:", response);
-            setHotels(list);
+            setHotels(extractList(response));
         } catch (error) {
-            console.error(
-                "Error loading hotels:",
-                error?.response?.data ?? error
-            );
-
+            console.error("Error loading hotels:", error?.response?.data ?? error);
             setHotels([]);
-            setPageError(
-                getApiErrorMessage(error, "Unable to load hotels.")
-            );
+            setPageError(getApiErrorMessage(error, "Unable to load hotels."));
         } finally {
             setLoadingHotels(false);
         }
     };
 
-    // ====================================================
-    // INITIAL LOAD
-    // ====================================================
     useEffect(() => {
         loadEmployees();
         loadHotels();
     }, []);
 
-    // ====================================================
-    // MEMBER TYPE CHANGE
-    // ====================================================
     const handleMemberTypeChange = (type) => {
         setMemberType(type);
         setSearchText("");
@@ -387,75 +314,54 @@ const Assignments = () => {
         }
     };
 
-    // ====================================================
-    // DATE CHANGE
-    // ====================================================
-    const handleAssignmentDateChange = (event) => {
-        setAssignmentDate(event.target.value);
+    const handleAssignmentDateChange = (value) => {
+        setAssignmentDate(value);
         setPageError("");
     };
 
-    // ====================================================
-    // FILTER EMPLOYEES
-    // ====================================================
     const currentEmployees = useMemo(() => {
         if (memberType !== "InHouse") return [];
 
         const search = searchText.trim().toLowerCase();
-
         if (!search) return employees;
 
         return employees.filter((employee) => {
-            const name = String(getEmployeeName(employee) ?? "")
-                .toLowerCase();
-
-            const id = String(getEmployeeId(employee) ?? "")
-                .toLowerCase();
+            const name = String(getEmployeeName(employee)).toLowerCase();
+            const id = String(getEmployeeId(employee)).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
     }, [employees, memberType, searchText]);
 
-    // ====================================================
-    // FILTER VENDORS
-    // ====================================================
     const currentVendors = useMemo(() => {
         if (memberType !== "Vendor") return [];
 
         const search = searchText.trim().toLowerCase();
-
         if (!search) return vendors;
 
         return vendors.filter((vendor) => {
-            const name = String(getVendorName(vendor) ?? "")
-                .toLowerCase();
-
-            const id = String(getVendorId(vendor) ?? "")
-                .toLowerCase();
+            const name = String(getVendorName(vendor)).toLowerCase();
+            const id = String(getVendorId(vendor)).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
     }, [vendors, memberType, searchText]);
 
-    // ====================================================
-    // ROW FIELD CHANGE
-    // ====================================================
+    // Update row values, including the new Venue field.
     const handleRowChange = (rowKey, field, value) => {
         setRowData((previous) => ({
             ...previous,
             [rowKey]: {
                 ...previous[rowKey],
-                [field]: value
-            }
+                [field]: value,
+            },
         }));
     };
 
     const getSelectedAssignmentDate = () =>
         normalizeDateForPayload(assignmentDate);
 
-    // ====================================================
-    // SAVE EMPLOYEE ASSIGNMENT
-    // ====================================================
+    // Save employee assignment
     const handleSubmit = async (employee) => {
         const employeeId = getEmployeeId(employee);
 
@@ -469,6 +375,11 @@ const Assignments = () => {
 
         if (!row.hotelId) {
             alert("Please select hotel.");
+            return;
+        }
+
+        if (!row.venue?.trim()) {
+            alert("Please enter Venue.");
             return;
         }
 
@@ -494,11 +405,12 @@ const Assignments = () => {
         const payload = {
             EmployeeId: Number(employeeId),
             HotelId: Number(row.hotelId),
+            Venue: row.venue.trim(),
             AssignmentDate: selectedDate,
             ShiftId: Number(row.shiftId),
             WorkType: row.workType,
             IsCancelled: false,
-            Description: row.description?.trim() || null
+            Description: row.description?.trim() || null,
         };
 
         try {
@@ -510,7 +422,7 @@ const Assignments = () => {
             await createAssignment(payload);
 
             alert(
-                `Assignment saved successfully for ${getEmployeeName(employee)} on ${selectedDate}.`
+                `Assignment saved successfully for ${getEmployeeName(employee)} on ${formatDateForDisplay(selectedDate)}.`
             );
 
             setRowData((previous) => {
@@ -519,25 +431,17 @@ const Assignments = () => {
                 return updated;
             });
         } catch (error) {
-            console.error(
-                "Error saving employee assignment:",
-                error?.response?.data ?? error
-            );
+            console.error("Error saving employee assignment:", error?.response?.data ?? error);
 
             alert(
-                getApiErrorMessage(
-                    error,
-                    "Failed to save employee assignment."
-                )
+                getApiErrorMessage(error, "Failed to save employee assignment.")
             );
         } finally {
             setSavingRowKey(null);
         }
     };
 
-    // ====================================================
-    // SAVE VENDOR ASSIGNMENT
-    // ====================================================
+    // Save vendor assignment
     const handleVendorSubmit = async (vendor) => {
         const vendorId = getVendorId(vendor);
         const rowKey = getVendorRowKey(vendor);
@@ -565,6 +469,11 @@ const Assignments = () => {
             return;
         }
 
+        if (!row.venue?.trim()) {
+            alert("Please enter Venue.");
+            return;
+        }
+
         if (!row.shiftId) {
             alert("Please select shift type.");
             return;
@@ -588,10 +497,11 @@ const Assignments = () => {
             VendorId: Number(vendorId),
             Emp_Quantity: quantity,
             HotelId: Number(row.hotelId),
+            Venue: row.venue.trim(),
             AssignmentDate: selectedDate,
             ShiftId: Number(row.shiftId),
             WorkType: row.workType,
-            Description: row.description?.trim() || null
+            Description: row.description?.trim() || null,
         };
 
         try {
@@ -605,7 +515,7 @@ const Assignments = () => {
             alert(
                 `Vendor assignment saved successfully for ${
                     getVendorName(vendor) || `Vendor ID ${vendorId}`
-                } on ${selectedDate}.`
+                } on ${formatDateForDisplay(selectedDate)}.`
             );
 
             setRowData((previous) => {
@@ -614,25 +524,16 @@ const Assignments = () => {
                 return updated;
             });
         } catch (error) {
-            console.error(
-                "Error saving vendor assignment:",
-                error?.response?.data ?? error
-            );
+            console.error("Error saving vendor assignment:", error?.response?.data ?? error);
 
             alert(
-                getApiErrorMessage(
-                    error,
-                    "Failed to save vendor assignment."
-                )
+                getApiErrorMessage(error, "Failed to save vendor assignment.")
             );
         } finally {
             setSavingRowKey(null);
         }
     };
 
-    // ====================================================
-    // CANCEL ROW
-    // ====================================================
     const handleCancel = (rowKey) => {
         setRowData((previous) => {
             const updated = { ...previous };
@@ -641,98 +542,64 @@ const Assignments = () => {
         });
     };
 
-    // ====================================================
-    // LOADING AND COUNTS
-    // ====================================================
     const isLoading =
         memberType === "Vendor"
             ? loadingVendors
             : memberType === "InHouse"
-                ? loadingEmployees
-                : false;
+              ? loadingEmployees
+              : false;
 
     const displayedCount =
         memberType === "Vendor"
             ? currentVendors.length
             : memberType === "InHouse"
-                ? currentEmployees.length
-                : 0;
+              ? currentEmployees.length
+              : 0;
 
-    // ====================================================
-    // RENDER
-    // ====================================================
     return (
         <div className="assignment-page">
             <div className="assignment-header">
                 <div>
-                    <center><h2>Daily Employee Assignment</h2></center>
-                    {/* <p>Assign employees or vendors to Caters and shifts</p> */}
+                    <center>
+                        <h2>Daily Employee Assignment</h2>
+                    </center>
                 </div>
             </div>
 
-            {/* FILTERS */}
             <div className="assignment-filter-card">
                 <div className="filter-group">
                     <label>Member Type</label>
 
                     <div className="member-type-buttons">
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="InHouse"
-                                checked={memberType === "InHouse"}
-                                onChange={() =>
-                                    handleMemberTypeChange("InHouse")
-                                }
-                            />
-                            <span>InHouse</span>
-                        </label>
-
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="Vendor"
-                                checked={memberType === "Vendor"}
-                                onChange={() =>
-                                    handleMemberTypeChange("Vendor")
-                                }
-                            />
-                            <span>Vendor</span>
-                        </label>
-
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="Local"
-                                checked={memberType === "Local"}
-                                onChange={() =>
-                                    handleMemberTypeChange("Local")
-                                }
-                            />
-                            <span>Local</span>
-                        </label>
+                        {["InHouse", "Vendor", "Local"].map((type) => (
+                            <label className="type-option" key={type}>
+                                <input
+                                    type="radio"
+                                    name="memberType"
+                                    value={type}
+                                    checked={memberType === type}
+                                    onChange={() => handleMemberTypeChange(type)}
+                                />
+                                <span>{type}</span>
+                            </label>
+                        ))}
                     </div>
                 </div>
 
                 <div className="filter-group">
-                    <label htmlFor="assignmentDate">Assignment Date</label>
-
-                    <input
-                        id="assignmentDate"
-                        type="date"
+                    <DatePicker
+                        label="Assignment Date"
+                        name="assignmentDate"
                         value={assignmentDate}
                         onChange={handleAssignmentDateChange}
+                        required
+                        placeholder="DD/MM/YYYY"
                     />
                 </div>
 
                 <div className="filter-group search-group">
                     <label>
-                        {memberType === "Vendor"
-                            ? "Search Vendor"
-                            : "Search Employee"}
+                        {memberType === "Vendor" ? "Search Vendor" : "Search Employee"}
                     </label>
 
                     <input
@@ -743,9 +610,7 @@ const Assignments = () => {
                                 : "Search by employee name or ID"
                         }
                         value={searchText}
-                        onChange={(event) =>
-                            setSearchText(event.target.value)
-                        }
+                        onChange={(event) => setSearchText(event.target.value)}
                     />
                 </div>
             </div>
@@ -763,7 +628,7 @@ const Assignments = () => {
 
                 <span>
                     Selected Date:{" "}
-                    <strong>{assignmentDate || "Not selected"}</strong>
+                    <strong>{formatDateForDisplay(assignmentDate)}</strong>
                 </span>
 
                 <span>
@@ -787,7 +652,8 @@ const Assignments = () => {
                                     <th>ID</th>
                                     <th>Vendor Name</th>
                                     <th>Employee Quantity</th>
-                                    <th>Hotel Name</th>
+                                    <th>Hotel</th>
+                                    <th>Venue</th>
                                     <th>Shift Type</th>
                                     <th>Work Type</th>
                                     <th>Description / Note</th>
@@ -797,7 +663,8 @@ const Assignments = () => {
                                 <tr>
                                     <th>ID</th>
                                     <th>Employee Name</th>
-                                    <th>Caterers Name</th>
+                                    <th>Hotel</th>
+                                    <th>Venue</th>
                                     <th>Shift Type</th>
                                     <th>Work Type</th>
                                     <th>Description / Note</th>
@@ -810,9 +677,9 @@ const Assignments = () => {
                             {memberType === "Vendor" ? (
                                 currentVendors.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="no-data">
+                                        <td colSpan={9} className="no-data">
                                             {vendors.length === 0
-                                                ? "No vendor records found. Check the vendor-rate API response."
+                                                ? "No vendor records found."
                                                 : "No matching vendors found."}
                                         </td>
                                     </tr>
@@ -822,7 +689,6 @@ const Assignments = () => {
                                         const rowKey = getVendorRowKey(vendor);
                                         const row = rowData[rowKey] ?? {};
                                         const isSaving = savingRowKey === rowKey;
-                                        const vendorName = getVendorName(vendor);
 
                                         return (
                                             <tr key={rowKey}>
@@ -830,8 +696,8 @@ const Assignments = () => {
 
                                                 <td>
                                                     <div className="employee-name">
-                                                        {vendorName ||
-                                                            `Vendor name unavailable (ID: ${vendorId})`}
+                                                        {getVendorName(vendor) ||
+                                                            `Vendor ID ${vendorId}`}
                                                     </div>
                                                 </td>
 
@@ -867,9 +733,7 @@ const Assignments = () => {
                                                         className="assignment-select-head"
                                                         disabled={loadingHotels || isSaving}
                                                     >
-                                                        <option value="">
-                                                            Select Hotel
-                                                        </option>
+                                                        <option value="">Select Hotel</option>
 
                                                         {hotels.map((hotel) => (
                                                             <option
@@ -880,6 +744,25 @@ const Assignments = () => {
                                                             </option>
                                                         ))}
                                                     </select>
+                                                </td>
+
+                                                {/* NEW: Venue field after Hotel */}
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        value={row.venue ?? ""}
+                                                        onChange={(event) =>
+                                                            handleRowChange(
+                                                                rowKey,
+                                                                "venue",
+                                                                event.target.value
+                                                            )
+                                                        }
+                                                        placeholder="Enter venue"
+                                                        className="assignment-select"
+                                                        maxLength={100}
+                                                        disabled={isSaving}
+                                                    />
                                                 </td>
 
                                                 <td>
@@ -895,12 +778,9 @@ const Assignments = () => {
                                                         className="assignment-select"
                                                         disabled={isSaving}
                                                     >
-                                                        <option value="">
-                                                            Select Shift Type
-                                                        </option>
+                                                        <option value="">Select Shift Type</option>
                                                         <option value="1">Morning</option>
                                                         <option value="2">Evening</option>
-                                                        <option value="3">TwoHalfDay</option>
                                                     </select>
                                                 </td>
 
@@ -917,9 +797,7 @@ const Assignments = () => {
                                                         className="assignment-select"
                                                         disabled={isSaving}
                                                     >
-                                                        <option value="">
-                                                            Select Work Type
-                                                        </option>
+                                                        <option value="">Select Work Type</option>
                                                         <option value="HalfDay">HalfDay</option>
                                                         <option value="FullDay">FullDay</option>
                                                     </select>
@@ -948,9 +826,7 @@ const Assignments = () => {
                                                             type="button"
                                                             className="btn-submit"
                                                             disabled={isSaving || loadingHotels}
-                                                            onClick={() =>
-                                                                handleVendorSubmit(vendor)
-                                                            }
+                                                            onClick={() => handleVendorSubmit(vendor)}
                                                         >
                                                             {isSaving ? "Saving..." : "Submit"}
                                                         </button>
@@ -959,9 +835,7 @@ const Assignments = () => {
                                                             type="button"
                                                             className="btn-cancel"
                                                             disabled={isSaving}
-                                                            onClick={() =>
-                                                                handleCancel(rowKey)
-                                                            }
+                                                            onClick={() => handleCancel(rowKey)}
                                                         >
                                                             Cancel
                                                         </button>
@@ -973,13 +847,13 @@ const Assignments = () => {
                                 )
                             ) : memberType === "Local" ? (
                                 <tr>
-                                    <td colSpan={7} className="no-data">
+                                    <td colSpan={8} className="no-data">
                                         Local employee API is not connected yet.
                                     </td>
                                 </tr>
                             ) : currentEmployees.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="no-data">
+                                    <td colSpan={8} className="no-data">
                                         No employees found.
                                     </td>
                                 </tr>
@@ -1013,9 +887,7 @@ const Assignments = () => {
                                                     className="assignment-select-head"
                                                     disabled={loadingHotels || isSaving}
                                                 >
-                                                    <option value="">
-                                                        Select Hotel
-                                                    </option>
+                                                    <option value="">Select Hotel</option>
 
                                                     {hotels.map((hotel) => (
                                                         <option
@@ -1026,6 +898,25 @@ const Assignments = () => {
                                                         </option>
                                                     ))}
                                                 </select>
+                                            </td>
+
+                                            {/* NEW: Venue field after Hotel */}
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    value={row.venue ?? ""}
+                                                    onChange={(event) =>
+                                                        handleRowChange(
+                                                            rowKey,
+                                                            "venue",
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                    placeholder="Enter venue"
+                                                    className="assignment-select"
+                                                    maxLength={100}
+                                                    disabled={isSaving}
+                                                />
                                             </td>
 
                                             <td>
@@ -1041,12 +932,9 @@ const Assignments = () => {
                                                     className="assignment-select"
                                                     disabled={isSaving}
                                                 >
-                                                    <option value="">
-                                                        Select Shift Type
-                                                    </option>
+                                                    <option value="">Select Shift Type</option>
                                                     <option value="1">Morning</option>
                                                     <option value="2">Evening</option>
-                                                    <option value="3">TwoHalfDay</option>
                                                 </select>
                                             </td>
 
@@ -1063,9 +951,7 @@ const Assignments = () => {
                                                     className="assignment-select"
                                                     disabled={isSaving}
                                                 >
-                                                    <option value="">
-                                                        Select Work Type
-                                                    </option>
+                                                    <option value="">Select Work Type</option>
                                                     <option value="HalfDay">HalfDay</option>
                                                     <option value="FullDay">FullDay</option>
                                                 </select>
@@ -1094,9 +980,7 @@ const Assignments = () => {
                                                         type="button"
                                                         className="btn-submit"
                                                         disabled={isSaving || loadingHotels}
-                                                        onClick={() =>
-                                                            handleSubmit(employee)
-                                                        }
+                                                        onClick={() => handleSubmit(employee)}
                                                     >
                                                         {isSaving ? "Saving..." : "Submit"}
                                                     </button>
@@ -1105,9 +989,7 @@ const Assignments = () => {
                                                         type="button"
                                                         className="btn-cancel"
                                                         disabled={isSaving}
-                                                        onClick={() =>
-                                                            handleCancel(rowKey)
-                                                        }
+                                                        onClick={() => handleCancel(rowKey)}
                                                     >
                                                         Cancel
                                                     </button>

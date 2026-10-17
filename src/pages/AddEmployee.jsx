@@ -1,7 +1,10 @@
 
 import { useState } from "react";
-import { createEmployee } from "../api/employeeApi";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+import { createEmployee } from "../api/employeeApi";
 import "../CSS/AddEmployee.css";
 
 function AddEmployee() {
@@ -22,6 +25,7 @@ function AddEmployee() {
 
     const navigate = useNavigate();
 
+    // Handle text inputs, dropdowns, and checkboxes
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
 
@@ -31,20 +35,41 @@ function AddEmployee() {
         }));
     };
 
+    // Convert YYYY-MM-DD to a local Date without UTC shifting
+    const parseDate = (value) => {
+        if (!value) return null;
+
+        const datePart = value.substring(0, 10);
+        const [year, month, day] = datePart.split("-").map(Number);
+
+        if (!year || !month || !day) return null;
+
+        const date = new Date(year, month - 1, day);
+
+        // Reject invalid dates
+        if (
+            date.getFullYear() !== year ||
+            date.getMonth() !== month - 1 ||
+            date.getDate() !== day
+        ) {
+            return null;
+        }
+
+        return date;
+    };
+
+    // Validate the employee form
     const validateForm = () => {
         const newErrors = {};
 
-        // Full Name validation
         if (!formData.fullName.trim()) {
             newErrors.fullName = "Full Name is required.";
         }
 
-        // Gender validation
         if (!formData.gender) {
             newErrors.gender = "Please select Gender.";
         }
 
-        // Aadhaar Number validation
         if (!formData.aadhaarNumber.trim()) {
             newErrors.aadhaarNumber = "Aadhaar Number is required.";
         } else if (!/^\d{12}$/.test(formData.aadhaarNumber)) {
@@ -52,7 +77,6 @@ function AddEmployee() {
                 "Aadhaar Number must contain exactly 12 digits.";
         }
 
-        // Mobile Number validation
         if (!formData.mobileNumber.trim()) {
             newErrors.mobileNumber = "Mobile Number is required.";
         } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
@@ -60,24 +84,22 @@ function AddEmployee() {
                 "Mobile Number must contain exactly 10 digits.";
         }
 
-        // Member Type validation
         if (!formData.memberType) {
             newErrors.memberType = "Please select Member Type.";
         }
 
-        // Joining Date validation
         if (!formData.joiningDate) {
             newErrors.joiningDate = "Joining Date is required.";
+        } else if (!parseDate(formData.joiningDate)) {
+            newErrors.joiningDate = "Please select a valid Joining Date.";
         }
-
-        // Email validation removed
-        // PAN validation removed
 
         setErrors(newErrors);
 
         return Object.keys(newErrors).length === 0;
     };
 
+    // Save employee
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -88,23 +110,15 @@ function AddEmployee() {
         try {
             const employee = {
                 fullName: formData.fullName.trim(),
-
-                // Email is optional and has no validation
                 emailId: formData.emailId.trim() || null,
-
                 gender: formData.gender,
-
                 aadhaarNumber: formData.aadhaarNumber.trim(),
-
                 mobileNumber: formData.mobileNumber.trim(),
-
-                // PAN is optional and has no validation
                 panNo: formData.panNo.trim() || null,
-
                 address: formData.address.trim() || null,
-
                 memberType: formData.memberType,
 
+                // Send ISO date to ASP.NET Core DateTime
                 joiningDate: formData.joiningDate,
 
                 isActive: formData.isActive
@@ -129,22 +143,16 @@ function AddEmployee() {
 
     return (
         <div className="add-employee-page">
-
             <div className="add-employee-header">
                 <h1>Add Employee</h1>
-
-                <p>
-                    Create a new employee record.
-                </p>
+                <p>Create a new employee record.</p>
             </div>
 
             <div className="employee-form-card">
-
                 <form
                     className="employee-form"
                     onSubmit={handleSubmit}
                 >
-
                     {/* Full Name */}
                     <div className="form-group">
                         <label>Full Name</label>
@@ -186,21 +194,10 @@ function AddEmployee() {
                             value={formData.gender}
                             onChange={handleChange}
                         >
-                            <option value="">
-                                Select Gender
-                            </option>
-
-                            <option value="Male">
-                                Male
-                            </option>
-
-                            <option value="Female">
-                                Female
-                            </option>
-
-                            <option value="Other">
-                                Other
-                            </option>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
                         </select>
 
                         {errors.gender && (
@@ -260,9 +257,7 @@ function AddEmployee() {
                             value={formData.panNo}
                             onChange={handleChange}
                             maxLength={10}
-                            style={{
-                                textTransform: "uppercase"
-                            }}
+                            style={{ textTransform: "uppercase" }}
                         />
                     </div>
 
@@ -286,20 +281,14 @@ function AddEmployee() {
                             value={formData.memberType}
                             onChange={handleChange}
                         >
-                            <option value="">
-                                Select Member Type
-                            </option>
+                            <option value="">Select Member Type</option>
 
                             <option value="InHouse">
-                                InHouse Member
-                            </option>
-
-                            <option value="Vendor">
-                                Vendor
+                                InHouse Employee
                             </option>
 
                             <option value="Local">
-                                Local Member
+                                Local Employee
                             </option>
                         </select>
 
@@ -314,11 +303,34 @@ function AddEmployee() {
                     <div className="form-group">
                         <label>Joining Date</label>
 
-                        <input
-                            type="date"
-                            name="joiningDate"
-                            value={formData.joiningDate}
-                            onChange={handleChange}
+                        <DatePicker
+                            selected={parseDate(formData.joiningDate)}
+                            onChange={(date) => {
+                                // Store the date as YYYY-MM-DD
+                                // to avoid timezone conversion issues.
+                                const formattedDate = date
+                                    ? `${date.getFullYear()}-${String(
+                                          date.getMonth() + 1
+                                      ).padStart(2, "0")}-${String(
+                                          date.getDate()
+                                      ).padStart(2, "0")}`
+                                    : "";
+                                
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    joiningDate: formattedDate
+                                }));
+
+                                setErrors((prev) => ({
+                                    ...prev,
+                                    joiningDate: ""
+                                }));
+                            }}
+                            dateFormat="dd/MM/yyyy"
+                            placeholderText="Click to select a date"
+                            className="form-control"
+                            autoComplete="off"
+                            isClearable
                         />
 
                         {errors.joiningDate && (
@@ -328,28 +340,27 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Active Status */}
-                    <div className="form-group">
-                        <label>Active Status</label>
+                    {/* Active Status: only shown if an employee ID exists */}
+                    {formData.employeeId && (
+                        <div className="form-group">
+                            <label>Active Status</label>
 
-                        <div>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    name="isActive"
-                                    checked={formData.isActive}
-                                    onChange={handleChange}
-                                />
-
-                                {" "}
-                                Active
-                            </label>
+                            <div>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="isActive"
+                                        checked={formData.isActive}
+                                        onChange={handleChange}
+                                    />
+                                    {" "}Active
+                                </label>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Form Actions */}
                     <div className="form-actions">
-
                         <button
                             type="button"
                             className="cancel-btn"
@@ -364,9 +375,7 @@ function AddEmployee() {
                         >
                             Save Employee
                         </button>
-
                     </div>
-
                 </form>
             </div>
         </div>

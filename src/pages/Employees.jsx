@@ -188,12 +188,23 @@ function Employees() {
                                             </td>
 
                                             <td>
-                                                {employee.joiningDate
+                                                {/* {employee.joiningDate
                                                     ? new Date(
                                                         employee.joiningDate
                                                     ).toLocaleDateString(
                                                         "en-GB"
                                                     )
+                                                    : ""} */}
+                                                     {employee.joiningDate
+                                                    ? (() => {
+                                                        const date = new Date(employee.joiningDate);
+
+                                                        return (
+                                                            `${String(date.getDate()).padStart(2, "0")}/` +
+                                                            `${String(date.getMonth() + 1).padStart(2, "0")}/` +
+                                                            `${date.getFullYear()}`
+                                                        );
+                                                    })()
                                                     : ""}
                                             </td>
 

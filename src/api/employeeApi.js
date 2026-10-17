@@ -1,3 +1,4 @@
+import axios from "axios";
 import axiosClient from "./axiosClient";
 
 export const getEmployees = (pageNumber = 1, pageSize = 10) => {
@@ -26,3 +27,7 @@ export const updateEmployee = (id, employee) => {
 export const deleteEmployee = (id) => {
     return axiosClient.delete(`/Employees/${id}`);
 }
+
+export const GetEmployeesWithoutRateHistory=() =>{
+    return axiosClient.get("/Employees/without-rate-history");
+} 

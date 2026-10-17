@@ -201,7 +201,7 @@ function AddHotel() {
                                 name="mobileNumber2"
                                 value={hotel.mobileNumber2}
                                 onChange={handleChange}
-                                 placeholder="Enter 10  digit Mobile number"
+                                 placeholder="Optional -Enter 10  digit Mobile number"
                                maxLength={10}
                             />
 

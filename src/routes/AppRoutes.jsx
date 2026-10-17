@@ -19,13 +19,16 @@ import VendorRateMaster from "../pages/VendorRateMaster";
 // import HoteRateMaster from "../pages/HoteRateMaster";
 import EmployeeRateMaster from "../pages/EmployeeRateMaster";
 import DailyEmployeePayment from "../pages/DailyEmployeePayment";
+import VendorPayment from "../pages/VendorPayment";
 
 import AddEmployeeRateMaster from "../pages/AddEmployeeRateMaster";
 import EditEmployeeRateMaster from "../pages/EditEmployeeRateMaster";
 
 import EmployeeAdvance  from "../pages/EmployeeAdvance";
+import VendorAdvance from "../pages/VendorAdvance";
 
 import AddEditEmployeeAdvance from "../pages/AddEditEmployeeAdvance";
+import AddEditVendorAdvance from "../pages/AddEditVendorAdvance";
 
 import AddVendorRate from "../pages/AddVendorRate";
 
@@ -34,7 +37,7 @@ import HotelRateHistory from "../pages/HotelRateHistory";
 import AddEditHotelRateHistory from "../pages/AddEditHotelRateHistory";
 
 import EmployeePaymentReports from "../pages/EmployeePaymentReports";
-
+import EditVendorRate from "../pages/EditVendorRate";
 
 
 function AppRoutes() {
@@ -66,48 +69,30 @@ function AppRoutes() {
             <Route path="/RateMasters/employee" element={<EmployeeRateMaster />}/>
             <Route path="/RateMasters/employeerate"element={  <EmployeeRateMaster /> } />
             <Route path="/RateMasters/employeerate/add"element={ <AddEmployeeRateMaster /> }/>
-             <Route path="/RateMasters/employeerate/edit/:rateId" element={<EditEmployeeRateMaster  />} /> 
+            <Route path="/RateMasters/employeerate/edit/:rateId" element={<EditEmployeeRateMaster  />} /> 
 
-            {/* <Route path="/RateMasters/employeerate/edit/:employeeId" element={ <AddEmployeeRateMaster /> } /> */}
-           
            <Route path="/RateMasters/vendor" element={<VendorRateMaster />} />
            <Route path="/RateMasters/vendor/add" element={<AddVendorRate />} />
-           <Route path="/RateMasters/vendor/edit/:id" element={<AddVendorRate />} />
+          
 
-           {/* //<Route  path="/RateMasters/Hotel" element={<HoteRateMaster />} /> */}
-
-           <Route
-    path="/RateMasters/hotel"
-    element={<HotelRateHistory />}
-/>
-
-<Route
-    path="/RateMasters/hotel/add"
-    element={<AddEditHotelRateHistory />}
-/>
-
-<Route
-    path="/RateMasters/hotel/edit/:id"
-    element={<AddEditHotelRateHistory />}
-/>
+           <Route path="/RateMasters/hotel" element={<HotelRateHistory />} />
+           <Route path="/RateMasters/hotel/add" element={<AddEditHotelRateHistory />} />
+           <Route path="/RateMasters/hotel/edit/:id" element={<AddEditHotelRateHistory />} />
            <Route  path="/daily-employee-payment" element={<DailyEmployeePayment />} /> 
+           <Route  path="/vendor-employee-payment" element={<VendorPayment />} />
            <Route  path="/advances/employee" element={<EmployeeAdvance />}/>
            <Route  path="/advances/employee/add"  element={<AddEditEmployeeAdvance />} /> 
            <Route  path="/advances/employee/edit/:id"  element={<AddEditEmployeeAdvance />} />
-           <Route  path="/master-allocations"  element={<MasterAllocations />} />
-           
-            {/* <Route
-    path="/reports/employee-payments"
-    element={<EmployeePaymentReports />}
-/>
-<Route
-    path="/reports/employee"
-    element={<EmployeeReport />}
-/> */}
-<Route  path="/reports/employee" element={<EmployeePaymentReports />} />
+           <Route  path="/advances/vendor" element={<VendorAdvance />}/>
+           <Route  path="/advances/vendor/add"  element={<AddEditVendorAdvance />} /> 
+           <Route  path="/advances/vendor/edit/:id"  element={<AddEditVendorAdvance />} />
+           <Route  path="/master-allocations"  element={<MasterAllocations />} /> 
+           <Route  path="/reports/employee" element={<EmployeePaymentReports />} />
+           <Route  path="/RateMasters/vendor/edit/:id" element={<EditVendorRate />}/>
 
-        </Routes>
+        </Routes> 
     );
 }
+
 
 export default AppRoutes;
