@@ -1,6 +1,9 @@
 
 import React, { useState } from "react";
-import { getAllEmployeePaymentSummary } from "../api/dailyEmployeePaymentApi";
+import {
+    getAllEmployeePaymentSummary,
+    getAllReportEmployee,
+} from "../api/dailyEmployeePaymentApi";
 //import "../CSS/AllEmployeePaymentReport.css";
 
 const AllEmployeePaymentReport = () => {
@@ -65,9 +68,10 @@ const AllEmployeePaymentReport = () => {
         try {
             setLoading(true);
 
-            const response = await getAllEmployeePaymentSummary(
+            const response = await getAllReportEmployee(
                 fromDate,
-                toDate
+                toDate,
+                "All"
             );
 
             const data = response?.data;
@@ -81,7 +85,9 @@ const AllEmployeePaymentReport = () => {
                         ? data.items
                         : Array.isArray(data?.employees)
                             ? data.employees
-                            : null;
+                            : Array.isArray(data?.records)
+                                ? data.records
+                                : null;
 
             if (!rows) {
                 throw new Error(

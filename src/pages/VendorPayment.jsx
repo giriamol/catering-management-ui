@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../CSS/DailyEmployeePayment.css";
-import {
-    getVendorPaymentSummary,
-    SaveVendorPayment,
-} from "../api/vendorPaymentApi";
+import {getVendorPaymentSummary, SaveVendorPayment } from "../api/vendorPaymentApi";
+import { getVendors } from "../api/vendorApi";
+import DatePicker from "../components/DatePicker";
 
 const VendorPayment = () => {
     const [vendorId, setVendorId] = useState("");
+    const [vendors, setVendors] = useState([]);
+    const [loadingVendors, setLoadingVendors] = useState(false);
+
+    // Keep dates in ISO format (YYYY-MM-DD) for API requests.
+    // The shared DatePicker displays them as DD/MM/YYYY.
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
-
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -24,6 +27,89 @@ const VendorPayment = () => {
     const [paymentStatus, setPaymentStatus] = useState("Paid");
     const [savingPayment, setSavingPayment] = useState(false);
 
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadVendors = async () => {
+            try {
+                setLoadingVendors(true);
+                const response = await getVendors(1, 2000);
+                console.log("getVendors response:", response?.data);
+
+                const data = response?.data;
+                const vendorList = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data?.data)
+                      ? data.data
+                      : Array.isArray(data?.items)
+                        ? data.items
+                        : Array.isArray(data?.vendors)
+                          ? data.vendors
+                          : [];
+
+                const normalizedVendors = vendorList
+                    .map((vendor) => ({
+                        ...vendor,
+                        vendorId:
+                            vendor.vendorId ??
+                            vendor.VendorId ??
+                            vendor.fk_VendorId,
+                        vendorName:
+                            vendor.vendorName ??
+                            vendor.VendorName ??
+                            vendor.companyName ??
+                            vendor.CompanyName ??
+                            vendor.businessName ??
+                            vendor.BusinessName ??
+                            "",
+                        isActive: vendor.isActive ?? vendor.IsActive,
+                    }))
+                    .filter((vendor) => vendor.vendorId != null)
+                    .filter((vendor) => {
+                        if (vendor.isActive == null) return true;
+                        return (
+                            vendor.isActive === true ||
+                            vendor.isActive === 1 ||
+                            String(vendor.isActive).toLowerCase() === "true"
+                        );
+                    })
+                    .sort((a, b) =>
+                        String(a.vendorName || `Vendor ${a.vendorId}`).localeCompare(
+                            String(b.vendorName || `Vendor ${b.vendorId}`)
+                        )
+                    );
+
+                if (isMounted) {
+                    setVendors(normalizedVendors);
+                    if (normalizedVendors.length === 0) {
+                        setError("No vendors were returned by the vendor API.");
+                    }
+                }
+            } catch (err) {
+                console.error(
+                    "Error loading vendors:",
+                    err?.response?.status,
+                    err?.response?.data || err?.message
+                );
+                if (isMounted) {
+                    setVendors([]);
+                    setError(
+                        err?.response?.data?.message ||
+                        err?.response?.data?.title ||
+                        "Unable to load vendors. Please check the vendor API."
+                    );
+                }
+            } finally {
+                if (isMounted) setLoadingVendors(false);
+            }
+        };
+
+        loadVendors();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     const formatAmount = (amount) =>
         Number(amount ?? 0).toLocaleString("en-IN", {
             minimumFractionDigits: 2,
@@ -32,24 +118,15 @@ const VendorPayment = () => {
 
     const formatDate = (date) => {
         if (!date) return "—";
-
         const datePart = String(date).split("T")[0];
         const [year, month, day] = datePart.split("-");
-
-        return year && month && day
-            ? `${day}-${month}-${year}`
-            : datePart;
+        return year && month && day ? `${day}/${month}/${year}` : datePart;
     };
 
     const getErrorMessage = (err) => {
         const data = err?.response?.data;
-
         if (typeof data === "string") return data;
-
-        if (data?.errors) {
-            return Object.values(data.errors).flat().join(" ");
-        }
-
+        if (data?.errors) return Object.values(data.errors).flat().join(" ");
         return (
             data?.message ||
             data?.title ||
@@ -69,7 +146,6 @@ const VendorPayment = () => {
 
     const handleSearch = async (event) => {
         event.preventDefault();
-
         setError("");
         setSuccessMessage("");
         setSummary(null);
@@ -77,17 +153,14 @@ const VendorPayment = () => {
         setShowPaymentForm(false);
 
         const id = Number(vendorId);
-
-        if (!vendorId.trim() || !Number.isSafeInteger(id) || id <= 0) {
-            setError("Please enter a valid Vendor ID.");
+        if (!vendorId || !Number.isSafeInteger(id) || id <= 0) {
+            setError("Please select a valid vendor.");
             return;
         }
-
         if (!fromDate || !toDate) {
             setError("Please select both From Date and To Date.");
             return;
         }
-
         if (fromDate > toDate) {
             setError("From Date cannot be later than To Date.");
             return;
@@ -95,18 +168,11 @@ const VendorPayment = () => {
 
         try {
             setLoading(true);
-
-            const response = await getVendorPaymentSummary(
-                id,
-                fromDate,
-                toDate
-            );
-
+            const response = await getVendorPaymentSummary(id, fromDate, toDate);
             if (!response?.data) {
                 setError("No vendor payment summary was returned.");
                 return;
             }
-
             setSummary(response.data);
             setSearched(true);
         } catch (err) {
@@ -132,17 +198,11 @@ const VendorPayment = () => {
     const handleOpenPaymentForm = () => {
         setError("");
         setSuccessMessage("");
-
         setPaymentDate("");
-        setOpeningPendingAmount(
-            String(summary?.openingPendingAmount ?? 0)
-        );
-        setAdvanceDeducted(
-            String(summary?.advanceDeducted ?? 0)
-        );
+        setOpeningPendingAmount(String(summary?.openingPendingAmount ?? 0));
+        setAdvanceDeducted(String(summary?.advanceDeducted ?? 0));
         setAmountPaid("0");
         setPaymentStatus("Paid");
-
         setShowPaymentForm(true);
     };
 
@@ -154,7 +214,6 @@ const VendorPayment = () => {
 
     const handleSavePayment = async (event) => {
         event.preventDefault();
-
         if (savingPayment) return;
 
         setError("");
@@ -164,7 +223,6 @@ const VendorPayment = () => {
             setError("Load the vendor payment summary first.");
             return;
         }
-
         if (!paymentDate) {
             setError("Please select a payment date.");
             return;
@@ -180,21 +238,20 @@ const VendorPayment = () => {
             setError("Invalid Vendor ID.");
             return;
         }
-
-        if (![grossAmount, openingAmount, advanceAmount, paidAmount].every(
-            (value) => Number.isFinite(value) && value >= 0
-        )) {
+        if (
+            ![grossAmount, openingAmount, advanceAmount, paidAmount].every(
+                (value) => Number.isFinite(value) && value >= 0
+            )
+        ) {
             setError("All payment amounts must be valid non-negative numbers.");
             return;
         }
 
         const totalPayable = openingAmount + grossAmount - advanceAmount;
-
         if (totalPayable < 0) {
             setError("Advance deducted cannot exceed the total payable.");
             return;
         }
-
         if (paidAmount > totalPayable) {
             setError("Amount paid cannot exceed the total payable.");
             return;
@@ -204,21 +261,18 @@ const VendorPayment = () => {
             vendorId: resolvedVendorId,
             paymentMonth: `${paymentDate}T00:00:00`,
             openingPendingAmount: openingAmount,
-            grossAmount: grossAmount,
+            grossAmount,
             advanceDeducted: advanceAmount,
             amountPaid: paidAmount,
-            paymentStatus: paymentStatus,
+            paymentStatus,
         };
 
         try {
             setSavingPayment(true);
-
             const response = await SaveVendorPayment(payload);
-
             setSuccessMessage(
                 response?.data?.message || "Vendor payment saved successfully."
             );
-
             setShowPaymentForm(false);
             resetPaymentForm();
 
@@ -228,16 +282,11 @@ const VendorPayment = () => {
                     fromDate,
                     toDate
                 );
-
                 if (refreshedResponse?.data) {
                     setSummary(refreshedResponse.data);
                 }
             } catch (refreshError) {
-                console.error(
-                    "Payment saved, but summary refresh failed:",
-                    refreshError
-                );
-
+                console.error("Summary refresh failed:", refreshError);
                 setSuccessMessage(
                     "Payment saved successfully, but the summary could not be refreshed. Search again to reload it."
                 );
@@ -251,36 +300,76 @@ const VendorPayment = () => {
         }
     };
 
+    const selectedVendor = vendors.find(
+        (vendor) =>
+            Number(vendor.vendorId) === Number(summary?.vendorId ?? vendorId)
+    );
+
+    const vendorInformation = summary
+        ? [
+              {
+                  label: "Vendor Name",
+                  value:
+                      summary.vendorName ||
+                      selectedVendor?.vendorName ||
+                      "—",
+              },
+              {
+                  label: "Vendor ID",
+                  value: summary.vendorId ?? vendorId,
+              },
+              ...[
+                  {
+                      label: "Vendor Type",
+                      value:
+                          summary.vendorType ??
+                          summary.memberType ??
+                          selectedVendor?.vendorType ??
+                          selectedVendor?.memberType,
+                  },
+                  {
+                      label: "Employee Quantity",
+                      value:
+                          summary.emp_Quantity ??
+                          summary.empQuantity ??
+                          summary.employeeQuantity ??
+                          summary.totalEmployeeCount ??
+                          selectedVendor?.emp_Quantity ??
+                          selectedVendor?.empQuantity,
+                  },
+                  {
+                      label: "Half-Day Shift Count",
+                      value:
+                          summary.halfDayShiftCount ??
+                          summary.halfDayCount ??
+                          summary.totalHalfDayShifts,
+                  },
+                  {
+                      label: "Full-Day Shift Count",
+                      value:
+                          summary.fullDayShiftCount ??
+                          summary.fullDayCount ??
+                          summary.totalFullDayShifts,
+                  },
+              ].filter((item) => item.value != null),
+          ]
+        : [];
+
     const paymentDetails = summary
         ? [
               {
-                  label: "Opening Pending Amount",
+                  label: "Opening Pending Amount / Previous Pending Amount",
                   amount: summary.openingPendingAmount,
               },
-              {
-                  label: "Gross Amount",
-                  amount: summary.grossAmount,
-              },
-              {
-                  label: "Advance Deducted",
-                  amount: summary.advanceDeducted,
-              },
-              {
-                  label: "Total Before Deductions",
-                  amount: summary.totalBeforeDeductions,
-              },
+              { label: "Gross Amount", amount: summary.grossAmount },
+              { label: "Advance Deducted", amount: summary.advanceDeducted },
               {
                   label: "Total Payable",
-                  amount: summary.totalPayable,
-                  highlight: true,
-              },
-              {
-                  label: "Amount Paid",
-                  amount: summary.amountPaid,
-              },
-              {
-                  label: "Closing Pending Amount",
-                  amount: summary.closingPendingAmount,
+                  amount:
+                      summary.totalPayable ??
+                      (Number(summary.openingPendingAmount ?? 0) +
+                          Number(summary.grossAmount ?? 0) -
+                          Number(summary.advanceDeducted ?? 0)),
                   highlight: true,
               },
           ]
@@ -291,84 +380,83 @@ const VendorPayment = () => {
         Number(summary?.grossAmount || 0) -
         Number(advanceDeducted || 0);
 
-    const summaryCards = summary
-        ? [
-              {
-                  label: "Gross Amount",
-                  value: `₹ ${formatAmount(summary.grossAmount)}`,
-                  accent: false,
-              },
-              {
-                  label: "Opening Pending",
-                  value: `₹ ${formatAmount(summary.openingPendingAmount)}`,
-                  accent: false,
-              },
-              {
-                  label: "Advance Deducted",
-                  value: `₹ ${formatAmount(summary.advanceDeducted)}`,
-                  accent: false,
-              },
-              {
-                  label: "Total Payable",
-                  value: `₹ ${formatAmount(
-                      summary.totalPayable ?? calculatedTotalPayable
-                  )}`,
-                  accent: true,
-              },
-          ]
-        : [];
-
     return (
         <div className="daily-payment-page">
             <div className="payment-page-header">
                 <div>
                     <h2>Vendor Payment</h2>
                     <p>
-                        View vendor payment summary and save vendor payment details
-                        for the selected date range.
+                        View vendor information and payment breakdown for the
+                        selected date range.
                     </p>
                 </div>
             </div>
 
-            <form
-                className="payment-filter-card"
-                onSubmit={handleSearch}
-            >
+            <form className="payment-filter-card" onSubmit={handleSearch}>
                 <div className="payment-filter-field">
-                    <label htmlFor="vendorId">Vendor ID</label>
-                    <input
+                    <label htmlFor="vendorId">Vendor Name</label>
+                    <select
                         id="vendorId"
-                        type="number"
-                        min="1"
-                        step="1"
+                        name="vendorId"
                         value={vendorId}
-                        onChange={(event) => setVendorId(event.target.value)}
-                        placeholder="Enter Vendor ID"
+                        onChange={(event) => {
+                            setVendorId(event.target.value);
+                            setSummary(null);
+                            setSearched(false);
+                            setShowPaymentForm(false);
+                            setError("");
+                            setSuccessMessage("");
+                        }}
+                        disabled={loadingVendors || loading || savingPayment}
                         required
-                    />
+                    >
+                        <option value="">
+                            {loadingVendors
+                                ? "Loading vendors..."
+                                : vendors.length
+                                  ? "-- Select Vendor Name --"
+                                  : "-- No vendors found --"}
+                        </option>
+                        {vendors.map((vendor) => (
+                            <option
+                                key={vendor.vendorId}
+                                value={String(vendor.vendorId)}
+                            >
+                                {vendor.vendorName ||
+                                    `Vendor ${vendor.vendorId}`}
+                            </option>
+                        ))}
+                    </select>
+                    {/* <small>
+                        {loadingVendors
+                            ? "Loading vendor list..."
+                            : `${vendors.length} vendor(s) available`}
+                    </small> */}
                 </div>
 
                 <div className="payment-filter-field">
                     <label htmlFor="fromDate">From Date</label>
-                    <input
+                    <DatePicker
                         id="fromDate"
-                        type="date"
+                        name="fromDate"
                         value={fromDate}
+                        onChange={setFromDate}
                         max={toDate || undefined}
-                        onChange={(event) => setFromDate(event.target.value)}
                         required
+                        placeholder="DD/MM/YYYY"
                     />
                 </div>
 
                 <div className="payment-filter-field">
                     <label htmlFor="toDate">To Date</label>
-                    <input
+                    <DatePicker
                         id="toDate"
-                        type="date"
+                        name="toDate"
                         value={toDate}
+                        onChange={setToDate}
                         min={fromDate || undefined}
-                        onChange={(event) => setToDate(event.target.value)}
                         required
+                        placeholder="DD/MM/YYYY"
                     />
                 </div>
 
@@ -381,11 +469,10 @@ const VendorPayment = () => {
                     >
                         Reset
                     </button>
-
                     <button
                         type="submit"
                         className="btn-calculate"
-                        disabled={loading || savingPayment}
+                        disabled={loading || loadingVendors || savingPayment}
                     >
                         {loading ? "Searching..." : "Get Payment Summary"}
                     </button>
@@ -397,7 +484,6 @@ const VendorPayment = () => {
                     {error}
                 </div>
             )}
-
             {successMessage && (
                 <div className="payment-alert payment-alert-success" role="status">
                     {successMessage}
@@ -406,51 +492,12 @@ const VendorPayment = () => {
 
             {searched && summary && (
                 <>
-                    <div className="payment-summary payment-summary-card-row">
-                        {summaryCards.map((item) => (
-                            <div
-                                key={item.label}
-                                className={
-                                    item.accent
-                                        ? "payment-summary-item payment-summary-item-accent"
-                                        : "payment-summary-item"
-                                }
-                            >
-                                <span>{item.label}</span>
-                                <strong>{item.value}</strong>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="payment-summary">
-                        <div className="payment-summary-item">
-                            <span>Vendor Name</span>
-                            <strong>{summary.vendorName || "—"}</strong>
-                        </div>
-
-                        <div className="payment-summary-item">
-                            <span>Vendor ID</span>
-                            <strong>{summary.vendorId ?? vendorId}</strong>
-                        </div>
-
-                        <div className="payment-summary-item">
-                            <span>Payment Type</span>
-                            <strong>{summary.paymentType || "Vendor Payment"}</strong>
-                        </div>
-
-                        <div className="payment-summary-item">
-                            <span>Selected Date Range</span>
-                            <strong>
-                                {formatDate(summary.fromDate)} to {formatDate(summary.toDate)}
-                            </strong>
-                        </div>
-                    </div>
-
                     <div className="payment-table-card">
                         <div className="payment-table-heading">
                             <h3>Vendor Payment Details</h3>
                             <span>
-                                {formatDate(summary.fromDate)} – {formatDate(summary.toDate)}
+                                {formatDate(summary.fromDate || fromDate)} –{" "}
+                                {formatDate(summary.toDate || toDate)}
                             </span>
                         </div>
 
@@ -460,21 +507,44 @@ const VendorPayment = () => {
                                     <tr>
                                         <th>Sr. No.</th>
                                         <th>Payment Description</th>
-                                        <th>Amount (₹)</th>
+                                        <th>Amount / Details</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
+                                    <tr className="payment-section-row">
+                                        <td colSpan="3">Vendor Information</td>
+                                    </tr>
+                                    {vendorInformation.map((item, index) => (
+                                        <tr key={`vendor-info-${item.label}`}>
+                                            <td>{String(index + 1).padStart(2, "0")}</td>
+                                            <td className="employee-name-cell">
+                                                {item.label}
+                                            </td>
+                                            <td>
+                                                {item.label.toLowerCase().includes("amount")
+                                                    ? `₹ ${formatAmount(item.value)}`
+                                                    : item.value}
+                                            </td>
+                                        </tr>
+                                    ))}
+
+                                    <tr className="payment-section-row">
+                                        <td colSpan="3">Payment Breakdown</td>
+                                    </tr>
                                     {paymentDetails.map((item, index) => (
                                         <tr
-                                            key={item.label}
+                                            key={`payment-${item.label}`}
                                             className={
                                                 item.highlight
                                                     ? "payment-total-row"
                                                     : ""
                                             }
                                         >
-                                            <td>{index + 1}</td>
+                                            <td>
+                                                {String(
+                                                    vendorInformation.length + index + 1
+                                                ).padStart(2, "0")}
+                                            </td>
                                             <td className="employee-name-cell">
                                                 {item.label}
                                             </td>
@@ -509,28 +579,28 @@ const VendorPayment = () => {
                             <div className="payment-table-heading">
                                 <h3>Add Vendor Payment</h3>
                                 <span>
-                                    Total Payable: ₹ {formatAmount(calculatedTotalPayable)}
+                                    Total Payable: ₹{" "}
+                                    {formatAmount(calculatedTotalPayable)}
                                 </span>
                             </div>
 
                             <div className="payment-form-note">
-                                Live calculation: Opening Pending + Gross Amount - Advance Deducted
+                                Live calculation: Opening Pending + Gross Amount -
+                                Advance Deducted
                             </div>
 
                             <div className="payment-entry-grid">
                                 <div className="payment-filter-field">
                                     <label htmlFor="paymentDate">Payment Date</label>
-                                    <input
+                                    <DatePicker
                                         id="paymentDate"
-                                        type="date"
+                                        name="paymentDate"
                                         value={paymentDate}
-                                        onChange={(event) =>
-                                            setPaymentDate(event.target.value)
-                                        }
+                                        onChange={setPaymentDate}
                                         required
+                                        placeholder="DD/MM/YYYY"
                                     />
                                 </div>
-
                                 <div className="payment-filter-field">
                                     <label htmlFor="openingPendingAmount">
                                         Opening Pending Amount (₹)
@@ -547,7 +617,6 @@ const VendorPayment = () => {
                                         required
                                     />
                                 </div>
-
                                 <div className="payment-filter-field">
                                     <label htmlFor="advanceDeducted">
                                         Advance Deducted (₹)
@@ -564,11 +633,8 @@ const VendorPayment = () => {
                                         required
                                     />
                                 </div>
-
                                 <div className="payment-filter-field">
-                                    <label htmlFor="amountPaid">
-                                        Amount Paid (₹)
-                                    </label>
+                                    <label htmlFor="amountPaid">Amount Paid (₹)</label>
                                     <input
                                         id="amountPaid"
                                         type="number"
@@ -581,7 +647,6 @@ const VendorPayment = () => {
                                         required
                                     />
                                 </div>
-
                                 <div className="payment-filter-field">
                                     <label htmlFor="paymentStatus">Payment Status</label>
                                     <select
@@ -606,7 +671,6 @@ const VendorPayment = () => {
                                 >
                                     Cancel
                                 </button>
-
                                 <button
                                     type="submit"
                                     className="btn-calculate"
@@ -627,9 +691,9 @@ const VendorPayment = () => {
                     <div className="payment-table-heading">
                         <h3>Vendor Payment Summary</h3>
                     </div>
-
                     <div className="empty-row">
-                        Enter a Vendor ID, select a date range, and click Get Payment Summary.
+                        Select a vendor, choose a date range, and click Get Payment
+                        Summary.
                     </div>
                 </div>
             )}

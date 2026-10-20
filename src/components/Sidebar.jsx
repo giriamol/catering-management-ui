@@ -170,11 +170,11 @@ function Sidebar() {
                                 </Link>
                             </li>
 
-                            <li>
+                            {/* <li>
                                 <Link to="/advances/hotel">
                                     Hotel Advance
                                 </Link>
-                            </li>
+                            </li> */}
 
                             <li>
                                 <Link to="/advances/vendor">
@@ -223,11 +223,10 @@ function Sidebar() {
                                 </Link>
                             </li>
 
-
                             {/* Vendor Employee Payment */}
                             <li>
                                 <Link to="/vendor-employee-payment">
-                                    Vendor Employee Payment
+                                    Vendor Payment
                                 </Link>
                             </li>
 
@@ -274,6 +273,12 @@ function Sidebar() {
                     {reportOpen && (
 
                         <ul className="submenu">
+
+                            <li>
+                                <Link to="/reports">
+                                    All Reports
+                                </Link>
+                            </li>
 
                             <li>
                                 <Link to="/reports/employee">

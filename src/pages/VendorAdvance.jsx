@@ -195,7 +195,7 @@ function VendorAdvance() {
                             <thead>
                                 <tr>
                                     <th>Sr. No.</th>
-                                    <th>Vendor</th>
+                                    <th>Vendor Name</th>
                                     <th>Advance Date</th>
                                     <th>Amount</th>
                                     <th>Description</th>

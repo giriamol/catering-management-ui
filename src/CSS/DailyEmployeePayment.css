@@ -48,7 +48,7 @@
 .payment-filter-card {
     display: flex;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 16px;
     padding: 20px;
     margin-bottom: 22px;
@@ -63,7 +63,7 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    flex: 1 1 175px;
+    flex: 1 1 0;
     min-width: 0;
 }
 
@@ -72,6 +72,7 @@
     color: #29465d;
     font-size: 12px;
     font-weight: 800;
+    letter-spacing: .02em;
 }
 
 .payment-filter-field input,
@@ -80,16 +81,32 @@
 .payment-entry-grid select {
     width: 100%;
     min-width: 0;
-    height: 40px;
-    padding: 0 11px;
+    height: 42px;
+    padding: 0 40px 0 12px;
     box-sizing: border-box;
     color: #1e3345;
     background: #fff;
     border: 1px solid #c5d3df;
-    border-radius: 6px;
+    border-radius: 8px;
     outline: none;
     font: 13px Arial, Helvetica, sans-serif;
-    transition: border-color .18s ease, box-shadow .18s ease;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.payment-filter-field select,
+.payment-entry-grid select {
+    appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #2f627f 50%),
+        linear-gradient(135deg, #2f627f 50%, transparent 50%),
+        linear-gradient(to right, #f4f8fb, #f4f8fb);
+    background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px),
+        100% 0;
+    background-size: 6px 6px, 6px 6px, 2.5em 2.5em;
+    background-repeat: no-repeat;
+    padding-right: 38px;
 }
 
 .payment-filter-field input:focus,
@@ -98,6 +115,7 @@
 .payment-entry-grid select:focus {
     border-color: #2874a6;
     box-shadow: 0 0 0 3px rgba(40, 116, 166, .13);
+    transform: translateY(-1px);
 }
 
 .payment-filter-field input:disabled,
@@ -129,8 +147,9 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 9px;
+    margin-left: auto;
 }
 
 .btn-calculate,
@@ -878,4 +897,35 @@ button:focus-visible {
 
 .payment-alert span {
     overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) {
+    .payment-filter-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .payment-filter-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .payment-filter-card {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 13px;
+        padding: 14px;
+    }
+
+    .payment-filter-actions {
+        grid-column: auto;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .payment-filter-actions .btn-reset,
+    .payment-filter-actions .btn-calculate {
+        flex: 1 1 120px;
+    }
 }

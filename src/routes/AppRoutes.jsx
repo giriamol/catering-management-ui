@@ -37,6 +37,7 @@ import HotelRateHistory from "../pages/HotelRateHistory";
 import AddEditHotelRateHistory from "../pages/AddEditHotelRateHistory";
 
 import EmployeePaymentReports from "../pages/EmployeePaymentReports";
+import ReportsOverview from "../pages/ReportsOverview";
 import EditVendorRate from "../pages/EditVendorRate";
 
 
@@ -83,10 +84,14 @@ function AppRoutes() {
            <Route  path="/advances/employee" element={<EmployeeAdvance />}/>
            <Route  path="/advances/employee/add"  element={<AddEditEmployeeAdvance />} /> 
            <Route  path="/advances/employee/edit/:id"  element={<AddEditEmployeeAdvance />} />
+           
            <Route  path="/advances/vendor" element={<VendorAdvance />}/>
            <Route  path="/advances/vendor/add"  element={<AddEditVendorAdvance />} /> 
            <Route  path="/advances/vendor/edit/:id"  element={<AddEditVendorAdvance />} />
            <Route  path="/master-allocations"  element={<MasterAllocations />} /> 
+           <Route path="/reports" element={<ReportsOverview />} />
+           <Route path="/reports/hotel" element={<ReportsOverview />} />
+           <Route path="/reports/vendor" element={<ReportsOverview />} />
            <Route  path="/reports/employee" element={<EmployeePaymentReports />} />
            <Route  path="/RateMasters/vendor/edit/:id" element={<EditVendorRate />}/>
 
