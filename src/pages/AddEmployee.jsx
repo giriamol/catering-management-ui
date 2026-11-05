@@ -290,6 +290,9 @@ function AddEmployee() {
                             <option value="Local">
                                 Local Employee
                             </option>
+                             <option value="Supplier">
+                                Supplier
+                            </option>
                         </select>
 
                         {errors.memberType && (

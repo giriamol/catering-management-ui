@@ -36,9 +36,10 @@ import MasterAllocations from "../pages/MasterAllocations";
 import HotelRateHistory from "../pages/HotelRateHistory";
 import AddEditHotelRateHistory from "../pages/AddEditHotelRateHistory";
 
-import EmployeePaymentReports from "../pages/EmployeePaymentReports";
+//import EmployeePaymentReports from "../pages/EmployeePaymentReports";
 import ReportsOverview from "../pages/ReportsOverview";
 import EditVendorRate from "../pages/EditVendorRate";
+import HotelPayment from "../pages/HotelPayment";
 
 
 function AppRoutes() {
@@ -92,9 +93,10 @@ function AppRoutes() {
            <Route path="/reports" element={<ReportsOverview />} />
            <Route path="/reports/hotel" element={<ReportsOverview />} />
            <Route path="/reports/vendor" element={<ReportsOverview />} />
-           <Route  path="/reports/employee" element={<EmployeePaymentReports />} />
+           {/* <Route  path="/reports/employee" element={<EmployeePaymentReports />} /> */}
            <Route  path="/RateMasters/vendor/edit/:id" element={<EditVendorRate />}/>
-
+            <Route path="/hotel-payment"  element={<HotelPayment />}  />
+            
         </Routes> 
     );
 }

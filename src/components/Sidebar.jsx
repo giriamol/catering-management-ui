@@ -53,7 +53,7 @@ function Sidebar() {
                 ================================================== */}
                 <li>
                     <Link to="/hotels">
-                        Hotels
+                        Caterers
                     </Link>
                 </li>
 
@@ -97,7 +97,7 @@ function Sidebar() {
 
                             <li>
                                 <Link to="/RateMasters/hotel">
-                                    Hotel Rate
+                                    Caterers Rate
                                 </Link>
                             </li>
 
@@ -234,7 +234,7 @@ function Sidebar() {
                             {/* Hotel Payment */}
                             <li>
                                 <Link to="/hotel-payment">
-                                    Hotel Payment
+                                    Caterers Payment
                                 </Link>
                             </li>
 
@@ -280,7 +280,7 @@ function Sidebar() {
                                 </Link>
                             </li>
 
-                            <li>
+                            {/* <li>
                                 <Link to="/reports/employee">
                                     Employee Report
                                 </Link>
@@ -288,7 +288,7 @@ function Sidebar() {
 
                             <li>
                                 <Link to="/reports/hotel">
-                                    Hotel Report
+                                    Caterers Report
                                 </Link>
                             </li>
 
@@ -296,7 +296,7 @@ function Sidebar() {
                                 <Link to="/reports/vendor">
                                     Vendor Report
                                 </Link>
-                            </li>
+                            </li> */}
 
                         </ul>
 

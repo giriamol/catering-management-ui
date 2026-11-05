@@ -375,3 +375,27 @@
         padding: 12px;
     }
 }
+/* Hotel tab only: wider caterer, venue and assignment-date columns.
+   Employee, Local and Vendor table layouts remain unchanged. */
+.hotel-allocation-table {
+    min-width: 1250px;
+    table-layout: auto;
+}
+
+.hotel-allocation-table th:nth-child(3),
+.hotel-allocation-table td:nth-child(3) {
+    min-width: 220px;
+    white-space: nowrap;
+}
+
+.hotel-allocation-table th:nth-child(4),
+.hotel-allocation-table td:nth-child(4) {
+    min-width: 200px;
+    white-space: nowrap;
+}
+
+.hotel-allocation-table th:nth-child(5),
+.hotel-allocation-table td:nth-child(5) {
+    min-width: 150px;
+    white-space: nowrap;
+}

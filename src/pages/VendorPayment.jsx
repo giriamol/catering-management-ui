@@ -265,6 +265,9 @@ const VendorPayment = () => {
             advanceDeducted: advanceAmount,
             amountPaid: paidAmount,
             paymentStatus,
+              fromDate: `${fromDate}T00:00:00`,
+              toDate: `${toDate}T00:00:00`
+              
         };
 
         try {
