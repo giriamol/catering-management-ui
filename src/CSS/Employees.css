@@ -1,205 +1,377 @@
+
+/* =====================================================
+   EMPLOYEES PAGE
+===================================================== */
+
 .employees-page {
     padding: 25px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    background: #F4F6FA;
+    font-family: "Segoe UI", sans-serif;
+    color: #26364F;
 }
 
-/* Header */
+/* =====================================================
+   HEADER
+===================================================== */
 
 .employees-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
     margin-bottom: 25px;
 }
 
 .employees-header h1 {
     margin: 0;
     font-size: 28px;
-    color: #222;
+    font-weight: 700;
+    color: #14233E;
 }
 
 .employees-header p {
     margin-top: 6px;
-    color: #777;
+    color: #718096;
     font-size: 14px;
 }
 
-/* Add Employee Button */
+/* =====================================================
+   ADD EMPLOYEE BUTTON
+===================================================== */
 
 .add-employee-btn {
     border: none;
-    padding: 11px 18px;
-    border-radius: 6px;
-    background-color: #2563eb;
-    color: white;
+    padding: 11px 20px;
+    border-radius: 7px;
+
+    background: linear-gradient(
+        135deg,
+        #D6B66D,
+        #E3C477
+    );
+
+    color: #14233E;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
+
+    box-shadow: 0 3px 8px rgba(20, 35, 62, 0.12);
+    transition: all 0.25s ease;
 }
 
 .add-employee-btn:hover {
-    background-color: #1d4ed8;
+    background: #F4D58D;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(20, 35, 62, 0.18);
 }
 
-/* Employee Card */
+/* =====================================================
+   EMPLOYEE CARD
+===================================================== */
 
 .employees-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 22px;
+
+    border: 1px solid #E2E8F0;
+
+    box-shadow: 0 4px 15px rgba(20, 35, 62, 0.07);
 }
 
-/* Table */
+/* =====================================================
+   TABLE CONTAINER
+===================================================== */
 
 .table-container {
     width: 100%;
     overflow-x: auto;
+    border-radius: 8px;
 }
+
+/* =====================================================
+   EMPLOYEES TABLE
+===================================================== */
 
 .employees-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 650px;
 }
 
-.employees-table th {
-    background-color: #f5f7fa;
-    padding: 14px;
+/* Table Header */
+/* =====================================================
+   EMPLOYEES TABLE
+===================================================== */
+
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+/* Table Header */
+.employees-table thead th {
+    background: #14233E;
+    color: #F4D58D;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 15px 12px;
     text-align: left;
-    font-size: 14px;
-    color: #444;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 3px solid #D6B66D;
+    white-space: nowrap;
 }
 
-.employees-table td {
-    padding: 14px;
-    font-size: 14px;
-    color: #333;
-    border-bottom: 1px solid #eee;
+/* Table Data */
+.employees-table tbody td {
+    font-size: 15px;
+    font-weight: 500;
+    color: #26364F;
+    padding: 13px 12px;
+    border-bottom: 1px solid #E2E8F0;
 }
 
+/* Alternate Row Colors */
+.employees-table tbody tr:nth-child(even) {
+    background: #F8FAFC;
+}
+
+.employees-table tbody tr:nth-child(odd) {
+    background: #FFFFFF;
+}
+
+/* Row Hover */
 .employees-table tbody tr:hover {
-    background-color: #f8fafc;
+    background: #FDF7E8;
+    transition: background 0.2s ease;
 }
 
-/* Status */
+/* Employee Name */
+.employees-table tbody td:first-child {
+    font-weight: 600;
+    color: #14233E;
+}
+/* =====================================================
+   STATUS
+===================================================== */
 
 .status-active {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background-color: #dcfce7;
+
+    padding: 5px 12px;
+    border-radius: 20px;
+
+    background: #DCFCE7;
     color: #166534;
+
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .status-inactive {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background-color: #fee2e2;
-    color: #991b1b;
+
+    padding: 5px 12px;
+    border-radius: 20px;
+
+    background: #FEE2E2;
+    color: #991B1B;
+
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
 }
+
+/* =====================================================
+   PAGINATION
+===================================================== */
+
 .pagination {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0 5px 0;
+    flex-wrap: wrap;
+
+    gap: 12px;
+    padding: 20px 0 5px;
 }
 
 .pagination-info {
-    font-size: 14px;
-    color: #555;
+    font-size: 13px;
+    color: #64748B;
+    font-weight: 500;
 }
 
 .pagination-buttons {
     display: flex;
-    gap: 5px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .pagination-buttons button {
-    border: 1px solid #d1d5db;
-    background-color: white;
-    padding: 7px 12px;
-    border-radius: 5px;
+    border: 1px solid #D5DCE6;
+
+    background: #FFFFFF;
+    color: #14233E;
+
+    padding: 8px 13px;
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 600;
+
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .pagination-buttons button:hover:not(:disabled) {
-    background-color: #f3f4f6;
+    background: #FDF7E8;
+    border-color: #D6B66D;
+    color: #14233E;
 }
 
 .pagination-buttons button:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
+    opacity: 0.45;
 }
 
 .pagination-buttons .active-page {
-    background-color: #2563eb;
-    color: white;
-    border-color: #2563eb;
+    background: #14233E;
+    color: #F4D58D;
+    border-color: #14233E;
 }
-/* Search Section */
+
+/* =====================================================
+   SEARCH SECTION
+===================================================== */
+
 .add-employe-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .add-employe-header h2 {
     margin: 0;
     font-size: 16px;
-    color: #333;
+    font-weight: 700;
+    color: #14233E;
 }
 
 .add-employe-header input {
     width: 280px;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    max-width: 100%;
+
+    padding: 10px 13px;
+
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+
+    background: #FFFFFF;
+    color: #26364F;
+
     font-size: 14px;
     outline: none;
-    transition: border-color 0.2s ease;
+
+    transition: all 0.2s ease;
 }
 
 .add-employe-header input:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    border-color: #D6B66D;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.18);
 }
 
 .add-employe-header input::placeholder {
-    color: #9ca3af;
+    color: #94A3B8;
 }
+
+/* =====================================================
+   ACTION BUTTONS
+===================================================== */
+
 .action-buttons {
     display: flex;
+    align-items: center;
     gap: 8px;
 }
 
 .edit-btn,
 .delete-btn {
     border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 7px 13px;
+    border-radius: 5px;
+
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: 600;
+
+    transition: all 0.2s ease;
 }
 
 .edit-btn {
-    background-color: #2563eb;
-    color: white;
-}
-
-.delete-btn {
-    background-color: #dc2626;
-    color: white;
+    background: #14233E;
+    color: #F4D58D;
 }
 
 .edit-btn:hover {
-    opacity: 0.85;
+    background: #263A58;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background: #DC2626;
+    color: #FFFFFF;
 }
 
 .delete-btn:hover {
-    opacity: 0.85;
+    background: #B91C1C;
+    transform: translateY(-1px);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .employees-page {
+        padding: 15px;
+    }
+
+    .employees-header {
+        align-items: flex-start;
+    }
+
+   .employees-page .employees-header h1 {
+    display: inline-block;
+    margin: 0;
+    padding: 10px 18px;
+    font-size: 30px;
+    font-weight: 800;
+    color: #F4D58D !important;
+    background: linear-gradient(135deg, #14233E, #263A58);
+    border-left: 5px solid #D6B66D;
+    border-radius: 7px;
+    box-shadow: 0 3px 8px rgba(20, 35, 62, 0.15);
+}
+
+/* Remove previous underline */
+.employees-page .employees-header h1::after {
+    display: none;
+}
+    .employees-card {
+        padding: 12px;
+    }
+
+    .add-employe-header input {
+        width: 100%;
+    }
+
+    .pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }

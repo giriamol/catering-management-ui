@@ -8,7 +8,7 @@ function Employees() {
     const [employees, setEmployees] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize] = useState(30);
+    const [pageSize] = useState(13);
     const [totalPages, setTotalPages] = useState(0);
     const [totalRecords, setTotalRecords] = useState(0);
     const [loading, setLoading] = useState(false);

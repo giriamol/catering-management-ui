@@ -1,10 +1,22 @@
 
+/* =========================================================
+   HOTEL RATE MASTER PAGE
+========================================================= */
+
 .hotel-rate-page {
-    padding: 24px;
-    color: #1f2937;
-    background: #f5f7fb;
+    padding: 25px;
     min-height: 100vh;
+    box-sizing: border-box;
+    color: #26364F;
+    background: #F4F6FA;
+    font-family: "Segoe UI", Arial, sans-serif;
+    border: 1px solid #E1E6EE;
+    border-radius: 10px;
 }
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 .hotel-rate-header {
     display: flex;
@@ -13,18 +25,27 @@
     gap: 16px;
     flex-wrap: wrap;
     margin-bottom: 24px;
+    padding: 15px 18px;
+    border-bottom: 1px solid #E1E6EE;
 }
 
 .hotel-rate-header h1 {
+    display: inline-block;
     margin: 0 0 7px;
-    font-size: 25px;
+    padding: 10px 18px;
+    font-size: 26px;
     font-weight: 700;
-    color: #172554;
+    color: #F4D58D;
+    background: linear-gradient(135deg, #14233E, #263A58);
+    border-left: 5px solid #D6B66D;
+    border-radius: 7px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 3px 8px rgba(20, 35, 62, 0.15);
 }
 
 .hotel-rate-header p {
-    margin: 0;
-    color: #64748b;
+    margin: 5px 0 0;
+    color: #718096;
     font-size: 14px;
 }
 
@@ -34,108 +55,161 @@
     flex-wrap: wrap;
 }
 
+/* =========================================================
+   BUTTON COMMON STYLE
+========================================================= */
+
 .hotel-rate-add,
 .hotel-rate-refresh,
 .hotel-rate-edit,
 .hotel-rate-delete,
 .hotel-rate-cancel {
-    border: none;
     border-radius: 6px;
-    padding: 10px 15px;
+    padding: 10px 16px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
+/* Add */
+
 .hotel-rate-add {
-    color: white;
-    background: #2563eb;
+    color: #14233E;
+    background: linear-gradient(135deg, #D6B66D, #E8CC8A);
+    border: 1px solid #C5A45D;
+    box-shadow: 0 2px 6px rgba(20, 35, 62, 0.10);
 }
 
 .hotel-rate-add:hover {
-    background: #1d4ed8;
+    background: linear-gradient(135deg, #C5A45D, #D6B66D);
+    transform: translateY(-1px);
 }
 
+/* Refresh */
+
 .hotel-rate-refresh {
-    background: #e2e8f0;
-    color: #334155;
+    background: #FFFFFF;
+    color: #263A58;
+    border: 1px solid #C8D1DE;
 }
 
 .hotel-rate-refresh:hover {
-    background: #cbd5e1;
+    background: #EDF2F8;
+    border-color: #263A58;
 }
 
+/* Edit */
+
 .hotel-rate-edit {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: #EDF3FA;
+    color: #263A58;
+    border: 1px solid #D5E0EF;
 }
 
 .hotel-rate-edit:hover {
-    background: #bfdbfe;
+    background: #263A58;
+    color: #FFFFFF;
+    border-color: #263A58;
 }
 
+/* Delete */
+
 .hotel-rate-delete {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: #FFF0F0;
+    color: #C0392B;
+    border: 1px solid #F2CECE;
 }
 
 .hotel-rate-delete:hover {
-    background: #fecaca;
+    background: #C0392B;
+    color: #FFFFFF;
+    border-color: #C0392B;
 }
 
+/* Cancel */
+
 .hotel-rate-cancel {
-    background: #e2e8f0;
-    color: #334155;
+    background: #FFFFFF;
+    color: #263A58;
+    border: 1px solid #C8D1DE;
 }
 
 .hotel-rate-cancel:hover {
-    background: #cbd5e1;
+    background: #EDF2F8;
+    border-color: #263A58;
 }
+
+/* Disabled */
 
 .hotel-rate-add:disabled,
 .hotel-rate-refresh:disabled,
 .hotel-rate-delete:disabled,
 .hotel-rate-cancel:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
 
 .hotel-rate-summary {
     display: grid;
     grid-template-columns: repeat(2, minmax(160px, 230px));
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 .hotel-rate-summary > div {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 18px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    gap: 9px;
+    padding: 19px;
+    background: #FFFFFF;
+    border: 1px solid #E5EAF1;
+    border-left: 4px solid #D6B66D;
+    border-radius: 9px;
+    box-shadow: 0 3px 10px rgba(20, 35, 62, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hotel-rate-summary > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 13px rgba(20, 35, 62, 0.09);
 }
 
 .hotel-rate-summary span {
     font-size: 13px;
-    color: #64748b;
+    font-weight: 500;
+    color: #718096;
 }
 
 .hotel-rate-summary strong {
     font-size: 25px;
-    color: #1e3a8a;
+    font-weight: 700;
+    color: #14233E;
 }
+
+/* =========================================================
+   TABLE CARD AND FORM CARD
+========================================================= */
 
 .hotel-rate-table-card,
 .hotel-rate-form-card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: #FFFFFF;
+    border: 1px solid #E5EAF1;
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 3px 12px rgba(20, 35, 62, 0.06);
+    margin-bottom: 22px;
 }
+
+/* =========================================================
+   TABLE
+========================================================= */
 
 .hotel-rate-table-wrapper {
     width: 100%;
@@ -146,51 +220,87 @@
     width: 100%;
     border-collapse: collapse;
     white-space: nowrap;
+    font-size: 14px;
+}
+
+/* Table heading */
+
+.hotel-rate-table thead {
+    background: linear-gradient(135deg, #14233E, #263A58);
 }
 
 .hotel-rate-table th {
-    padding: 14px 12px;
-    background: #eff6ff;
-    color: #1e3a8a;
+    padding: 14px 15px;
+    background: #14233E;
+    color: #F4D58D;
     text-align: left;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
-    border-bottom: 1px solid #dbeafe;
+    border-bottom: 2px solid #D6B66D;
 }
+
+/* Table data */
 
 .hotel-rate-table td {
-    padding: 13px 12px;
-    font-size: 13px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 13px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #45546A;
+    border-bottom: 1px solid #E9EDF3;
 }
 
-.hotel-rate-table tbody tr:hover {
-    background: #f8fafc;
+/* Alternate rows */
+
+.hotel-rate-table tbody tr:nth-child(even) {
+    background: #F8FAFC;
 }
+
+/* Hover */
+
+.hotel-rate-table tbody tr:hover {
+    background: #FFF9EB;
+    transition: background 0.15s ease;
+}
+
+.hotel-rate-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Empty row */
 
 .empty-row {
     padding: 32px !important;
     text-align: center;
-    color: #64748b;
+    color: #718096;
+    background: #F8FAFC;
+    font-size: 14px;
 }
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 .hotel-rate-status {
     display: inline-block;
-    padding: 5px 9px;
+    padding: 5px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 700;
 }
 
 .hotel-rate-status.active {
-    background: #dcfce7;
-    color: #166534;
+    background: #E5F5EB;
+    color: #21804A;
 }
 
 .hotel-rate-status.inactive {
-    background: #fee2e2;
-    color: #991b1b;
+    background: #FFF0F0;
+    color: #C0392B;
 }
+
+/* =========================================================
+   ROW ACTIONS
+========================================================= */
 
 .hotel-rate-row-actions {
     display: flex;
@@ -198,26 +308,33 @@
     gap: 7px;
 }
 
+/* =========================================================
+   ALERT MESSAGES
+========================================================= */
+
 .hotel-rate-alert {
     padding: 12px 15px;
     margin-bottom: 18px;
     border-radius: 6px;
     font-size: 13px;
+    font-weight: 500;
 }
 
 .hotel-rate-alert.error {
-    background: #fee2e2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
+    background: #FFF0F0;
+    border: 1px solid #F2CECE;
+    color: #C0392B;
 }
 
 .hotel-rate-alert.success {
-    background: #dcfce7;
-    border: 1px solid #bbf7d0;
-    color: #166534;
+    background: #EAF6EE;
+    border: 1px solid #C5E5CF;
+    color: #21804A;
 }
 
-/* Add/Edit form */
+/* =========================================================
+   ADD / EDIT FORM
+========================================================= */
 
 .hotel-rate-form {
     width: 100%;
@@ -226,53 +343,73 @@
 .hotel-rate-form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    gap: 21px 24px;
 }
 
 .hotel-rate-field {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
 }
 
 .hotel-rate-field.full-width {
     grid-column: 1 / -1;
 }
 
+/* Labels */
+
 .hotel-rate-field label {
-    color: #334155;
+    color: #263A58;
     font-size: 13px;
     font-weight: 600;
 }
 
 .hotel-rate-field label span {
-    color: #dc2626;
+    color: #C0392B;
 }
+
+/* Inputs and dropdowns */
 
 .hotel-rate-field input:not([type="checkbox"]),
 .hotel-rate-field select {
     width: 100%;
-    min-height: 42px;
+    min-height: 43px;
     padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: white;
-    color: #1f2937;
-    font-size: 14px;
     box-sizing: border-box;
+    border: 1px solid #D5DDE8;
+    border-radius: 6px;
+    background: #FFFFFF;
+    color: #26364F;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
+
+/* Hover */
+
+.hotel-rate-field input:not([type="checkbox"]):hover,
+.hotel-rate-field select:hover {
+    border-color: #B9A16B;
+}
+
+/* Focus */
 
 .hotel-rate-field input:focus,
 .hotel-rate-field select:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: #D6B66D;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.18);
 }
 
+/* Readonly */
+
 .hotel-rate-field input[readonly] {
-    background: #f1f5f9;
-    color: #475569;
+    background: #F1F4F8;
+    color: #64748B;
+    cursor: not-allowed;
 }
+
+/* Checkbox */
 
 .hotel-rate-field.checkbox-field {
     justify-content: center;
@@ -282,28 +419,82 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    min-height: 42px;
+    min-height: 43px;
     cursor: pointer;
 }
 
 .hotel-rate-field input[type="checkbox"] {
     width: 17px;
     height: 17px;
-    accent-color: #2563eb;
+    accent-color: #263A58;
+    cursor: pointer;
 }
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
 
 .hotel-rate-form-actions {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
     margin-top: 28px;
     padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #E9EDF3;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.hotel-rate-table-wrapper::-webkit-scrollbar {
+    height: 7px;
+}
+
+.hotel-rate-table-wrapper::-webkit-scrollbar-track {
+    background: #F1F4F8;
+}
+
+.hotel-rate-table-wrapper::-webkit-scrollbar-thumb {
+    background: #B8C2D0;
+    border-radius: 10px;
+}
+
+.hotel-rate-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #263A58;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+    .hotel-rate-page {
+        padding: 16px;
+    }
+
+    .hotel-rate-header h1 {
+        font-size: 23px;
+    }
+
+    .hotel-rate-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 700px) {
     .hotel-rate-page {
-        padding: 14px;
+        padding: 12px;
+    }
+
+    .hotel-rate-header {
+        padding: 12px 5px;
+    }
+
+    .hotel-rate-header h1 {
+        font-size: 20px;
     }
 
     .hotel-rate-form-grid {
@@ -329,5 +520,19 @@
 
     .hotel-rate-form-actions button {
         width: 100%;
+    }
+}
+
+@media (max-width: 450px) {
+    .hotel-rate-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .hotel-rate-header-actions {
+        width: 100%;
+    }
+
+    .hotel-rate-header-actions button {
+        flex: 1;
     }
 }
