@@ -1,66 +1,137 @@
+
+/* =====================================================
+   ADD EMPLOYEE PAGE
+===================================================== */
+
 .add-employee-page {
-    padding: 25px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 28px;
+    background: #F4F6FA;
+    font-family: "Segoe UI", sans-serif;
+    color: #26364F;
+    border: 1px solid #E1E6EE;
+    border-radius: 10px;
 }
 
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+
 .add-employee-header {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #E1E6EE;
+    position: relative;
 }
 
 .add-employee-header h1 {
+    display: inline-block;
     margin: 0;
-    font-size: 28px;
-    color: #222;
+    padding: 0 0 9px;
+    font-size: 27px;
+    font-weight: 700;
+    color: #14233E;
+    letter-spacing: 0.2px;
+    position: relative;
+}
+
+.add-employee-header h1::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 55px;
+    height: 3px;
+    border-radius: 5px;
+    background: #D6B66D;
 }
 
 .add-employee-header p {
-    margin-top: 6px;
-    color: #777;
+    margin: 9px 0 0;
+    color: #718096;
     font-size: 14px;
+    line-height: 1.5;
 }
 
+/* =====================================================
+   FORM CARD
+===================================================== */
+
 .employee-form-card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: #FFFFFF;
+    padding: 28px;
+    border: 1px solid #E5EAF1;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(20, 35, 62, 0.05);
 }
+
+/* =====================================================
+   FORM LAYOUT
+===================================================== */
 
 .employee-form {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 25px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .form-group.full-width {
     grid-column: span 2;
 }
 
-.form-group label {
-    margin-bottom: 7px;
+/* =====================================================
+   LABELS
+===================================================== */
+
+.form-group > label {
+    margin-bottom: 8px;
+    color: #263A58;
     font-size: 14px;
     font-weight: 600;
-    color: #333;
 }
 
-.form-group input,
+/* =====================================================
+   INPUT / SELECT / TEXTAREA
+===================================================== */
+
+.form-group input:not([type="checkbox"]),
 .form-group select,
 .form-group textarea {
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
+    width: 100%;
+    min-height: 43px;
+    box-sizing: border-box;
+    padding: 10px 13px;
+    border: 1px solid #D5DDE8;
+    border-radius: 6px;
+    background: #FFFFFF;
+    color: #26364F;
+    font-family: "Segoe UI", sans-serif;
     font-size: 14px;
     outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: #2563eb;
+    border-color: #C5A252;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.14);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #A0AAB8;
+}
+
+.form-group select {
+    cursor: pointer;
 }
 
 .form-group textarea {
@@ -68,56 +139,218 @@
     resize: vertical;
 }
 
+/* =====================================================
+   DATE PICKER
+===================================================== */
+
+.form-group .react-datepicker-wrapper,
+.form-group .react-datepicker__input-container {
+    display: block;
+    width: 100%;
+}
+
+.form-group .form-control {
+    width: 100%;
+    height: 43px;
+    box-sizing: border-box;
+    padding: 10px 13px;
+    border: 1px solid #D5DDE8;
+    border-radius: 6px;
+    background: #FFFFFF;
+    color: #26364F;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 14px;
+    outline: none;
+}
+
+.form-group .form-control:focus {
+    border-color: #C5A252;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.14);
+}
+
+/* DatePicker Calendar */
+
+.react-datepicker {
+    border: 1px solid #D6B66D !important;
+    border-radius: 8px !important;
+    font-family: "Segoe UI", sans-serif !important;
+    box-shadow: 0 5px 18px rgba(20, 35, 62, 0.12);
+    overflow: hidden;
+}
+
+.react-datepicker__header {
+    background: #14233E !important;
+    border-bottom: 2px solid #D6B66D !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+    color: #F4D58D !important;
+    font-weight: 600;
+}
+
+.react-datepicker__day {
+    color: #26364F;
+    border-radius: 50%;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+    background: #14233E !important;
+    color: #FFFFFF !important;
+}
+
+.react-datepicker__day:hover {
+    background: #FDF0CC !important;
+    border-radius: 50%;
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: #F4D58D !important;
+}
+
+/* =====================================================
+   VALIDATION ERRORS
+===================================================== */
+
+.error-message {
+    margin-top: 5px;
+    color: #DC2626;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* =====================================================
+   ACTIVE STATUS CHECKBOX
+===================================================== */
+
+.form-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #14233E;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+/* =====================================================
+   FORM ACTIONS
+===================================================== */
+
 .form-actions {
     grid-column: span 2;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #E8EDF3;
 }
 
-.save-btn {
-    border: none;
-    padding: 11px 20px;
+/* Common button styling */
+
+.save-btn,
+.cancel-btn {
+    min-width: 125px;
+    height: 43px;
+    padding: 0 23px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 6px;
-    background-color: #2563eb;
-    color: white;
+    font-family: "Segoe UI", sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Save Button - Primary */
+
+.save-btn {
+    background: #14233E;
+    color: #FFFFFF;
+    border: 1px solid #14233E;
+    box-shadow: 0 2px 5px rgba(20, 35, 62, 0.12);
 }
 
 .save-btn:hover {
-    background-color: #1d4ed8;
+    background: #263A58;
+    border-color: #263A58;
+    box-shadow: 0 4px 9px rgba(20, 35, 62, 0.17);
+    transform: translateY(-1px);
 }
 
+/* Cancel Button - Secondary */
+
 .cancel-btn {
-    border: 1px solid #d1d5db;
-    padding: 11px 20px;
-    border-radius: 6px;
-    background-color: white;
-    color: #333;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
+    background: #FFFFFF;
+    color: #263A58;
+    border: 1px solid #C9D2DF;
 }
 
 .cancel-btn:hover {
-    background-color: #f3f4f6;
+    background: #F4F6FA;
+    border-color: #14233E;
+    color: #14233E;
 }
 
-/* Mobile */
+/* Button focus and click */
+
+.save-btn:focus-visible,
+.cancel-btn:focus-visible {
+    outline: 3px solid rgba(214, 182, 109, 0.35);
+    outline-offset: 2px;
+}
+
+.save-btn:active,
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+.save-btn:disabled,
+.cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
 
 @media (max-width: 768px) {
+    .add-employee-page {
+        padding: 16px;
+    }
+
+    .add-employee-header h1 {
+        font-size: 23px;
+    }
+
+    .employee-form-card {
+        padding: 18px;
+    }
+
     .employee-form {
         grid-template-columns: 1fr;
+        gap: 17px;
     }
 
-    .form-group.full-width {
-        grid-column: span 1;
-    }
-
+    .form-group.full-width,
     .form-actions {
         grid-column: span 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .save-btn,
+    .cancel-btn {
+        width: 100%;
     }
 }

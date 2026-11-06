@@ -1,33 +1,92 @@
 
+/* =========================================================
+   MASTER ALLOCATIONS PAGE
+   Same UI and dynamic colors as Assignment page
+========================================================= */
+
 .master-allocations-page {
-    padding: 24px;
-    min-height: 100%;
-    background: #f5f7fb;
-    color: #1e293b;
+    --page-bg: #f5f7fb;
+    --page-accent: #2563eb;
+    --page-soft: #eef4ff;
+    --page-header-accent: rgba(37, 99, 235, 0.08);
+
+    padding: 25px;
+    min-height: 100vh;
     box-sizing: border-box;
+    background: var(--page-bg);
+    color: #26364f;
+    font-family: "Segoe UI", Arial, sans-serif;
+    transition: background 0.2s ease;
 }
 
-/* Page heading */
+/* Dynamic colors based on allocation type */
+
+.master-allocations-page.inhouse {
+    --page-bg: #f0f9ff;
+    --page-accent: #0284c7;
+    --page-soft: #e0f2fe;
+    --page-header-accent: rgba(2, 132, 199, 0.1);
+}
+
+.master-allocations-page.vendor {
+    --page-bg: #f5f3ff;
+    --page-accent: #7c3aed;
+    --page-soft: #ede9fe;
+    --page-header-accent: rgba(124, 58, 237, 0.1);
+}
+
+.master-allocations-page.local {
+    --page-bg: #f0fdf4;
+    --page-accent: #16a34a;
+    --page-soft: #dcfce7;
+    --page-header-accent: rgba(22, 163, 74, 0.1);
+}
+
+.master-allocations-page.supplier {
+    --page-bg: #fff7ed;
+    --page-accent: #f59e0b;
+    --page-soft: #fef3c7;
+    --page-header-accent: rgba(245, 158, 11, 0.12);
+}
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
 .master-allocations-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    padding: 20px 25px;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        var(--page-header-accent),
+        white 28%
+    );
+    border-left: 5px solid var(--page-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .master-allocations-header h2 {
-    margin: 0 0 7px;
-    font-size: 26px;
+    margin: 0;
+    font-size: 24px;
     font-weight: 700;
-    color: #172554;
+    color: #1f2937;
 }
 
 .master-allocations-header p {
-    margin: 0;
-    color: #64748b;
+    margin: 6px 0 0;
+    color: #6b7280;
     font-size: 14px;
 }
+
+/* =========================================================
+   HEADER BUTTONS
+========================================================= */
 
 .allocation-refresh-button,
 .allocation-search-button {
@@ -35,82 +94,108 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 42px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
-    color: #ffffff;
+    min-height: 40px;
+    padding: 9px 17px;
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.allocation-refresh-button:hover,
+.allocation-refresh-button {
+    background: white;
+    color: var(--page-accent);
+    border: 1px solid var(--page-accent);
+}
+
+.allocation-refresh-button:hover {
+    background: var(--page-soft);
+}
+
+.allocation-search-button {
+    background: var(--page-accent);
+    color: white;
+    border: 1px solid var(--page-accent);
+}
+
 .allocation-search-button:hover {
-    background: #1d4ed8;
+    filter: brightness(0.92);
+    transform: translateY(-1px);
 }
 
 .allocation-refresh-button:disabled,
 .allocation-search-button:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
 }
 
-/* Filters */
+/* =========================================================
+   FILTERS
+========================================================= */
+
 .master-allocations-filters {
     display: grid;
-    grid-template-columns: minmax(180px, 0.8fr) minmax(300px, 1.4fr)
-        minmax(220px, 1fr) auto;
+    grid-template-columns:
+        minmax(180px, 0.8fr)
+        minmax(300px, 1.4fr)
+        minmax(220px, 1fr)
+        auto;
     align-items: end;
-    gap: 18px;
-    padding: 22px;
-    margin-bottom: 22px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    gap: 25px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .allocation-filter {
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 7px;
     min-width: 0;
 }
 
 .allocation-filter > label {
-    color: #334155;
-    font-size: 13px;
+    color: #374151;
+    font-size: 14px;
     font-weight: 600;
 }
 
 .allocation-filter input[type="date"],
-.allocation-filter input[type="search"] {
+.allocation-filter input[type="search"],
+.allocation-filter input[type="text"],
+.allocation-filter select {
     width: 100%;
     min-width: 0;
-    height: 42px;
+    height: 40px;
     padding: 0 12px;
     box-sizing: border-box;
-    border: 1px solid #cbd5e1;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #1e293b;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
     font-size: 14px;
     outline: none;
+    transition: all 0.2s ease;
 }
 
-.allocation-filter input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+.allocation-filter input:focus,
+.allocation-filter select:focus {
+    border-color: var(--page-accent);
+    box-shadow: 0 0 0 2px var(--page-header-accent);
 }
 
-/* Type radio buttons */
+/* =========================================================
+   ALLOCATION TYPE OPTIONS
+========================================================= */
+
 .allocation-type-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 
 .allocation-type-option {
@@ -119,35 +204,44 @@
     justify-content: center;
     gap: 7px;
     min-height: 40px;
-    padding: 0 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #475569;
-    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .allocation-type-option input {
     margin: 0;
-    accent-color: #2563eb;
+    cursor: pointer;
 }
 
 .allocation-type-option.selected {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1d4ed8;
-    font-weight: 600;
+    background: var(--page-soft);
+    border-color: var(--page-accent);
+    color: var(--page-accent);
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--page-header-accent);
 }
 
-/* Count card */
+.allocation-type-option:hover {
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
 .allocation-summary-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    margin-bottom: 22px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
 }
 
 .allocation-summary-card {
@@ -157,11 +251,16 @@
     width: fit-content;
     min-width: 280px;
     padding: 20px 24px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
     box-sizing: border-box;
+    background: white;
+    border-left: 4px solid var(--page-accent);
+    border-radius: 9px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.allocation-summary-card:hover {
+    transform: translateY(-2px);
 }
 
 .allocation-summary-icon {
@@ -171,9 +270,9 @@
     width: 52px;
     height: 52px;
     flex-shrink: 0;
-    border-radius: 10px;
-    background: #e8f2ff;
-    color: #2563eb;
+    border-radius: 9px;
+    background: var(--page-soft);
+    color: var(--page-accent);
     font-size: 27px;
 }
 
@@ -184,14 +283,15 @@
 }
 
 .allocation-summary-details > span {
-    color: #64748b;
+    color: #6b7280;
     font-size: 13px;
     font-weight: 500;
 }
 
-.allocation-summary-details h2 {
+.allocation-summary-details h2,
+.allocation-summary-details strong {
     margin: 0;
-    color: #172554;
+    color: var(--page-accent);
     font-size: 29px;
     line-height: 1.2;
     font-weight: 700;
@@ -203,54 +303,63 @@
 }
 
 .allocation-result-info {
-    color: #64748b;
+    margin: 12px 0;
+    color: #6b7280;
     font-size: 13px;
 }
 
-/* Table card */
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
 .master-allocations-table-card {
     overflow: hidden;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .master-allocations-table-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 14px;
-    padding: 20px 22px;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e5e7eb;
+    background: white;
 }
 
 .master-allocations-table-heading h3 {
     margin: 0 0 6px;
-    color: #1e293b;
-    font-size: 17px;
+    color: #1f2937;
+    font-size: 18px;
     font-weight: 700;
 }
 
 .master-allocations-table-heading p {
     margin: 0;
-    color: #64748b;
+    color: #6b7280;
     font-size: 13px;
 }
 
 .allocation-readonly-badge {
     display: inline-flex;
     align-items: center;
-    padding: 6px 10px;
+    padding: 6px 11px;
     border-radius: 20px;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--page-soft);
+    border: 1px solid var(--page-accent);
+    color: var(--page-accent);
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
 }
 
-/* Responsive table */
+/* =========================================================
+   TABLE
+========================================================= */
+
 .allocation-table-container {
     width: 100%;
     overflow-x: auto;
@@ -261,71 +370,168 @@
     border-collapse: collapse;
     text-align: left;
     white-space: nowrap;
-}
-
-.master-allocations-table thead {
-    background: #f8fafc;
+    font-size: 15px;
 }
 
 .master-allocations-table th {
-    padding: 14px 18px;
-    border-bottom: 1px solid #e2e8f0;
-    color: #475569;
-    font-size: 12px;
+    padding: 14px 16px;
+    background: var(--page-accent);
+    color: white;
+    text-align: left;
+    font-size: 14px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.35px;
+    white-space: nowrap;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .master-allocations-table td {
-    padding: 14px 18px;
-    border-bottom: 1px solid #edf2f7;
-    color: #334155;
-    font-size: 13px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 15px;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.master-allocations-table tbody tr {
+    background: rgba(255, 255, 255, 0.45);
 }
 
 .master-allocations-table tbody tr:hover {
-    background: #f8fbff;
+    background: var(--page-header-accent);
+}
+
+/* Dynamic alternating rows */
+
+.master-allocations-page.inhouse
+.master-allocations-table tbody tr:nth-child(even) {
+    background: rgba(2, 132, 199, 0.04);
+}
+
+.master-allocations-page.vendor
+.master-allocations-table tbody tr:nth-child(even) {
+    background: rgba(124, 58, 237, 0.04);
+}
+
+.master-allocations-page.local
+.master-allocations-table tbody tr:nth-child(even) {
+    background: rgba(22, 163, 74, 0.04);
+}
+
+.master-allocations-page.supplier
+.master-allocations-table tbody tr:nth-child(even) {
+    background: rgba(245, 158, 11, 0.06);
 }
 
 .master-allocations-table tbody tr:last-child td {
     border-bottom: none;
 }
 
+/* Empty data */
+
 .allocation-empty {
     height: 100px;
+    padding: 30px !important;
     text-align: center !important;
-    color: #64748b !important;
-    font-size: 14px !important;
+    color: #6b7280 !important;
+    font-size: 15px !important;
+    background: white;
 }
 
-/* Table footer */
+/* =========================================================
+   TABLE FOOTER
+========================================================= */
+
 .master-allocations-table-footer {
     display: flex;
     justify-content: flex-end;
-    padding: 14px 20px;
-    border-top: 1px solid #e2e8f0;
-    background: #fafcff;
-    color: #64748b;
-    font-size: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 20px;
+    margin-top: 12px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    color: #6b7280;
+    font-size: 14px;
 }
 
-/* Error state */
+/* =========================================================
+   MESSAGES
+========================================================= */
+
 .allocation-message {
-    padding: 13px 16px;
-    margin-bottom: 20px;
+    padding: 12px 16px;
+    margin: 12px 0;
     border-radius: 8px;
     font-size: 14px;
 }
 
 .allocation-error {
     border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
     background: #fef2f2;
-    color: #b91c1c;
+    color: #991b1b;
 }
 
-/* Tablet */
+/* =========================================================
+   HOTEL ALLOCATION TABLE
+========================================================= */
+
+.hotel-allocation-table {
+    min-width: 1250px;
+    table-layout: auto;
+}
+
+.hotel-allocation-table th:nth-child(3),
+.hotel-allocation-table td:nth-child(3) {
+    min-width: 220px;
+    white-space: nowrap;
+}
+
+.hotel-allocation-table th:nth-child(4),
+.hotel-allocation-table td:nth-child(4) {
+    min-width: 200px;
+    white-space: nowrap;
+}
+
+.hotel-allocation-table th:nth-child(5),
+.hotel-allocation-table td:nth-child(5) {
+    min-width: 150px;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.allocation-table-container::-webkit-scrollbar {
+    height: 7px;
+}
+
+.allocation-table-container::-webkit-scrollbar-track {
+    background: #f1f4f8;
+}
+
+.allocation-table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.allocation-table-container::-webkit-scrollbar-thumb:hover {
+    background: var(--page-accent);
+}
+
+/* =========================================================
+   TABLET RESPONSIVE
+========================================================= */
+
 @media (max-width: 1100px) {
+    .master-allocations-page {
+        padding: 18px;
+    }
+
     .master-allocations-filters {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -335,43 +541,59 @@
     }
 }
 
-/* Mobile */
+/* =========================================================
+   MOBILE RESPONSIVE
+========================================================= */
+
 @media (max-width: 640px) {
     .master-allocations-page {
-        padding: 14px;
+        padding: 12px;
     }
 
     .master-allocations-header {
         align-items: flex-start;
         flex-direction: column;
+        padding: 18px;
     }
 
     .master-allocations-header h2 {
-        font-size: 22px;
+        font-size: 21px;
     }
 
     .master-allocations-filters {
         grid-template-columns: 1fr;
         padding: 16px;
+        gap: 15px;
     }
 
     .allocation-summary-row {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
     }
 
     .allocation-summary-card {
         width: 100%;
         min-width: 0;
+        padding: 16px;
     }
 
     .master-allocations-table-heading {
         align-items: flex-start;
         flex-direction: column;
+        padding: 16px;
     }
 
-    .master-allocations-table th,
+    .master-allocations-table th {
+        padding: 13px 12px;
+        font-size: 13px;
+    }
+
     .master-allocations-table td {
-        padding: 12px;
+        padding: 13px 12px;
+        font-size: 14px;
+    }
+
+    .allocation-readonly-badge {
+        align-self: flex-start;
     }
 }

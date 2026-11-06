@@ -1,0 +1,120 @@
+/* Shared date-picker styles for the entire application.
+   Import this stylesheet once through DatePicker.jsx. */
+
+.common-date-picker {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+}
+
+.common-date-picker-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.common-date-picker-required {
+    color: #dc3545;
+}
+
+.common-date-picker-control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.common-date-picker-display {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 10px 44px 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    background: #fff;
+    color: #222;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.common-date-picker-display::placeholder {
+    color: #888;
+    opacity: 1;
+}
+
+.common-date-picker-display:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.12);
+}
+
+.common-date-picker-button {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #495057;
+    cursor: pointer;
+}
+
+.common-date-picker-button:hover {
+    background: #f0f4f8;
+    color: #007bff;
+}
+
+.common-date-picker-control.has-error .common-date-picker-display {
+    border-color: #dc3545;
+}
+
+.common-date-picker-control.is-disabled .common-date-picker-display {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.common-date-picker-control.is-disabled .common-date-picker-button {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.common-date-picker-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.common-date-picker-error {
+    margin-top: 5px;
+    color: #dc3545;
+    font-size: 12px;
+}
+
+@media (max-width: 700px) {
+    .common-date-picker-display {
+        min-height: 42px;
+    }
+}

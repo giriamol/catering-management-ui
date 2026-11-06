@@ -1,64 +1,64 @@
 
 import React, { useEffect, useMemo, useState } from "react";
-
 import { getAllEmployeeRateMasters } from "../api/employeeRateMasterApi";
 import { getHotels } from "../api/hotelApi";
 import { getVendors } from "../api/vendorApi";
-
 import {
     createAssignment,
     createVendorAssignment
 } from "../api/dailyHotelAssignmentApi";
-
+import { addSupplierAssignment } from "../api/dailySupplierAssignmentToVendorApi";
+import DatePicker from "../components/DatePicker";
 import "../CSS/EmployeeHotelAssignment.css";
 
-// ====================================================
-// DATE HELPERS
-// ====================================================
+const PAGE_SIZE = 30;
+
 const getTodayDate = () => {
     const today = new Date();
-
     return [
         today.getFullYear(),
         String(today.getMonth() + 1).padStart(2, "0"),
-        String(today.getDate()).padStart(2, "0")
+        String(today.getDate()).padStart(2, "0"),
     ].join("-");
 };
 
 const normalizeDateForPayload = (value) => {
-    if (!value) {
-        throw new Error("Please select an assignment date.");
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+        throw new Error("Please select a valid assignment date.");
     }
 
-    const date = String(value).trim();
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        throw new Error("Invalid assignment date.");
-    }
-
-    const [year, month, day] = date.split("-").map(Number);
-    const check = new Date(year, month - 1, day);
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
 
     if (
-        check.getFullYear() !== year ||
-        check.getMonth() !== month - 1 ||
-        check.getDate() !== day
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
     ) {
         throw new Error("The selected assignment date is invalid.");
     }
 
-    return date;
+    return value;
 };
 
-// ====================================================
-// API RESPONSE HELPERS
-// ====================================================
+const formatDateForDisplay = (value) => {
+    if (!value) return "Not selected";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    return value;
+};
+
 const extractList = (response) => {
     const data = response?.data ?? response;
 
     if (Array.isArray(data)) return data;
 
-    const possibleLists = [
+    const lists = [
         data?.items,
         data?.Items,
         data?.data,
@@ -66,15 +66,13 @@ const extractList = (response) => {
         data?.$values,
         data?.vendors,
         data?.Vendors,
-        data?.vendorRates,
-        data?.VendorRates,
         data?.employees,
         data?.Employees,
         data?.hotels,
-        data?.Hotels
+        data?.Hotels,
     ];
 
-    return possibleLists.find(Array.isArray) ?? [];
+    return lists.find(Array.isArray) ?? [];
 };
 
 const getApiErrorMessage = (error, fallback) => {
@@ -92,14 +90,14 @@ const getApiErrorMessage = (error, fallback) => {
     );
 };
 
-// ====================================================
-// COMPONENT
-// ====================================================
 const Assignments = () => {
     const [memberType, setMemberType] = useState("InHouse");
     const [assignmentDate, setAssignmentDate] = useState(getTodayDate);
     const [searchText, setSearchText] = useState("");
     const [savingRowKey, setSavingRowKey] = useState(null);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [employees, setEmployees] = useState([]);
     const [vendors, setVendors] = useState([]);
@@ -111,10 +109,14 @@ const Assignments = () => {
 
     const [pageError, setPageError] = useState("");
     const [rowData, setRowData] = useState({});
+    const [successDialog, setSuccessDialog] = useState(null);
 
-    // ====================================================
-    // EMPLOYEE HELPERS
-    // ====================================================
+    // Reset pagination when tab or search changes.
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [memberType, searchText]);
+
+    // Employee helpers
     const getEmployeeId = (employee) =>
         employee?.employeeId ??
         employee?.EmployeeId ??
@@ -124,7 +126,7 @@ const Assignments = () => {
         employee?.Id;
 
     const getEmployeeName = (employee) => {
-        const directName =
+        const name =
             employee?.employeeName ??
             employee?.EmployeeName ??
             employee?.fullName ??
@@ -132,21 +134,47 @@ const Assignments = () => {
             employee?.name ??
             employee?.Name;
 
-        if (directName) return directName;
+        if (name) return name;
 
         return [
             employee?.firstName ?? employee?.FirstName,
             employee?.middleName ?? employee?.MiddleName,
-            employee?.lastName ?? employee?.LastName
+            employee?.lastName ?? employee?.LastName,
         ]
             .filter(Boolean)
             .join(" ");
     };
 
-    // ====================================================
-    // VENDOR HELPERS
-    // Supports vendor-rate records with nested vendor data.
-    // ====================================================
+    const getEmployeeMemberType = (employee) => {
+        const value =
+            employee?.memberType ??
+            employee?.MemberType ??
+            employee?.member_type ??
+            employee?.Member_Type ??
+            employee?.workType ??
+            employee?.WorkType ??
+            employee?.work_type ??
+            employee?.Work_Type ??
+            employee?.employeeType ??
+            employee?.EmployeeType ??
+            employee?.employeeCategory ??
+            employee?.EmployeeCategory ??
+            employee?.workCategory ??
+            employee?.WorkCategory ??
+            employee?.employeeRateMaster?.workType ??
+            employee?.EmployeeRateMaster?.WorkType ??
+            "";
+
+        const normalized = String(value).trim().toLowerCase();
+
+        if (normalized === "outsourced" || normalized === "supplier") {
+            return "supplier";
+        }
+
+        return normalized;
+    };
+
+    // Vendor helpers
     const getVendorObject = (record) =>
         record?.vendor ??
         record?.Vendor ??
@@ -177,7 +205,7 @@ const Assignments = () => {
     const getVendorName = (record) => {
         const vendor = getVendorObject(record);
 
-        const directName =
+        const name =
             vendor?.vendorName ??
             vendor?.VendorName ??
             vendor?.vendorFullName ??
@@ -193,29 +221,21 @@ const Assignments = () => {
             vendor?.name ??
             vendor?.Name;
 
-        if (directName) return directName;
+        if (name) return name;
 
-        const composedName = [
+        return [
             vendor?.firstName ?? vendor?.FirstName,
             vendor?.middleName ?? vendor?.MiddleName,
-            vendor?.lastName ?? vendor?.LastName
+            vendor?.lastName ?? vendor?.LastName,
         ]
             .filter(Boolean)
             .join(" ");
-
-        if (composedName) return composedName;
-
-        // Some rate records contain only a vendor ID.
-        // Do not display a rate or unrelated field as the name.
-        return "";
     };
 
     const getVendorRowKey = (vendor) =>
         `vendor-${getVendorId(vendor)}`;
 
-    // ====================================================
-    // HOTEL HELPERS
-    // ====================================================
+    // Hotel helpers
     const getHotelId = (hotel) =>
         hotel?.hotelId ??
         hotel?.HotelId ??
@@ -231,9 +251,7 @@ const Assignments = () => {
         hotel?.Name ??
         "";
 
-    // ====================================================
-    // LOAD EMPLOYEES
-    // ====================================================
+    // Load employees
     const loadEmployees = async () => {
         try {
             setLoadingEmployees(true);
@@ -242,10 +260,26 @@ const Assignments = () => {
             const response = await getAllEmployeeRateMasters(1, 2000);
             const list = extractList(response);
 
-            console.log("Employee API response:", response);
-            console.log("Loaded employee records:", list);
+            const validEmployees = list.filter((employee) => {
+                const id = getEmployeeId(employee);
 
-            setEmployees(list);
+                return (
+                    id !== undefined &&
+                    id !== null &&
+                    String(id).trim() !== ""
+                );
+            });
+
+            const uniqueEmployees = Array.from(
+                new Map(
+                    validEmployees.map((employee) => [
+                        String(getEmployeeId(employee)),
+                        employee,
+                    ])
+                ).values()
+            );
+
+            setEmployees(uniqueEmployees);
         } catch (error) {
             console.error(
                 "Error loading employees:",
@@ -261,9 +295,7 @@ const Assignments = () => {
         }
     };
 
-    // ====================================================
-    // LOAD VENDOR RATE RECORDS
-    // ====================================================
+    // Load vendors
     const loadVendors = async () => {
         try {
             setLoadingVendors(true);
@@ -272,82 +304,44 @@ const Assignments = () => {
             const response = await getVendors(1, 2000);
             const list = extractList(response);
 
-            console.log("Full vendor-rate API response:", response);
-            console.table(list);
-
-            if (list.length > 0) {
-                console.log("First vendor-rate record:", list[0]);
-                console.log(
-                    "Vendor-rate record properties:",
-                    Object.keys(list[0])
-                );
-                console.log(
-                    "Extracted vendor ID:",
-                    getVendorId(list[0])
-                );
-                console.log(
-                    "Extracted vendor name:",
-                    getVendorName(list[0])
-                );
-            }
-
             const validVendors = list.filter((record) => {
                 const id = getVendorId(record);
 
                 return id !== undefined && id !== null && id !== "";
             });
 
-            // Multiple rate records may exist for one vendor.
-            // Keep one record per vendor for the assignment list.
             const uniqueVendors = Array.from(
                 new Map(
                     validVendors.map((record) => [
                         String(getVendorId(record)),
-                        record
+                        record,
                     ])
                 ).values()
             );
 
             setVendors(uniqueVendors);
-
-            if (uniqueVendors.length === 0 && list.length > 0) {
-                console.warn(
-                    "Vendor-rate records were returned, but a vendor ID could not be identified."
-                );
-            }
-
-            if (uniqueVendors.some((record) => !getVendorName(record))) {
-                console.warn(
-                    "Some vendor-rate records have no recognized vendor-name property. Inspect the logged record to identify the actual field."
-                );
-            }
         } catch (error) {
             console.error(
-                "Error loading vendor rates:",
+                "Error loading vendors:",
                 error?.response?.data ?? error
             );
 
             setVendors([]);
             setPageError(
-                getApiErrorMessage(error, "Unable to load vendor records.")
+                getApiErrorMessage(error, "Unable to load vendors.")
             );
         } finally {
             setLoadingVendors(false);
         }
     };
 
-    // ====================================================
-    // LOAD HOTELS
-    // ====================================================
+    // Load hotels
     const loadHotels = async () => {
         try {
             setLoadingHotels(true);
 
             const response = await getHotels(1, 2000);
-            const list = extractList(response);
-
-            console.log("Hotel API response:", response);
-            setHotels(list);
+            setHotels(extractList(response));
         } catch (error) {
             console.error(
                 "Error loading hotels:",
@@ -363,62 +357,117 @@ const Assignments = () => {
         }
     };
 
-    // ====================================================
-    // INITIAL LOAD
-    // ====================================================
     useEffect(() => {
         loadEmployees();
         loadHotels();
     }, []);
 
-    // ====================================================
-    // MEMBER TYPE CHANGE
-    // ====================================================
+    const normalizeMemberType = (type) =>
+        type === "Supplier" ? "Outsourced" : type;
+
     const handleMemberTypeChange = (type) => {
-        setMemberType(type);
+        const nextType = normalizeMemberType(type);
+
+        setMemberType(nextType);
         setSearchText("");
         setRowData({});
+        setCurrentPage(1);
         setPageError("");
 
-        if (type === "InHouse") {
+        if (
+            nextType === "InHouse" ||
+            nextType === "Local" ||
+            nextType === "Outsourced"
+        ) {
             loadEmployees();
-        } else if (type === "Vendor") {
+        }
+
+        if (nextType === "Vendor" || nextType === "Outsourced") {
             loadVendors();
         }
     };
 
-    // ====================================================
-    // DATE CHANGE
-    // ====================================================
-    const handleAssignmentDateChange = (event) => {
-        setAssignmentDate(event.target.value);
+    const handleAssignmentDateChange = (value) => {
+        setAssignmentDate(value);
         setPageError("");
     };
 
-    // ====================================================
-    // FILTER EMPLOYEES
-    // ====================================================
+    // InHouse employees
     const currentEmployees = useMemo(() => {
         if (memberType !== "InHouse") return [];
 
         const search = searchText.trim().toLowerCase();
 
-        if (!search) return employees;
+        const inHouseEmployees = employees.filter((employee) => {
+            const typeValue = getEmployeeMemberType(employee);
 
-        return employees.filter((employee) => {
-            const name = String(getEmployeeName(employee) ?? "")
-                .toLowerCase();
+            return (
+                typeValue !== "local" &&
+                typeValue !== "supplier" &&
+                typeValue !== "outsourced"
+            );
+        });
 
-            const id = String(getEmployeeId(employee) ?? "")
-                .toLowerCase();
+        if (!search) return inHouseEmployees;
+
+        return inHouseEmployees.filter((employee) => {
+            const name = String(getEmployeeName(employee)).toLowerCase();
+            const id = String(getEmployeeId(employee)).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
     }, [employees, memberType, searchText]);
 
-    // ====================================================
-    // FILTER VENDORS
-    // ====================================================
+    // Local employees
+    const currentLocalEmployees = useMemo(() => {
+        if (memberType !== "Local") return [];
+
+        const search = searchText.trim().toLowerCase();
+
+        const localEmployees = employees.filter(
+            (employee) => getEmployeeMemberType(employee) === "local"
+        );
+
+        if (!search) return localEmployees;
+
+        return localEmployees.filter((employee) => {
+            const name = String(getEmployeeName(employee)).toLowerCase();
+            const id = String(getEmployeeId(employee)).toLowerCase();
+
+            return name.includes(search) || id.includes(search);
+        });
+    }, [employees, memberType, searchText]);
+
+    // Outsourced / Supplier employees
+    const currentOutsourcedEmployees = useMemo(() => {
+        if (memberType !== "Outsourced" && memberType !== "Supplier") {
+            return [];
+        }
+
+        const search = searchText.trim().toLowerCase();
+
+        const outsourcedEmployees = employees.filter((employee) => {
+            const typeValue = getEmployeeMemberType(employee);
+
+            return (
+                typeValue === "supplier" ||
+                typeValue === "outsourced" ||
+                typeValue === "supplier employee" ||
+                typeValue === "supplieremployee"
+            );
+        });
+
+        if (!search) return outsourcedEmployees;
+
+        return outsourcedEmployees.filter((employee) => {
+            const name = String(getEmployeeName(employee)).toLowerCase();
+            const id = String(getEmployeeId(employee)).toLowerCase();
+
+            return name.includes(search) || id.includes(search);
+        });
+    }, [employees, memberType, searchText]);
+
+    // Vendors
     const currentVendors = useMemo(() => {
         if (memberType !== "Vendor") return [];
 
@@ -427,40 +476,105 @@ const Assignments = () => {
         if (!search) return vendors;
 
         return vendors.filter((vendor) => {
-            const name = String(getVendorName(vendor) ?? "")
-                .toLowerCase();
-
-            const id = String(getVendorId(vendor) ?? "")
-                .toLowerCase();
+            const name = String(getVendorName(vendor)).toLowerCase();
+            const id = String(getVendorId(vendor)).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
     }, [vendors, memberType, searchText]);
 
-    // ====================================================
-    // ROW FIELD CHANGE
-    // ====================================================
+    // Get total filtered records
+    const displayedCount =
+        memberType === "Vendor"
+            ? currentVendors.length
+            : memberType === "Local"
+                ? currentLocalEmployees.length
+                : memberType === "Outsourced" || memberType === "Supplier"
+                    ? currentOutsourcedEmployees.length
+                    : currentEmployees.length;
+
+    // Pagination calculations
+    const totalPages = Math.max(
+        1,
+        Math.ceil(displayedCount / PAGE_SIZE)
+    );
+
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = Math.min(startIndex + PAGE_SIZE, displayedCount);
+
+    // Display only 30 records on the current page
+    const paginatedEmployees = useMemo(
+        () => currentEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        [currentEmployees, startIndex]
+    );
+
+    const paginatedLocalEmployees = useMemo(
+        () => currentLocalEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        [currentLocalEmployees, startIndex]
+    );
+
+    const paginatedOutsourcedEmployees = useMemo(
+        () => currentOutsourcedEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        [currentOutsourcedEmployees, startIndex]
+    );
+
+    const paginatedVendors = useMemo(
+        () => currentVendors.slice(startIndex, startIndex + PAGE_SIZE),
+        [currentVendors, startIndex]
+    );
+
+    // Keep current page valid when records change
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    const handlePreviousPage = () => {
+        setCurrentPage((previous) => Math.max(1, previous - 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage((previous) =>
+            Math.min(totalPages, previous + 1)
+        );
+    };
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    // Update row values
     const handleRowChange = (rowKey, field, value) => {
         setRowData((previous) => ({
             ...previous,
             [rowKey]: {
                 ...previous[rowKey],
-                [field]: value
-            }
+                [field]: value,
+            },
         }));
     };
 
     const getSelectedAssignmentDate = () =>
         normalizeDateForPayload(assignmentDate);
 
-    // ====================================================
-    // SAVE EMPLOYEE ASSIGNMENT
-    // ====================================================
+    const showDialog = (title, message) => {
+        setSuccessDialog({ title, message });
+    };
+
+    const memberTypeLabel =
+        memberType === "Outsourced" || memberType === "Supplier"
+            ? "Supplier"
+            : memberType;
+
+    // Save InHouse / Local employee assignment
     const handleSubmit = async (employee) => {
         const employeeId = getEmployeeId(employee);
 
         if (employeeId == null || employeeId === "") {
-            alert("Employee ID not found.");
+            showDialog("Error", "Employee ID not found.");
             return;
         }
 
@@ -468,17 +582,22 @@ const Assignments = () => {
         const row = rowData[rowKey] ?? {};
 
         if (!row.hotelId) {
-            alert("Please select hotel.");
+            showDialog("Error", "Please select hotel.");
+            return;
+        }
+
+        if (!row.venue?.trim()) {
+            showDialog("Error", "Please enter Venue.");
             return;
         }
 
         if (!row.shiftId) {
-            alert("Please select shift type.");
+            showDialog("Error", "Please select shift type.");
             return;
         }
 
         if (!row.workType) {
-            alert("Please select work type.");
+            showDialog("Error", "Please select work type.");
             return;
         }
 
@@ -487,30 +606,30 @@ const Assignments = () => {
         try {
             selectedDate = getSelectedAssignmentDate();
         } catch (error) {
-            alert(error.message);
+            showDialog("Error", error.message);
             return;
         }
 
         const payload = {
             EmployeeId: Number(employeeId),
             HotelId: Number(row.hotelId),
+            Venue: row.venue.trim(),
             AssignmentDate: selectedDate,
             ShiftId: Number(row.shiftId),
             WorkType: row.workType,
             IsCancelled: false,
-            Description: row.description?.trim() || null
+            Description: row.description?.trim() || null,
         };
 
         try {
             setSavingRowKey(rowKey);
             setPageError("");
 
-            console.log("Employee assignment payload:", payload);
-
             await createAssignment(payload);
 
-            alert(
-                `Assignment saved successfully for ${getEmployeeName(employee)} on ${selectedDate}.`
+            showDialog(
+                "Success!",
+                `Assignment saved successfully for ${getEmployeeName(employee)} on ${formatDateForDisplay(selectedDate)}.`
             );
 
             setRowData((previous) => {
@@ -524,7 +643,8 @@ const Assignments = () => {
                 error?.response?.data ?? error
             );
 
-            alert(
+            showDialog(
+                "Error",
                 getApiErrorMessage(
                     error,
                     "Failed to save employee assignment."
@@ -535,16 +655,14 @@ const Assignments = () => {
         }
     };
 
-    // ====================================================
-    // SAVE VENDOR ASSIGNMENT
-    // ====================================================
+    // Save vendor assignment
     const handleVendorSubmit = async (vendor) => {
         const vendorId = getVendorId(vendor);
         const rowKey = getVendorRowKey(vendor);
         const row = rowData[rowKey] ?? {};
 
         if (vendorId == null || vendorId === "") {
-            alert("Vendor ID not found.");
+            showDialog("Error", "Vendor ID not found.");
             return;
         }
 
@@ -556,22 +674,30 @@ const Assignments = () => {
             !Number.isInteger(quantity) ||
             quantity < 1
         ) {
-            alert("Please enter a valid Employee Quantity (at least 1).");
+            showDialog(
+                "Error",
+                "Please enter a valid Employee Quantity (at least 1)."
+            );
             return;
         }
 
         if (!row.hotelId) {
-            alert("Please select hotel.");
+            showDialog("Error", "Please select hotel.");
+            return;
+        }
+
+        if (!row.venue?.trim()) {
+            showDialog("Error", "Please enter Venue.");
             return;
         }
 
         if (!row.shiftId) {
-            alert("Please select shift type.");
+            showDialog("Error", "Please select shift type.");
             return;
         }
 
         if (!row.workType) {
-            alert("Please select work type.");
+            showDialog("Error", "Please select work type.");
             return;
         }
 
@@ -580,7 +706,7 @@ const Assignments = () => {
         try {
             selectedDate = getSelectedAssignmentDate();
         } catch (error) {
-            alert(error.message);
+            showDialog("Error", error.message);
             return;
         }
 
@@ -588,24 +714,24 @@ const Assignments = () => {
             VendorId: Number(vendorId),
             Emp_Quantity: quantity,
             HotelId: Number(row.hotelId),
+            Venue: row.venue.trim(),
             AssignmentDate: selectedDate,
             ShiftId: Number(row.shiftId),
             WorkType: row.workType,
-            Description: row.description?.trim() || null
+            Description: row.description?.trim() || null,
         };
 
         try {
             setSavingRowKey(rowKey);
             setPageError("");
 
-            console.log("Vendor assignment payload:", payload);
-
             await createVendorAssignment(payload);
 
-            alert(
+            showDialog(
+                "Success!",
                 `Vendor assignment saved successfully for ${
                     getVendorName(vendor) || `Vendor ID ${vendorId}`
-                } on ${selectedDate}.`
+                } on ${formatDateForDisplay(selectedDate)}.`
             );
 
             setRowData((previous) => {
@@ -619,7 +745,8 @@ const Assignments = () => {
                 error?.response?.data ?? error
             );
 
-            alert(
+            showDialog(
+                "Error",
                 getApiErrorMessage(
                     error,
                     "Failed to save vendor assignment."
@@ -630,9 +757,110 @@ const Assignments = () => {
         }
     };
 
-    // ====================================================
-    // CANCEL ROW
-    // ====================================================
+    // Save outsourced / supplier assignment
+    const handleSupplierSubmit = async (employee) => {
+        const employeeId = getEmployeeId(employee);
+
+        if (employeeId == null || employeeId === "") {
+            showDialog("Error", "Supplier employee ID not found.");
+            return;
+        }
+
+        const rowKey = String(employeeId);
+        const row = rowData[rowKey] ?? {};
+
+        if (!row.vendorId) {
+            showDialog("Error", "Please select vendor.");
+            return;
+        }
+
+        const quantityText = String(row.employeeQuantity ?? "").trim();
+        const quantity = Number(quantityText);
+
+        if (
+            quantityText === "" ||
+            !Number.isInteger(quantity) ||
+            quantity < 1
+        ) {
+            showDialog(
+                "Error",
+                "Please enter a valid Employee Quantity (at least 1)."
+            );
+            return;
+        }
+
+        if (!row.venue?.trim()) {
+            showDialog("Error", "Please enter Vendor Venue.");
+            return;
+        }
+
+        if (!row.shiftId) {
+            showDialog("Error", "Please select shift type.");
+            return;
+        }
+
+        if (!row.workType) {
+            showDialog("Error", "Please select work type.");
+            return;
+        }
+
+        let selectedDate;
+
+        try {
+            selectedDate = getSelectedAssignmentDate();
+        } catch (error) {
+            showDialog("Error", error.message);
+            return;
+        }
+
+        const payload = {
+            EmployeeId: Number(employeeId),
+            Emp_Quantity: quantity,
+            VendorId: Number(row.vendorId),
+            Venue: row.venue.trim(),
+            AssignmentDate: selectedDate,
+            ShiftId: Number(row.shiftId),
+            WorkType: row.workType,
+            Description: row.description?.trim() || null,
+            IsHotelPay: false,
+        };
+
+        try {
+            setSavingRowKey(rowKey);
+            setPageError("");
+
+            await addSupplierAssignment(payload);
+
+            showDialog(
+                "Success!",
+                `Supplier assignment saved successfully for ${
+                    getEmployeeName(employee) || `Supplier ID ${employeeId}`
+                } on ${formatDateForDisplay(selectedDate)}.`
+            );
+
+            setRowData((previous) => {
+                const updated = { ...previous };
+                delete updated[rowKey];
+                return updated;
+            });
+        } catch (error) {
+            console.error(
+                "Error saving outsourced supplier assignment:",
+                error?.response?.data ?? error
+            );
+
+            showDialog(
+                "Error",
+                getApiErrorMessage(
+                    error,
+                    "Failed to save supplier assignment."
+                )
+            );
+        } finally {
+            setSavingRowKey(null);
+        }
+    };
+
     const handleCancel = (rowKey) => {
         setRowData((previous) => {
             const updated = { ...previous };
@@ -641,98 +869,497 @@ const Assignments = () => {
         });
     };
 
-    // ====================================================
-    // LOADING AND COUNTS
-    // ====================================================
     const isLoading =
         memberType === "Vendor"
             ? loadingVendors
-            : memberType === "InHouse"
-                ? loadingEmployees
-                : false;
+            : loadingEmployees;
 
-    const displayedCount =
-        memberType === "Vendor"
-            ? currentVendors.length
-            : memberType === "InHouse"
-                ? currentEmployees.length
-                : 0;
+    // Reusable employee table rows
+    const renderEmployeeRows = (employeeList) => {
+        if (employeeList.length === 0) {
+            return (
+                <tr>
+                    <td colSpan={8} className="no-data">
+                        {employees.length === 0
+                            ? "No employee records found."
+                            : memberType === "Local"
+                                ? "No Local employees found. Check the employee API member/work type field."
+                                : "No matching InHouse employees found."}
+                    </td>
+                </tr>
+            );
+        }
 
-    // ====================================================
-    // RENDER
-    // ====================================================
+        return employeeList.map((employee) => {
+            const employeeId = getEmployeeId(employee);
+            const rowKey = String(employeeId);
+            const row = rowData[rowKey] ?? {};
+            const isSaving = savingRowKey === rowKey;
+
+            return (
+                <tr key={rowKey}>
+                    <td>{employeeId}</td>
+
+                    <td>
+                        <div className="employee-name">
+                            {getEmployeeName(employee)}
+                        </div>
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.hotelId ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "hotelId",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select-head"
+                            disabled={loadingHotels || isSaving}
+                        >
+                            <option value="">Select Hotel</option>
+
+                            {hotels.map((hotel) => (
+                                <option
+                                    key={getHotelId(hotel)}
+                                    value={getHotelId(hotel)}
+                                >
+                                    {getHotelName(hotel)}
+                                </option>
+                            ))}
+                        </select>
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            value={row.venue ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "venue",
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Enter venue"
+                            className="assignment-select"
+                            maxLength={100}
+                            disabled={isSaving}
+                        />
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.shiftId ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "shiftId",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select"
+                            disabled={isSaving}
+                        >
+                            <option value="">Select Shift Type</option>
+                            <option value="1">Morning</option>
+                            <option value="2">Evening</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.workType ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "workType",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select"
+                            disabled={isSaving}
+                        >
+                            <option value="">Select Work Type</option>
+                            <option value="HalfDay">HalfDay</option>
+                            <option value="FullDay">FullDay</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            placeholder="Enter description / note"
+                            value={row.description ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "description",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select-dscrip"
+                            disabled={isSaving}
+                        />
+                    </td>
+
+                    <td>
+                        <div className="action-buttons">
+                            <button
+                                type="button"
+                                className="btn-submit"
+                                disabled={isSaving || loadingHotels}
+                                onClick={() => handleSubmit(employee)}
+                            >
+                                {isSaving ? "Saving..." : "Submit"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn-cancel"
+                                disabled={isSaving}
+                                onClick={() => handleCancel(rowKey)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            );
+        });
+    };
+
+    // Supplier table rows
+    const renderSupplierRows = (employeeList) => {
+        if (employeeList.length === 0) {
+            return (
+                <tr>
+                    <td colSpan={9} className="no-data">
+                        {employees.length === 0
+                            ? "No supplier records found."
+                            : "No matching supplier records found."}
+                    </td>
+                </tr>
+            );
+        }
+
+        return employeeList.map((employee) => {
+            const employeeId = getEmployeeId(employee);
+            const rowKey = String(employeeId);
+            const row = rowData[rowKey] ?? {};
+            const isSaving = savingRowKey === rowKey;
+
+            return (
+                <tr key={rowKey}>
+                    <td>{employeeId}</td>
+
+                    <td>
+                        <div className="employee-name">
+                            {getEmployeeName(employee)}
+                        </div>
+                    </td>
+
+                    <td>
+                        <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={row.employeeQuantity ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "employeeQuantity",
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Enter quantity"
+                            className="assignment-select"
+                            disabled={isSaving}
+                        />
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.vendorId ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "vendorId",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select-head"
+                            disabled={loadingVendors || isSaving}
+                        >
+                            <option value="">Select Vendor</option>
+
+                            {vendors.map((vendor) => (
+                                <option
+                                    key={getVendorId(vendor)}
+                                    value={getVendorId(vendor)}
+                                >
+                                    {getVendorName(vendor) ||
+                                        `Vendor ${getVendorId(vendor)}`}
+                                </option>
+                            ))}
+                        </select>
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            value={row.venue ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "venue",
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Enter vendor venue"
+                            className="assignment-select"
+                            maxLength={100}
+                            disabled={isSaving}
+                        />
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.shiftId ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "shiftId",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select"
+                            disabled={isSaving}
+                        >
+                            <option value="">Select Shift Type</option>
+                            <option value="1">Morning</option>
+                            <option value="2">Evening</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <select
+                            value={row.workType ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "workType",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select"
+                            disabled={isSaving}
+                        >
+                            <option value="">Select Work Type</option>
+                            <option value="HalfDay">HalfDay</option>
+                            <option value="FullDay">FullDay</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            placeholder="Enter description / note"
+                            value={row.description ?? ""}
+                            onChange={(event) =>
+                                handleRowChange(
+                                    rowKey,
+                                    "description",
+                                    event.target.value
+                                )
+                            }
+                            className="assignment-select-dscrip"
+                            disabled={isSaving}
+                        />
+                    </td>
+
+                    <td>
+                        <div className="action-buttons">
+                            <button
+                                type="button"
+                                className="btn-submit"
+                                disabled={isSaving || loadingVendors}
+                                onClick={() => handleSupplierSubmit(employee)}
+                            >
+                                {isSaving ? "Saving..." : "Submit"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn-cancel"
+                                disabled={isSaving}
+                                onClick={() => handleCancel(rowKey)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            );
+        });
+    };
+
+    // Pagination controls
+    const renderPagination = () => {
+        if (displayedCount === 0) return null;
+
+        return (
+            <div className="assignment-pagination">
+
+                <div className="pagination-info">
+                    Showing <strong>{startIndex + 1}</strong> to{" "}
+                    <strong>{endIndex}</strong> of{" "}
+                    <strong>{displayedCount}</strong> records
+                </div>
+
+                <div className="pagination-controls">
+
+                    <button
+                        type="button"
+                        className="pagination-btn"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </button>
+
+                    {Array.from(
+                        { length: totalPages },
+                        (_, index) => index + 1
+                    )
+                        .filter((page) => {
+                            return (
+                                page === 1 ||
+                                page === totalPages ||
+                                Math.abs(page - currentPage) <= 1
+                            );
+                        })
+                        .reduce((result, page, index, array) => {
+                            if (index > 0 && page - array[index - 1] > 1) {
+                                result.push("...");
+                            }
+
+                            result.push(page);
+                            return result;
+                        }, [])
+                        .map((page, index) =>
+                            page === "..." ? (
+                                <span
+                                    key={`dots-${index}`}
+                                    className="pagination-dots"
+                                >
+                                    ...
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    key={page}
+                                    className={`pagination-btn ${
+                                        currentPage === page ? "active" : ""
+                                    }`}
+                                    onClick={() => handlePageChange(page)}
+                                >
+                                    {page}
+                                </button>
+                            )
+                        )}
+
+                    <button
+                        type="button"
+                        className="pagination-btn"
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </button>
+
+                </div>
+            </div>
+        );
+    };
+
+    const activeTabClass =
+        memberType === "Outsourced"
+            ? "supplier"
+            : memberType.toLowerCase();
+
     return (
-        <div className="assignment-page">
+        <div className={`assignment-page ${activeTabClass}`}>
+
             <div className="assignment-header">
                 <div>
-                    <center><h2>Daily Employee Assignment</h2></center>
-                    {/* <p>Assign employees or vendors to Caters and shifts</p> */}
+                    <center>
+                        <h2>Daily Employee Assignment</h2>
+                    </center>
                 </div>
             </div>
 
-            {/* FILTERS */}
             <div className="assignment-filter-card">
+
                 <div className="filter-group">
                     <label>Member Type</label>
 
                     <div className="member-type-buttons">
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="InHouse"
-                                checked={memberType === "InHouse"}
-                                onChange={() =>
-                                    handleMemberTypeChange("InHouse")
-                                }
-                            />
-                            <span>InHouse</span>
-                        </label>
 
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="Vendor"
-                                checked={memberType === "Vendor"}
-                                onChange={() =>
-                                    handleMemberTypeChange("Vendor")
-                                }
-                            />
-                            <span>Vendor</span>
-                        </label>
+                        {["InHouse", "Vendor", "Local", "Outsourced"].map((type) => {
+                            const normalizedType =
+                                type === "Outsourced"
+                                    ? "supplier"
+                                    : type.toLowerCase();
 
-                        <label className="type-option">
-                            <input
-                                type="radio"
-                                name="memberType"
-                                value="Local"
-                                checked={memberType === "Local"}
-                                onChange={() =>
-                                    handleMemberTypeChange("Local")
-                                }
-                            />
-                            <span>Local</span>
-                        </label>
+                            return (
+                                <label
+                                    className={`type-option ${normalizedType}`}
+                                    key={type}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="memberType"
+                                        value={type}
+                                        checked={memberType === type}
+                                        onChange={() =>
+                                            handleMemberTypeChange(type)
+                                        }
+                                    />
+
+                                    <span>
+                                        {type === "Outsourced"
+                                            ? "Supplier"
+                                            : type}
+                                    </span>
+                                </label>
+                            );
+                        })}
+
                     </div>
                 </div>
 
                 <div className="filter-group">
-                    <label htmlFor="assignmentDate">Assignment Date</label>
-
-                    <input
-                        id="assignmentDate"
-                        type="date"
+                    <DatePicker
+                        label="Assignment Date"
+                        name="assignmentDate"
                         value={assignmentDate}
                         onChange={handleAssignmentDateChange}
+                        required
+                        placeholder="DD/MM/YYYY"
                     />
                 </div>
 
                 <div className="filter-group search-group">
+
                     <label>
                         {memberType === "Vendor"
                             ? "Search Vendor"
-                            : "Search Employee"}
+                            : memberType === "Outsourced"
+                                ? "Search Supplier"
+                                : "Search Employee"}
                     </label>
 
                     <input
@@ -740,15 +1367,43 @@ const Assignments = () => {
                         placeholder={
                             memberType === "Vendor"
                                 ? "Search by vendor name or ID"
-                                : "Search by employee name or ID"
+                                : memberType === "Outsourced"
+                                    ? "Search by supplier name or ID"
+                                    : "Search by employee name or ID"
                         }
                         value={searchText}
                         onChange={(event) =>
                             setSearchText(event.target.value)
                         }
                     />
+
                 </div>
+
             </div>
+
+            {/* Success / Error Dialog */}
+            {successDialog && (
+                <div
+                    className="assignment-success-backdrop"
+                    onClick={() => setSuccessDialog(null)}
+                >
+                    <div
+                        className="assignment-success-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{successDialog.title}</h3>
+                        <p>{successDialog.message}</p>
+
+                        <button
+                            type="button"
+                            className="assignment-success-ok"
+                            onClick={() => setSuccessDialog(null)}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {pageError && (
                 <div className="allocation-message allocation-error">
@@ -756,20 +1411,33 @@ const Assignments = () => {
                 </div>
             )}
 
+            {/* Assignment Information */}
             <div className="assignment-info">
+
                 <span>
-                    Type: <strong>{memberType}</strong>
+                    Type: <strong>{memberTypeLabel}</strong>
                 </span>
 
                 <span>
                     Selected Date:{" "}
-                    <strong>{assignmentDate || "Not selected"}</strong>
+                    <strong>
+                        {formatDateForDisplay(assignmentDate)}
+                    </strong>
                 </span>
 
                 <span>
-                    {memberType === "Vendor" ? "Vendors" : "Employees"}:{" "}
-                    <strong>{displayedCount}</strong>
+                    {memberType === "Vendor"
+                        ? "Vendors"
+                        : memberType === "Outsourced"
+                            ? "Suppliers"
+                            : "Employees"}
+                    : <strong>{displayedCount}</strong>
                 </span>
+
+                <span>
+                    Records per page: <strong>{PAGE_SIZE}</strong>
+                </span>
+
             </div>
 
             {isLoading ? (
@@ -779,348 +1447,261 @@ const Assignments = () => {
                         : "Loading employees..."}
                 </div>
             ) : (
-                <div className="assignment-table-card">
-                    <table className="assignment-table">
-                        <thead>
-                            {memberType === "Vendor" ? (
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Vendor Name</th>
-                                    <th>Employee Quantity</th>
-                                    <th>Hotel Name</th>
-                                    <th>Shift Type</th>
-                                    <th>Work Type</th>
-                                    <th>Description / Note</th>
-                                    <th>Action</th>
-                                </tr>
-                            ) : (
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Employee Name</th>
-                                    <th>Caterers Name</th>
-                                    <th>Shift Type</th>
-                                    <th>Work Type</th>
-                                    <th>Description / Note</th>
-                                    <th>Action</th>
-                                </tr>
-                            )}
-                        </thead>
+                <>
+                    <div className="assignment-table-card">
 
-                        <tbody>
-                            {memberType === "Vendor" ? (
-                                currentVendors.length === 0 ? (
+                        <table className="assignment-table">
+
+                            <thead>
+
+                                {memberType === "Vendor" ? (
                                     <tr>
-                                        <td colSpan={8} className="no-data">
-                                            {vendors.length === 0
-                                                ? "No vendor records found. Check the vendor-rate API response."
-                                                : "No matching vendors found."}
-                                        </td>
+                                        <th>ID</th>
+                                        <th>Vendor Name</th>
+                                        <th>Employee Quantity</th>
+                                        <th>Caterers_Name</th>
+                                        <th>Caterers_Venue</th>
+                                        <th>Shift Type</th>
+                                        <th>Work Type</th>
+                                        <th>Description / Note</th>
+                                        <th>Action</th>
+                                    </tr>
+                                ) : memberType === "Outsourced" ? (
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Supplier Name</th>
+                                        <th>Employee Quantity</th>
+                                        <th>Vendor_Name</th>
+                                        <th>Vendor_Venue</th>
+                                        <th>Shift Type</th>
+                                        <th>Work Type</th>
+                                        <th>Description / Note</th>
+                                        <th>Action</th>
                                     </tr>
                                 ) : (
-                                    currentVendors.map((vendor) => {
-                                        const vendorId = getVendorId(vendor);
-                                        const rowKey = getVendorRowKey(vendor);
-                                        const row = rowData[rowKey] ?? {};
-                                        const isSaving = savingRowKey === rowKey;
-                                        const vendorName = getVendorName(vendor);
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Employee Name</th>
+                                        <th>Caterers_Name</th>
+                                        <th>Caterers_Venue</th>
+                                        <th>Shift Type</th>
+                                        <th>Work Type</th>
+                                        <th>Description / Note</th>
+                                        <th>Action</th>
+                                    </tr>
+                                )}
 
-                                        return (
-                                            <tr key={rowKey}>
-                                                <td>{vendorId}</td>
+                            </thead>
 
-                                                <td>
-                                                    <div className="employee-name">
-                                                        {vendorName ||
-                                                            `Vendor name unavailable (ID: ${vendorId})`}
-                                                    </div>
-                                                </td>
+                            <tbody>
 
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        step="1"
-                                                        value={row.employeeQuantity ?? ""}
-                                                        onChange={(event) =>
-                                                            handleRowChange(
-                                                                rowKey,
-                                                                "employeeQuantity",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        placeholder="Enter quantity"
-                                                        className="assignment-select"
-                                                        disabled={isSaving}
-                                                    />
-                                                </td>
-
-                                                <td>
-                                                    <select
-                                                        value={row.hotelId ?? ""}
-                                                        onChange={(event) =>
-                                                            handleRowChange(
-                                                                rowKey,
-                                                                "hotelId",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        className="assignment-select-head"
-                                                        disabled={loadingHotels || isSaving}
-                                                    >
-                                                        <option value="">
-                                                            Select Hotel
-                                                        </option>
-
-                                                        {hotels.map((hotel) => (
-                                                            <option
-                                                                key={getHotelId(hotel)}
-                                                                value={getHotelId(hotel)}
-                                                            >
-                                                                {getHotelName(hotel)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-
-                                                <td>
-                                                    <select
-                                                        value={row.shiftId ?? ""}
-                                                        onChange={(event) =>
-                                                            handleRowChange(
-                                                                rowKey,
-                                                                "shiftId",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        className="assignment-select"
-                                                        disabled={isSaving}
-                                                    >
-                                                        <option value="">
-                                                            Select Shift Type
-                                                        </option>
-                                                        <option value="1">Morning</option>
-                                                        <option value="2">Evening</option>
-                                                        <option value="3">TwoHalfDay</option>
-                                                    </select>
-                                                </td>
-
-                                                <td>
-                                                    <select
-                                                        value={row.workType ?? ""}
-                                                        onChange={(event) =>
-                                                            handleRowChange(
-                                                                rowKey,
-                                                                "workType",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        className="assignment-select"
-                                                        disabled={isSaving}
-                                                    >
-                                                        <option value="">
-                                                            Select Work Type
-                                                        </option>
-                                                        <option value="HalfDay">HalfDay</option>
-                                                        <option value="FullDay">FullDay</option>
-                                                    </select>
-                                                </td>
-
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Enter description / note"
-                                                        value={row.description ?? ""}
-                                                        onChange={(event) =>
-                                                            handleRowChange(
-                                                                rowKey,
-                                                                "description",
-                                                                event.target.value
-                                                            )
-                                                        }
-                                                        className="assignment-select-dscrip"
-                                                        disabled={isSaving}
-                                                    />
-                                                </td>
-
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button
-                                                            type="button"
-                                                            className="btn-submit"
-                                                            disabled={isSaving || loadingHotels}
-                                                            onClick={() =>
-                                                                handleVendorSubmit(vendor)
-                                                            }
-                                                        >
-                                                            {isSaving ? "Saving..." : "Submit"}
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            className="btn-cancel"
-                                                            disabled={isSaving}
-                                                            onClick={() =>
-                                                                handleCancel(rowKey)
-                                                            }
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )
-                            ) : memberType === "Local" ? (
-                                <tr>
-                                    <td colSpan={7} className="no-data">
-                                        Local employee API is not connected yet.
-                                    </td>
-                                </tr>
-                            ) : currentEmployees.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="no-data">
-                                        No employees found.
-                                    </td>
-                                </tr>
-                            ) : (
-                                currentEmployees.map((employee) => {
-                                    const employeeId = getEmployeeId(employee);
-                                    const rowKey = String(employeeId);
-                                    const row = rowData[rowKey] ?? {};
-                                    const isSaving = savingRowKey === rowKey;
-
-                                    return (
-                                        <tr key={rowKey}>
-                                            <td>{employeeId}</td>
-
-                                            <td>
-                                                <div className="employee-name">
-                                                    {getEmployeeName(employee)}
-                                                </div>
-                                            </td>
-
-                                            <td>
-                                                <select
-                                                    value={row.hotelId ?? ""}
-                                                    onChange={(event) =>
-                                                        handleRowChange(
-                                                            rowKey,
-                                                            "hotelId",
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    className="assignment-select-head"
-                                                    disabled={loadingHotels || isSaving}
-                                                >
-                                                    <option value="">
-                                                        Select Hotel
-                                                    </option>
-
-                                                    {hotels.map((hotel) => (
-                                                        <option
-                                                            key={getHotelId(hotel)}
-                                                            value={getHotelId(hotel)}
-                                                        >
-                                                            {getHotelName(hotel)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </td>
-
-                                            <td>
-                                                <select
-                                                    value={row.shiftId ?? ""}
-                                                    onChange={(event) =>
-                                                        handleRowChange(
-                                                            rowKey,
-                                                            "shiftId",
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    className="assignment-select"
-                                                    disabled={isSaving}
-                                                >
-                                                    <option value="">
-                                                        Select Shift Type
-                                                    </option>
-                                                    <option value="1">Morning</option>
-                                                    <option value="2">Evening</option>
-                                                    <option value="3">TwoHalfDay</option>
-                                                </select>
-                                            </td>
-
-                                            <td>
-                                                <select
-                                                    value={row.workType ?? ""}
-                                                    onChange={(event) =>
-                                                        handleRowChange(
-                                                            rowKey,
-                                                            "workType",
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    className="assignment-select"
-                                                    disabled={isSaving}
-                                                >
-                                                    <option value="">
-                                                        Select Work Type
-                                                    </option>
-                                                    <option value="HalfDay">HalfDay</option>
-                                                    <option value="FullDay">FullDay</option>
-                                                </select>
-                                            </td>
-
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Enter description / note"
-                                                    value={row.description ?? ""}
-                                                    onChange={(event) =>
-                                                        handleRowChange(
-                                                            rowKey,
-                                                            "description",
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    className="assignment-select-dscrip"
-                                                    disabled={isSaving}
-                                                />
-                                            </td>
-
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button
-                                                        type="button"
-                                                        className="btn-submit"
-                                                        disabled={isSaving || loadingHotels}
-                                                        onClick={() =>
-                                                            handleSubmit(employee)
-                                                        }
-                                                    >
-                                                        {isSaving ? "Saving..." : "Submit"}
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        className="btn-cancel"
-                                                        disabled={isSaving}
-                                                        onClick={() =>
-                                                            handleCancel(rowKey)
-                                                        }
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
+                                {memberType === "Vendor" ? (
+                                    paginatedVendors.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={9} className="no-data">
+                                                {vendors.length === 0
+                                                    ? "No vendor records found."
+                                                    : "No matching vendors found."}
                                             </td>
                                         </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                    ) : (
+                                        paginatedVendors.map((vendor) => {
+                                            const vendorId = getVendorId(vendor);
+                                            const rowKey = getVendorRowKey(vendor);
+                                            const row = rowData[rowKey] ?? {};
+                                            const isSaving = savingRowKey === rowKey;
+
+                                            return (
+                                                <tr key={rowKey}>
+                                                    <td>{vendorId}</td>
+
+                                                    <td>
+                                                        <div className="employee-name">
+                                                            {getVendorName(vendor) ||
+                                                                `Vendor ID ${vendorId}`}
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            step="1"
+                                                            value={row.employeeQuantity ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "employeeQuantity",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            placeholder="Enter quantity"
+                                                            className="assignment-select"
+                                                            disabled={isSaving}
+                                                        />
+                                                    </td>
+
+                                                    <td>
+                                                        <select
+                                                            value={row.hotelId ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "hotelId",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            className="assignment-select-head"
+                                                            disabled={loadingHotels || isSaving}
+                                                        >
+                                                            <option value="">
+                                                                Select Hotel
+                                                            </option>
+
+                                                            {hotels.map((hotel) => (
+                                                                <option
+                                                                    key={getHotelId(hotel)}
+                                                                    value={getHotelId(hotel)}
+                                                                >
+                                                                    {getHotelName(hotel)}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.venue ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "venue",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            placeholder="Enter venue"
+                                                            className="assignment-select"
+                                                            maxLength={100}
+                                                            disabled={isSaving}
+                                                        />
+                                                    </td>
+
+                                                    <td>
+                                                        <select
+                                                            value={row.shiftId ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "shiftId",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            className="assignment-select"
+                                                            disabled={isSaving}
+                                                        >
+                                                            <option value="">
+                                                                Select Shift Type
+                                                            </option>
+                                                            <option value="1">
+                                                                Morning
+                                                            </option>
+                                                            <option value="2">
+                                                                Evening
+                                                            </option>
+                                                        </select>
+                                                    </td>
+
+                                                    <td>
+                                                        <select
+                                                            value={row.workType ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "workType",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            className="assignment-select"
+                                                            disabled={isSaving}
+                                                        >
+                                                            <option value="">
+                                                                Select Work Type
+                                                            </option>
+                                                            <option value="HalfDay">
+                                                                HalfDay
+                                                            </option>
+                                                            <option value="FullDay">
+                                                                FullDay
+                                                            </option>
+                                                        </select>
+                                                    </td>
+
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Enter description / note"
+                                                            value={row.description ?? ""}
+                                                            onChange={(event) =>
+                                                                handleRowChange(
+                                                                    rowKey,
+                                                                    "description",
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            className="assignment-select-dscrip"
+                                                            disabled={isSaving}
+                                                        />
+                                                    </td>
+
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button
+                                                                type="button"
+                                                                className="btn-submit"
+                                                                disabled={isSaving || loadingHotels}
+                                                                onClick={() =>
+                                                                    handleVendorSubmit(vendor)
+                                                                }
+                                                            >
+                                                                {isSaving ? "Saving..." : "Submit"}
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="btn-cancel"
+                                                                disabled={isSaving}
+                                                                onClick={() =>
+                                                                    handleCancel(rowKey)
+                                                                }
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )
+                                ) : memberType === "Local" ? (
+                                    renderEmployeeRows(paginatedLocalEmployees)
+                                ) : memberType === "Outsourced" ? (
+                                    renderSupplierRows(paginatedOutsourcedEmployees)
+                                ) : (
+                                    renderEmployeeRows(paginatedEmployees)
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {/* Pagination */}
+                    {renderPagination()}
+                </>
             )}
+
         </div>
     );
 };

@@ -1,337 +1,266 @@
+
 /* =========================================================
    EMPLOYEE RATE MASTER PAGE
-   ========================================================= */
+========================================================= */
 
 .employee-rate-page {
-    padding: 24px;
+    padding: 25px;
     min-height: 100vh;
-    background: linear-gradient(135deg, #f4f7fb 0%, #eef3f9 100%);
+    box-sizing: border-box;
+    background: #F4F6FA;
     font-family: "Segoe UI", Arial, sans-serif;
-    color: #263238;
+    color: #26364F;
+    border: 1px solid #E1E6EE;
+    border-radius: 10px;
 }
-
 
 /* =========================================================
    HEADER
-   ========================================================= */
+========================================================= */
 
 .employee-rate-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    margin-bottom: 22px;
-    padding: 20px 24px;
-
-    background: linear-gradient(135deg, #1976d2, #1565c0);
-    border-radius: 12px;
-
-    color: #fff;
-
-    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.20);
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: transparent;
+    border-bottom: 1px solid #E1E6EE;
+    border-radius: 0;
+    color: #26364F;
+    box-shadow: none;
 }
 
 .employee-rate-header h2 {
+    display: inline-block;
     margin: 0;
-    font-size: 25px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    padding: 10px 18px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #F4D58D;
+    background: linear-gradient(135deg, #14233E, #263A58);
+    border-left: 5px solid #D6B66D;
+    border-radius: 7px;
+    box-shadow: 0 3px 8px rgba(20, 35, 62, 0.15);
 }
 
 .employee-rate-header p {
-    margin: 6px 0 0;
-    color: rgba(255, 255, 255, 0.85);
+    margin: 8px 0 0;
+    color: #718096;
     font-size: 14px;
 }
 
-
 /* =========================================================
    FORM CARD
-   ========================================================= */
+========================================================= */
 
 .employee-rate-form-card {
-    background: #ffffff;
-
-    padding: 24px;
-
-    border-radius: 12px;
-
-    margin-bottom: 22px;
-
-    border: 1px solid #e1e8f0;
-
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    background: #FFFFFF;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    border: 1px solid #E5EAF1;
+    box-shadow: 0 3px 12px rgba(20, 35, 62, 0.06);
 }
-
 
 /* =========================================================
    FORM ROW
-   ========================================================= */
+========================================================= */
 
 .form-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
-
     margin-bottom: 20px;
 }
 
-
 /* =========================================================
    FORM GROUP
-   ========================================================= */
+========================================================= */
 
 .form-group {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .form-group label {
     font-size: 13px;
     font-weight: 600;
-
     margin-bottom: 7px;
-
-    color: #37474f;
+    color: #263A58;
 }
-
 
 /* =========================================================
    INPUT / SELECT
-   ========================================================= */
+========================================================= */
 
 .form-group input,
 .form-group select {
     width: 100%;
-    height: 42px;
-
+    height: 43px;
     padding: 0 12px;
-
     box-sizing: border-box;
-
-    background: #fafcff;
-
-    border: 1px solid #cfd8e3;
-    border-radius: 7px;
-
+    background: #FFFFFF;
+    border: 1px solid #D5DDE8;
+    border-radius: 6px;
     font-size: 14px;
-
-    color: #263238;
-
+    color: #26364F;
     transition: all 0.2s ease;
 }
 
-
-/* Hover */
-
 .form-group input:hover,
 .form-group select:hover {
-    border-color: #90caf9;
-    background: #ffffff;
+    border-color: #B9A16B;
 }
-
-
-/* Focus */
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-
-    border-color: #1976d2;
-
-    background: #ffffff;
-
-    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+    border-color: #D6B66D;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.18);
 }
-
-
-/* Placeholder */
 
 .form-group input::placeholder {
-    color: #9aa7b2;
+    color: #9AA5B4;
 }
-
-
-/* Number fields */
 
 .form-group input[type="number"] {
     text-align: right;
 }
 
-
 /* =========================================================
    BUTTONS
-   ========================================================= */
+========================================================= */
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-
+    flex-wrap: wrap;
     gap: 10px;
-
-    margin-top: 8px;
-
+    margin-top: 10px;
     padding-top: 18px;
-
-    border-top: 1px solid #edf1f5;
+    border-top: 1px solid #E9EDF3;
 }
-
 
 .save-btn,
 .cancel-btn {
-    min-width: 110px;
-
+    min-width: 120px;
+    min-height: 42px;
     padding: 10px 20px;
-
-    border: none;
-
-    border-radius: 7px;
-
+    border-radius: 6px;
     cursor: pointer;
-
     font-size: 14px;
     font-weight: 600;
-
     transition: all 0.2s ease;
 }
-
 
 /* Save */
 
 .save-btn {
-    background: linear-gradient(135deg, #1976d2, #1565c0);
-
-    color: #ffffff;
-
-    box-shadow: 0 3px 8px rgba(25, 118, 210, 0.25);
+    background: linear-gradient(135deg, #14233E, #263A58);
+    color: #FFFFFF;
+    border: 1px solid #14233E;
+    box-shadow: 0 3px 7px rgba(20, 35, 62, 0.15);
 }
 
 .save-btn:hover {
-    background: linear-gradient(135deg, #1565c0, #0d47a1);
-
+    background: linear-gradient(135deg, #263A58, #344B6B);
+    box-shadow: 0 5px 10px rgba(20, 35, 62, 0.20);
     transform: translateY(-1px);
-
-    box-shadow: 0 5px 12px rgba(25, 118, 210, 0.30);
 }
-
 
 /* Cancel */
 
 .cancel-btn {
-    background: #eceff1;
-
-    color: #455a64;
-
-    border: 1px solid #d5dce1;
+    background: #FFFFFF;
+    color: #263A58;
+    border: 1px solid #C8D1DE;
 }
 
 .cancel-btn:hover {
-    background: #dfe4e7;
-
-    color: #263238;
-
-    transform: translateY(-1px);
+    background: #F1F4F8;
+    border-color: #263A58;
 }
-
 
 /* =========================================================
    TABLE CARD
-   ========================================================= */
+========================================================= */
 
 .employee-rate-card {
-    background: #ffffff;
-
-    border-radius: 12px;
-
+    background: #FFFFFF;
+    border-radius: 10px;
     padding: 0;
-
-    border: 1px solid #e1e8f0;
-
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
-
+    border: 1px solid #E5EAF1;
+    box-shadow: 0 3px 12px rgba(20, 35, 62, 0.06);
     overflow: hidden;
 }
 
-
 /* =========================================================
    TABLE CONTAINER
-   ========================================================= */
+========================================================= */
 
 .table-container {
     width: 100%;
-
     overflow-x: auto;
 }
 
-
 /* =========================================================
    TABLE
-   ========================================================= */
+========================================================= */
 
 .employee-rate-table {
     width: 100%;
-
     border-collapse: collapse;
-
     font-size: 14px;
 }
 
-
 /* Table header */
 
-.employee-rate-table th {
-    padding: 13px 14px;
-
-    background: linear-gradient(
-        135deg,
-        #e3f2fd,
-        #eaf4fc
-    );
-
-    color: #174a73;
-
-    font-weight: 600;
-
-    border-bottom: 2px solid #bbdefb;
-
-    text-align: left;
-
-    white-space: nowrap;
+.employee-rate-table thead {
+    background: linear-gradient(135deg, #14233E, #263A58);
 }
 
+.employee-rate-table th {
+    padding: 14px 15px;
+    background: #14233E;
+    color: #F4D58D;
+    font-weight: 700;
+    font-size: 14px;
+    border-bottom: 2px solid #D6B66D;
+    text-align: left;
+    white-space: nowrap;
+}
 
 /* Table cells */
 
 .employee-rate-table td {
-    padding: 12px 14px;
-
-    border-bottom: 1px solid #edf1f5;
-
-    color: #455a64;
-
+    padding: 13px 15px;
+    border-bottom: 1px solid #E9EDF3;
+    color: #45546A;
+    font-size: 14px;
+    font-weight: 500;
     text-align: left;
-
     white-space: nowrap;
 }
-
 
 /* Alternate row */
 
 .employee-rate-table tbody tr:nth-child(even) {
-    background: #fafcff;
+    background: #F8FAFC;
 }
-
 
 /* Hover */
 
 .employee-rate-table tbody tr:hover {
-    background: #eaf4ff;
-
+    background: #FFF9EB;
     transition: background 0.15s ease;
 }
-
 
 /* Last row */
 
@@ -339,135 +268,105 @@
     border-bottom: none;
 }
 
-
 /* =========================================================
    NO DATA
-   ========================================================= */
+========================================================= */
 
 .no-data {
     text-align: center !important;
-
     padding: 35px !important;
-
-    color: #78909c;
-
+    color: #718096;
     font-size: 14px;
-
-    background: #fafcff;
+    background: #F8FAFC;
 }
-
 
 /* =========================================================
    ACTION BUTTONS
-   ========================================================= */
+========================================================= */
 
 .edit-btn,
 .delete-btn {
-    border: none;
-
     padding: 7px 13px;
-
-    border-radius: 6px;
-
+    border-radius: 5px;
     cursor: pointer;
-
     margin-right: 6px;
-
     font-size: 13px;
-
     font-weight: 600;
-
     transition: all 0.2s ease;
 }
-
 
 /* Edit */
 
 .edit-btn {
-    background: #e3f2fd;
-
-    color: #1565c0;
-
-    border: 1px solid #bbdefb;
+    background: #EDF3FA;
+    color: #263A58;
+    border: 1px solid #D5E0EF;
 }
 
 .edit-btn:hover {
-    background: #1976d2;
-
-    color: #ffffff;
-
-    transform: translateY(-1px);
+    background: #263A58;
+    color: #FFFFFF;
+    border-color: #263A58;
 }
-
 
 /* Delete */
 
 .delete-btn {
-    background: #ffebee;
-
-    color: #d32f2f;
-
-    border: 1px solid #ffcdd2;
+    background: #FFF0F0;
+    color: #C0392B;
+    border: 1px solid #F2CECE;
 }
 
 .delete-btn:hover {
-    background: #d32f2f;
-
-    color: #ffffff;
-
-    transform: translateY(-1px);
+    background: #C0392B;
+    color: #FFFFFF;
+    border-color: #C0392B;
 }
-
 
 /* =========================================================
    SCROLLBAR
-   ========================================================= */
+========================================================= */
 
 .table-container::-webkit-scrollbar {
     height: 7px;
 }
 
 .table-container::-webkit-scrollbar-track {
-    background: #f1f4f7;
+    background: #F1F4F8;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-    background: #b0bec5;
-
+    background: #B8C2D0;
     border-radius: 10px;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-    background: #78909c;
+    background: #263A58;
 }
-
 
 /* =========================================================
    RESPONSIVE
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 900px) {
-
     .employee-rate-page {
         padding: 16px;
     }
 
     .form-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .employee-rate-header {
-        padding: 18px;
+        padding: 14px 10px;
     }
 
     .employee-rate-header h2 {
-        font-size: 22px;
+        font-size: 23px;
     }
 }
 
-
 @media (max-width: 600px) {
-
     .employee-rate-page {
         padding: 10px;
     }
@@ -477,11 +376,16 @@
     }
 
     .employee-rate-header {
-        padding: 16px;
+        padding: 12px 5px;
     }
 
     .employee-rate-header h2 {
         font-size: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
 
     .form-actions {

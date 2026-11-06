@@ -1,69 +1,54 @@
-
-
-import React, {
-    useEffect,
-    useState
-} from "react";
-
-import {
-    useNavigate,
-    useParams
-} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import "../CSS/EditEmployeeRate.css";
+import DatePicker from "../components/DatePicker";
 
 import {
     getEmployeeRateMasterById,
     updateEmployeeRateMaster
 } from "../api/employeeRateMasterApi";
 
-import {
-    getEmployeeById
-} from "../api/employeeApi";
+import { getEmployeeById } from "../api/employeeApi";
 
+// Convert API date values to YYYY-MM-DD without timezone shifting.
+const toISODate = (dateValue) => {
+    if (!dateValue) return "";
+
+    const value = String(dateValue).trim();
+
+    // Handles YYYY-MM-DD and YYYY-MM-DDTHH:mm:ss
+    const isoMatch = value.match(/^(\d{4}-\d{2}-\d{2})/);
+
+    if (isoMatch) {
+        return isoMatch[1];
+    }
+
+    // Handles DD/MM/YYYY
+    const displayMatch = value.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+    );
+
+    if (displayMatch) {
+        const [, day, month, year] = displayMatch;
+
+        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+
+    return "";
+};
 
 const EditEmployeeRateMaster = () => {
-
     const navigate = useNavigate();
+    const { rateId } = useParams();
 
     // =========================================================
-    // URL PARAMETER
-    //
-    // rateId = EmployeeRateHistoryId
-    //
-    // Example:
-    // /RateMasters/employeerate/edit/10
-    //
-    // rateId = 10
-    // EmployeeRateHistoryId = 10
+    // FORM STATE
     // =========================================================
 
-    const {
-        rateId
-    } = useParams();
-
-
-    console.log("================================");
-    console.log("EDIT EMPLOYEE RATE COMPONENT");
-    console.log(
-        "EmployeeRateHistoryId:",
-        rateId
-    );
-    console.log("================================");
-
-
-    // =========================================================
-    // FORM
-    // =========================================================
-
-    const [
-        form,
-        setForm
-    ] = useState({
-
+    const [form, setForm] = useState({
         employeeId: "",
 
-        // Fixed shift IDs
         halfDShiftId: 1,
         halfDayRate: "",
 
@@ -77,788 +62,543 @@ const EditEmployeeRateMaster = () => {
         effectiveTo: ""
     });
 
-
     // =========================================================
     // EMPLOYEE NAME
     // =========================================================
 
-    const [
-        employeeName,
-        setEmployeeName
-    ] = useState("");
-
+    const [employeeName, setEmployeeName] = useState("");
 
     // =========================================================
-    // LOADING
+    // LOADING AND SAVING
     // =========================================================
 
-    const [
-        loading,
-        setLoading
-    ] = useState(true);
-
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     // =========================================================
-    // SAVING
-    // =========================================================
-
-    const [
-        saving,
-        setSaving
-    ] = useState(false);
-
-
-    // =========================================================
-    // LOAD RATE RECORD
+    // LOAD EMPLOYEE RATE
     // =========================================================
 
     useEffect(() => {
-
         if (!rateId) {
-
             console.error(
                 "EmployeeRateHistoryId not found in URL."
             );
 
             setLoading(false);
-
             return;
         }
 
-
         loadRate();
 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rateId]);
-
 
     // =========================================================
     // GET RATE BY EmployeeRateHistoryId
     // =========================================================
 
     const loadRate = async () => {
-    try {
-        console.log("================================");
-        console.log("GET EMPLOYEE RATE");
-        console.log("EmployeeRateHistoryId:", rateId);
-        console.log("================================");
+        try {
+            console.log(
+                "GET EMPLOYEE RATE - EmployeeRateHistoryId:",
+                rateId
+            );
 
-        const response = await getEmployeeRateMasterById(
-            Number(rateId)
-        );
+            const response = await getEmployeeRateMasterById(
+                Number(rateId)
+            );
 
-        console.log("FULL API RESPONSE:", response);
-        console.log("API RESPONSE DATA:", response.data);
+            console.log("FULL API RESPONSE:", response);
 
-        // --------------------------------------------------
-        // HANDLE DIFFERENT API RESPONSE STRUCTURES
-        // --------------------------------------------------
+            let data = response.data;
 
-        let data = response.data;
+            // Handle { data: {...} }
+            if (data?.data) {
+                data = data.data;
+            }
 
-        // If API returns:
-        // { data: { employeeId: 1, ... } }
-        if (data?.data) {
-            data = data.data;
+            // Handle { result: {...} }
+            if (data?.result) {
+                data = data.result;
+            }
+
+            // Handle array response
+            if (Array.isArray(data)) {
+                data = data[0];
+            }
+
+            console.log("FINAL RATE RECORD:", data);
+
+            if (!data) {
+                alert("Employee rate record not found.");
+                return;
+            }
+
+            // -------------------------------------------------
+            // EMPLOYEE ID
+            // -------------------------------------------------
+
+            const employeeId =
+                data.employeeId ??
+                data.EmployeeId ??
+                data.fk_EmployeeId ??
+                "";
+
+            // -------------------------------------------------
+            // RATE VALUES
+            // -------------------------------------------------
+
+            const halfDayRate =
+                data.halfDayRate ??
+                data.HalfDayRate ??
+                "";
+
+            const fullDayRate =
+                data.fullDayRate ??
+                data.FullDayRate ??
+                "";
+
+            const twoHalfDayRate =
+                data.twoHalfDayRate ??
+                data.TwoHalfDayRate ??
+                "";
+
+            // -------------------------------------------------
+            // EFFECTIVE FROM
+            // Normalize API date for DatePicker state.
+            // State format must be YYYY-MM-DD.
+            // -------------------------------------------------
+
+            const effectiveFrom = toISODate(
+                data.effectiveFrom ??
+                data.EffectiveFrom ??
+                data.fromDate ??
+                data.FromDate ??
+                ""
+            );
+
+            // -------------------------------------------------
+            // EFFECTIVE TO
+            // -------------------------------------------------
+
+            const effectiveTo = toISODate(
+                data.effectiveTo ??
+                data.EffectiveTo ??
+                data.toDate ??
+                data.ToDate ??
+                ""
+            );
+
+            console.log("EMPLOYEE ID:", employeeId);
+            console.log("HALF DAY RATE:", halfDayRate);
+            console.log("FULL DAY RATE:", fullDayRate);
+            console.log("TWO HALF DAY RATE:", twoHalfDayRate);
+            console.log("EFFECTIVE FROM:", effectiveFrom);
+            console.log("EFFECTIVE TO:", effectiveTo);
+
+            // -------------------------------------------------
+            // SET FORM
+            // -------------------------------------------------
+
+            setForm({
+                employeeId,
+
+                halfDShiftId: 1,
+                halfDayRate,
+
+                fullDShiftId: 2,
+                fullDayRate,
+
+                twoHDRShiftId: 3,
+                twoHalfDayRate,
+
+                effectiveFrom,
+                effectiveTo
+            });
+
+            // -------------------------------------------------
+            // LOAD EMPLOYEE NAME
+            // -------------------------------------------------
+
+            if (employeeId) {
+                await loadEmployee(employeeId);
+            }
+        } catch (error) {
+            console.error("GET EMPLOYEE RATE ERROR:", error);
+
+            console.error(
+                "SERVER RESPONSE:",
+                error.response?.data
+            );
+
+            alert("Unable to load employee rate.");
+        } finally {
+            setLoading(false);
         }
+    };
 
-        // If API returns:
-        // { result: { employeeId: 1, ... } }
-        if (data?.result) {
-            data = data.result;
+    // =========================================================
+    // GET EMPLOYEE NAME
+    // =========================================================
+
+    const loadEmployee = async (employeeId) => {
+        try {
+            const response = await getEmployeeById(
+                Number(employeeId)
+            );
+
+            let employee = response.data;
+
+            // Handle { data: {...} }
+            if (employee?.data) {
+                employee = employee.data;
+            }
+
+            // Handle { result: {...} }
+            if (employee?.result) {
+                employee = employee.result;
+            }
+
+            // Handle array response
+            if (Array.isArray(employee)) {
+                employee = employee[0];
+            }
+
+            const name =
+                employee?.employeeName ||
+                employee?.EmployeeName ||
+                employee?.memberName ||
+                employee?.MemberName ||
+                employee?.fullName ||
+                employee?.FullName ||
+                employee?.name ||
+                employee?.Name ||
+                "";
+
+            setEmployeeName(name);
+        } catch (error) {
+            console.error("GET EMPLOYEE ERROR:", error);
+
+            console.error(
+                "EMPLOYEE API ERROR:",
+                error.response?.data
+            );
+
+            setEmployeeName("");
         }
+    };
 
-        // If API returns array
-        if (Array.isArray(data)) {
-            data = data[0];
-        }
+    // =========================================================
+    // HANDLE NORMAL FORM INPUTS
+    // =========================================================
 
-        console.log("FINAL RECORD USED FOR FORM:", data);
+    const handleChange = (e) => {
+        const { name, value } = e.target;
 
-        if (!data) {
-            console.error("No employee rate record found.");
-            alert("Employee rate record not found.");
+        setForm((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // =========================================================
+    // HANDLE SHARED DATE PICKER
+    //
+    // DatePicker returns a YYYY-MM-DD string.
+    // It does not return a DOM event.
+    // =========================================================
+
+    const handleDateChange = (name, value) => {
+        setForm((prev) => ({
+            ...prev,
+            [name]: value || ""
+        }));
+    };
+
+    // =========================================================
+    // UPDATE EMPLOYEE RATE
+    // =========================================================
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Validate Effective From
+        if (!form.effectiveFrom) {
+            alert("Please select an Effective From date.");
             return;
         }
 
-        // --------------------------------------------------
-        // GET VALUES
-        // --------------------------------------------------
-
-        const employeeId =
-            data.employeeId ??
-            data.EmployeeId ??
-            data.fk_EmployeeId ??
-            "";
-
-        const halfDayRate =
-            data.halfDayRate ??
-            data.HalfDayRate ??
-            "";
-
-        const fullDayRate =
-            data.fullDayRate ??
-            data.FullDayRate ??
-            "";
-
-        const twoHalfDayRate =
-            data.twoHalfDayRate ??
-            data.TwoHalfDayRate ??
-            "";
-
-        const effectiveFrom =
-            data.effectiveFrom ??
-            data.EffectiveFrom ??
-            "";
-
-        const effectiveTo =
-            data.effectiveTo ??
-            data.EffectiveTo ??
-            "";
-
-        console.log("EMPLOYEE ID:", employeeId);
-        console.log("HALF DAY RATE:", halfDayRate);
-        console.log("FULL DAY RATE:", fullDayRate);
-        console.log("TWO HALF DAY RATE:", twoHalfDayRate);
-        console.log("EFFECTIVE FROM:", effectiveFrom);
-        console.log("EFFECTIVE TO:", effectiveTo);
-
-        // --------------------------------------------------
-        // SET FORM
-        // --------------------------------------------------
-
-        setForm({
-            employeeId: employeeId,
-
-            // Fixed values
-            halfDShiftId: 1,
-
-            halfDayRate: halfDayRate,
-
-            fullDShiftId: 2,
-
-            fullDayRate: fullDayRate,
-
-            twoHDRShiftId: 3,
-
-            twoHalfDayRate: twoHalfDayRate,
-
-            effectiveFrom: effectiveFrom
-                ? String(effectiveFrom).substring(0, 10)
-                : "",
-
-            effectiveTo: effectiveTo
-                ? String(effectiveTo).substring(0, 10)
-                : ""
-        });
-
-        // --------------------------------------------------
-        // LOAD ONLY THIS EMPLOYEE
-        // --------------------------------------------------
-
-        if (employeeId) {
-            console.log(
-                "Loading employee:",
-                employeeId
+        // Validate date range
+        if (
+            form.effectiveTo &&
+            form.effectiveTo < form.effectiveFrom
+        ) {
+            alert(
+                "Effective To date cannot be earlier than Effective From date."
             );
 
-            await loadEmployee(employeeId);
+            return;
         }
-
-    } catch (error) {
-
-        console.error(
-            "GET EMPLOYEE RATE ERROR:",
-            error
-        );
-
-        console.error(
-            "SERVER RESPONSE:",
-            error.response?.data
-        );
-
-        alert("Unable to load employee rate.");
-
-    } finally {
-
-        setLoading(false);
-    }
-};
-
-
-    // =========================================================
-    // GET EMPLOYEE BY EmployeeId
-    // Only used to display employee name
-    // =========================================================
-
-   const loadEmployee = async (employeeId) => {
-    try {
-        console.log("================================");
-        console.log("GET EMPLOYEE");
-        console.log("EmployeeId:", employeeId);
-        console.log("================================");
-
-        const response = await getEmployeeById(Number(employeeId));
-
-        console.log("FULL EMPLOYEE RESPONSE:", response);
-        console.log("EMPLOYEE RESPONSE DATA:", response.data);
-
-        let employee = response.data;
-
-        // Handle:
-        // { data: {...} }
-        if (employee?.data) {
-            employee = employee.data;
-        }
-
-        // Handle:
-        // { result: {...} }
-        if (employee?.result) {
-            employee = employee.result;
-        }
-
-        // Handle array response
-        if (Array.isArray(employee)) {
-            employee = employee[0];
-        }
-
-        console.log("FINAL EMPLOYEE OBJECT:", employee);
-
-        // Get employee name
-        const name =
-            employee?.employeeName ||
-            employee?.EmployeeName ||
-            employee?.memberName ||
-            employee?.MemberName ||
-            employee?.fullName ||
-            employee?.FullName ||
-            employee?.name ||
-            employee?.Name ||
-            "";
-
-        console.log("FINAL EMPLOYEE NAME:", name);
-
-        setEmployeeName(name);
-
-    } catch (error) {
-
-        console.error("GET EMPLOYEE ERROR:", error);
-        console.error(
-            "EMPLOYEE API ERROR:",
-            error.response?.data
-        );
-
-        setEmployeeName("");
-    }
-};
-
-    // =========================================================
-    // HANDLE FORM CHANGE
-    // =========================================================
-
-    const handleChange = (
-        e
-    ) => {
-
-        const {
-            name,
-            value
-        } = e.target;
-
-
-        setForm(
-            prev => ({
-                ...prev,
-                [name]: value
-            })
-        );
-
-    };
-
-
-    // =========================================================
-    // UPDATE
-    // =========================================================
-
-    const handleSubmit = async (
-        e
-    ) => {
-
-        e.preventDefault();
-
 
         try {
-
             setSaving(true);
 
-
-            // =====================================================
+            // -------------------------------------------------
             // UPDATE PAYLOAD
-            //
-            // EmployeeRateHistoryId is NOT sent in payload.
-            //
-            // It is passed separately in URL:
-            //
-            // PUT /EmployeeRateHistory/{id}
-            // =====================================================
+            // Dates remain YYYY-MM-DD for the API.
+            // -------------------------------------------------
 
             const payload = {
+                employeeId: Number(form.employeeId),
 
-                employeeId:
-                    Number(
-                        form.employeeId
-                    ),
-
-
-                // Fixed
                 halfDShiftId: 1,
+                halfDayRate: Number(form.halfDayRate),
 
-
-                halfDayRate:
-                    Number(
-                        form.halfDayRate
-                    ),
-
-
-                // Fixed
                 fullDShiftId: 2,
+                fullDayRate: Number(form.fullDayRate),
 
-
-                fullDayRate:
-                    Number(
-                        form.fullDayRate
-                    ),
-
-
-                // Fixed
                 twoHDRShiftId:
                     form.twoHalfDayRate !== ""
                         ? 3
                         : null,
 
-
                 twoHalfDayRate:
                     form.twoHalfDayRate !== ""
-                        ? Number(
-                            form.twoHalfDayRate
-                        )
+                        ? Number(form.twoHalfDayRate)
                         : null,
 
+                effectiveFrom: form.effectiveFrom,
 
-                effectiveFrom:
-                    form.effectiveFrom,
-
-
-                effectiveTo:
-                    form.effectiveTo || null
+                effectiveTo: form.effectiveTo || null
             };
 
-
             console.log("================================");
-            console.log(
-                "UPDATE EMPLOYEE RATE"
-            );
-            console.log(
-                "EmployeeRateHistoryId:",
-                rateId
-            );
-            console.log(
-                "UPDATE PAYLOAD:",
+            console.log("UPDATE EMPLOYEE RATE");
+            console.log("EmployeeRateHistoryId:", rateId);
+            console.log("UPDATE PAYLOAD:", payload);
+            console.log("================================");
+
+            const response = await updateEmployeeRateMaster(
+                Number(rateId),
                 payload
             );
-            console.log("================================");
 
+            console.log("UPDATE RESPONSE:", response);
 
-            // =====================================================
-            // IMPORTANT
-            //
-            // rateId = EmployeeRateHistoryId
-            //
-            // PUT:
-            // /api/EmployeeRateHistory/{EmployeeRateHistoryId}
-            // =====================================================
+            alert("Employee rate updated successfully.");
 
-            const response =
-                await updateEmployeeRateMaster(
-                    Number(rateId),
-                    payload
-                );
-
-
-            console.log(
-                "UPDATE RESPONSE:",
-                response
-            );
-
-
-            alert(
-                "Employee rate updated successfully."
-            );
-
-
-            navigate(
-                "/RateMasters/employeerate"
-            );
-
-        }
-        catch (error) {
-
-            console.error(
-                "UPDATE ERROR:",
-                error
-            );
-
+            navigate("/RateMasters/employeerate");
+        } catch (error) {
+            console.error("UPDATE ERROR:", error);
 
             console.error(
                 "UPDATE RESPONSE ERROR:",
                 error.response?.data
             );
 
-
             alert(
                 error.response?.data?.message ||
                 "Update failed."
             );
-
-        }
-        finally {
-
+        } finally {
             setSaving(false);
-
         }
-
     };
-
 
     // =========================================================
     // CANCEL
     // =========================================================
 
     const handleCancel = () => {
-
-        navigate(
-            "/RateMasters/employeerate"
-        );
-
+        navigate("/RateMasters/employeerate");
     };
 
-
     // =========================================================
-    // LOADING
+    // LOADING SCREEN
     // =========================================================
 
     if (loading) {
-
         return (
-
             <div className="employee-rate-container">
-
                 <div className="employee-rate-form">
+                    <h2>Edit Employee Rate</h2>
 
-                    <h2>
-                        Edit Employee Rate
-                    </h2>
-
-                    <p>
-                        Loading employee rate...
-                    </p>
-
+                    <p>Loading employee rate...</p>
                 </div>
-
             </div>
-
         );
-
     }
 
-
     // =========================================================
-    // FORM
+    // FORM UI
     // =========================================================
 
     return (
-
         <div className="employee-rate-container">
-
             <div className="employee-rate-form">
+                <h2>Edit Employee Rate</h2>
 
-                <h2>
-                    Edit Employee Rate
-                </h2>
-
-
-                <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                >
-                    <div className="form-group">
-
-                        <label>
-                            -
-                        </label>                        
-
-                    </div>
-                    {/* ==========================================
-                        EMPLOYEE
-                    ========================================== */}
+                <form onSubmit={handleSubmit}>
+                    {/* EMPLOYEE */}
 
                     <div className="form-group">
-
-                        <label>
-                            Employee
-                        </label>
-
+                        <label>Employee</label>
 
                         <input
                             type="text"
-                            value={
-                                employeeName 
-                            }
+                            value={employeeName}
                             readOnly
                         />
-
+                    </div>
+                    <div className="form-group">
+                        
                     </div>
 
-
-                    {/* ==========================================
-                        HALF DAY SHIFT
-                    ========================================== */}
+                    {/* HALF DAY SHIFT ID */}
 
                     <div className="form-group">
-
-                        <label>
-                            Half Day Shift ID
-                        </label>
-
+                        <label>Half Day Shift ID</label>
 
                         <input
                             type="number"
-                            value={
-                                form.halfDShiftId
-                            }
+                            value={form.halfDShiftId}
                             readOnly
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        HALF DAY RATE
-                    ========================================== */}
+                    {/* HALF DAY RATE */}
 
                     <div className="form-group">
-
-                        <label>
-                            Half Day Rate
-                        </label>
-
+                        <label>Half Day Rate</label>
 
                         <input
                             type="number"
                             name="halfDayRate"
-                            value={
-                                form.halfDayRate
-                            }
-                            onChange={
-                                handleChange
-                            }
+                            value={form.halfDayRate}
+                            onChange={handleChange}
                             step="0.01"
+                            min="0"
                             required
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        FULL DAY SHIFT
-                    ========================================== */}
+                    {/* FULL DAY SHIFT ID */}
 
                     <div className="form-group">
-
-                        <label>
-                            Full Day Shift ID
-                        </label>
-
+                        <label>Full Day Shift ID</label>
 
                         <input
                             type="number"
-                            value={
-                                form.fullDShiftId
-                            }
+                            value={form.fullDShiftId}
                             readOnly
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        FULL DAY RATE
-                    ========================================== */}
+                    {/* FULL DAY RATE */}
 
                     <div className="form-group">
-
-                        <label>
-                            Full Day Rate
-                        </label>
-
+                        <label>Full Day Rate</label>
 
                         <input
                             type="number"
                             name="fullDayRate"
-                            value={
-                                form.fullDayRate
-                            }
-                            onChange={
-                                handleChange
-                            }
+                            value={form.fullDayRate}
+                            onChange={handleChange}
                             step="0.01"
+                            min="0"
                             required
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        TWO HALF DAY SHIFT
-                    ========================================== */}
+                    {/* TWO HALF DAY SHIFT ID */}
 
                     <div className="form-group">
-
-                        <label>
-                            Two Half Day Shift ID
-                        </label>
-
+                        <label>Two Half Day Shift ID</label>
 
                         <input
                             type="number"
-                            value={
-                                form.twoHDRShiftId
-                            }
+                            value={form.twoHDRShiftId}
                             readOnly
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        TWO HALF DAY RATE
-                    ========================================== */}
+                    {/* TWO HALF DAY RATE */}
 
                     <div className="form-group">
-
-                        <label>
-                            Two Half Day Rate
-                        </label>
-
+                        <label>Two Half Day Rate</label>
 
                         <input
                             type="number"
                             name="twoHalfDayRate"
-                            value={
-                                form.twoHalfDayRate
-                            }
-                            onChange={
-                                handleChange
-                            }
+                            value={form.twoHalfDayRate}
+                            onChange={handleChange}
                             step="0.01"
+                            min="0"
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        EFFECTIVE FROM
-                    ========================================== */}
+                    {/* EFFECTIVE FROM */}
 
                     <div className="form-group">
-
-                        <label>
-                            Effective From
-                        </label>
-
-
-                        <input
-                            type="date"
+                        <DatePicker
+                            label="Effective From"
                             name="effectiveFrom"
-                            value={
-                                form.effectiveFrom
-                            }
-                            onChange={
-                                handleChange
+                            value={form.effectiveFrom}
+                            onChange={(value) =>
+                                handleDateChange(
+                                    "effectiveFrom",
+                                    value
+                                )
                             }
                             required
+                            max={form.effectiveTo || undefined}
+                            placeholder="DD/MM/YYYY"
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        EFFECTIVE TO
-                    ========================================== */}
+                    {/* EFFECTIVE TO */}
 
                     <div className="form-group">
-
-                        <label>
-                            Effective To
-                        </label>
-
-
-                        <input
-                            type="date"
+                        <DatePicker
+                            label="Effective To"
                             name="effectiveTo"
-                            value={
-                                form.effectiveTo
+                            value={form.effectiveTo}
+                            onChange={(value) =>
+                                handleDateChange(
+                                    "effectiveTo",
+                                    value
+                                )
                             }
-                            onChange={
-                                handleChange
-                            }
+                            min={form.effectiveFrom || undefined}
+                            placeholder="DD/MM/YYYY"
                         />
-
                     </div>
 
-
-                    {/* ==========================================
-                        BUTTONS
-                    ========================================== */}
+                    {/* BUTTONS */}
 
                     <div className="form-buttons">
-
                         <button
                             type="submit"
                             className="save-btn"
                             disabled={saving}
                         >
-
-                            {
-                                saving
-                                    ? "Updating..."
-                                    : "Update"
-                            }
-
+                            {saving ? "Updating..." : "Update"}
                         </button>
-
 
                         <button
                             type="button"
                             className="cancel-btn"
-                            onClick={
-                                handleCancel
-                            }
+                            onClick={handleCancel}
+                            disabled={saving}
                         >
                             Cancel
                         </button>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
-
     );
-
 };
-
 
 export default EditEmployeeRateMaster;

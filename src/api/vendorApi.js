@@ -25,3 +25,7 @@ export const updateVendor = (id, vendor) => {
 export const deleteVendor = (id) => {
     return axiosClient.delete(`/Vendors/${id}`);
 };
+
+export const GetVendorsWithoutRateHistory =() =>{
+    return axiosClient.get("/Vendors/without-rate-history") 
+} 

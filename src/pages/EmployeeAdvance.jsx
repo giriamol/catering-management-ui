@@ -261,11 +261,11 @@ function EmployeeAdvance() {
                                 <tr>
 
                                     <th>
-                                        ID
+                                        Sr.No
                                     </th>
 
                                     <th>
-                                        Employee
+                                        Employee Name
                                     </th>
 
                                     <th>
@@ -336,11 +336,11 @@ function EmployeeAdvance() {
                                                             }
                                                         </strong>
 
-                                                        <small>
+                                                        {/* <small>
                                                             ID: {
                                                                 item.employeeId
                                                             }
-                                                        </small>
+                                                        </small> */}
 
                                                     </div>
 

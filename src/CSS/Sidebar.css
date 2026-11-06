@@ -1,0 +1,572 @@
+/* 
+
+/* =====================================================
+   SIDEBAR MAIN CONTAINER
+===================================================== */
+
+.sidebar {
+    position: relative;
+
+    width: 255px;
+    min-width: 255px;
+    max-width: 255px;
+
+    min-height: 100vh;
+    height: 100vh;
+
+    box-sizing: border-box;
+    padding: 24px 15px;
+
+    background: linear-gradient(
+        180deg,
+        #14233E 0%,
+        #1B2E4C 55%,
+        #101C32 100%
+    );
+
+    color: #F1F5F9;
+    font-family: "Segoe UI", sans-serif;
+
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+
+    /* Scroll only inside sidebar */
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    /* Do not allow flex layout to shrink sidebar */
+    flex: 0 0 255px;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #D6B66D;
+    border-radius: 10px;
+}
+
+
+/* =====================================================
+   SIDEBAR HEADING
+===================================================== */
+
+.sidebar h3 {
+    color: #E3C477;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+
+    padding: 0 12px 18px;
+    margin: 0 0 15px;
+
+    border-bottom: 1px solid rgba(227, 196, 119, 0.3);
+}
+
+
+/* =====================================================
+   MAIN MENU LIST
+===================================================== */
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar > ul > li {
+    margin-bottom: 7px;
+}
+
+
+/* =====================================================
+   MAIN MENU LINKS
+===================================================== */
+
+.sidebar > ul > li > a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 12px 14px;
+
+    color: #E5EAF2;
+    background: transparent;
+
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+
+/* MAIN MENU HOVER */
+
+.sidebar > ul > li > a:hover {
+    background: #263A58;
+    color: #F4D58D;
+
+    border-left-color: #E3C477;
+}
+
+
+/* MAIN MENU ACTIVE */
+
+.sidebar > ul > li > a.active {
+    background: #E3C477;
+    color: #14233E;
+
+    border-left-color: #F4D58D;
+    font-weight: 700;
+}
+
+
+/* MAIN MENU ICONS */
+
+.sidebar .menu-icon {
+    font-size: 16px;
+    min-width: 18px;
+    color: #E3C477;
+    flex-shrink: 0;
+}
+
+
+/* =====================================================
+   DROPDOWN PARENT MENU
+===================================================== */
+
+.sidebar .menu-parent {
+    margin-bottom: 7px;
+}
+
+
+/* DROPDOWN TITLE */
+
+.sidebar .menu-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 12px 14px;
+
+    color: #E5EAF2;
+    background: transparent;
+
+    cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Menu icon and text */
+.sidebar .menu-title-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+/* DROPDOWN HOVER */
+
+.sidebar .menu-title:hover {
+    color: #F4D58D;
+    background: #263A58;
+
+    border-left-color: #E3C477;
+}
+
+
+/* DROPDOWN ARROW */
+
+.sidebar .arrow {
+    color: #E3C477;
+    font-size: 10px;
+    flex-shrink: 0;
+
+    transition: transform 0.25s ease;
+}
+
+.sidebar .arrow.rotate {
+    transform: rotate(180deg);
+}
+
+
+/* =====================================================
+   SUBMENU CONTAINER
+===================================================== */
+
+.sidebar .submenu {
+    display: block;
+
+    position: relative;
+    width: auto;
+    height: auto;
+
+    margin: 5px 0 10px 12px;
+    padding: 7px 8px 7px 10px;
+
+    box-sizing: border-box;
+
+    background: #101C32;
+
+    border-left: 2px solid #E3C477;
+    border-radius: 0 8px 8px 0;
+}
+
+
+/* SUBMENU LIST ITEMS */
+
+.sidebar .submenu li {
+    margin: 4px 0;
+}
+
+
+/* =====================================================
+   SUBMENU LINKS
+===================================================== */
+
+.sidebar .submenu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+
+    color: #C7D2E2;
+    background: transparent;
+
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+
+/* SUBMENU ICONS */
+
+.sidebar .submenu-icon {
+    font-size: 13px;
+    min-width: 15px;
+    color: #D6B66D;
+    flex-shrink: 0;
+}
+
+
+/* SUBMENU HOVER */
+
+.sidebar .submenu a:hover {
+    color: #F4D58D;
+    background: #263A58;
+
+    border-left-color: #E3C477;
+}
+
+.sidebar .submenu a:hover .submenu-icon {
+    color: #F4D58D;
+}
+
+
+/* SUBMENU ACTIVE */
+
+.sidebar .submenu a.active {
+    color: #14233E;
+    background: #E3C477;
+
+    border-left-color: #F4D58D;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .sidebar {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+
+        flex: 0 0 220px;
+
+        padding: 18px 10px;
+    }
+
+    .sidebar h3 {
+        font-size: 17px;
+    }
+
+    .sidebar > ul > li > a,
+    .sidebar .menu-title {
+        font-size: 13px;
+        padding: 11px 10px;
+    }
+
+    .sidebar .submenu a {
+        font-size: 12px;
+    }
+} */
+
+
+/* =========================================
+   SIDEBAR
+========================================= */
+
+.sidebar {
+    width: 255px;
+    min-width: 255px;
+    max-width: 255px;
+
+    height: 100vh;
+    position: sticky;
+    top: 0;
+
+    flex: 0 0 255px;
+
+    box-sizing: border-box;
+    padding: 18px 12px;
+
+    background: linear-gradient(
+        180deg,
+        #14233E 0%,
+        #1B2E4C 55%,
+        #101C32 100%
+    );
+
+    color: #F1F5F9;
+    font-family: "Segoe UI", sans-serif;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #D6B66D;
+    border-radius: 10px;
+}
+
+/* =========================================
+   BRAND
+========================================= */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 10px 18px;
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid rgba(227, 196, 119, 0.3);
+}
+
+.sidebar-brand h3 {
+    margin: 0;
+    color: #E3C477;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.brand-icon {
+    color: #E3C477;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+/* =========================================
+   MAIN MENU
+========================================= */
+
+.sidebar-menu,
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu > li {
+    margin-bottom: 5px;
+}
+
+.sidebar-menu > li > a,
+.sidebar .menu-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    width: 100%;
+    min-height: 40px;
+
+    padding: 9px 11px;
+
+    box-sizing: border-box;
+
+    color: #E5EAF2;
+    background: transparent;
+
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+
+    border-left: 3px solid transparent;
+    border-radius: 7px;
+}
+
+.sidebar-menu > li > a:hover,
+.sidebar .menu-title:hover {
+    color: #F4D58D;
+    background: #263A58;
+    border-left-color: #E3C477;
+}
+
+/* =========================================
+   ICONS
+========================================= */
+
+.menu-icon {
+    min-width: 18px;
+    font-size: 15px;
+    color: #E3C477;
+    flex-shrink: 0;
+}
+
+.submenu-icon {
+    min-width: 14px;
+    font-size: 12px;
+    color: #D6B66D;
+    flex-shrink: 0;
+}
+
+/* =========================================
+   MENU TITLES
+========================================= */
+
+.sidebar .menu-title {
+    cursor: default;
+}
+
+.menu-title-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+/* =========================================
+   SUBMENU
+========================================= */
+
+.sidebar .submenu {
+    display: block;
+
+    width: auto;
+
+    margin: 3px 0 8px 10px;
+    padding: 5px 5px 5px 8px;
+
+    background: rgba(10, 24, 45, 0.65);
+
+    border-left: 2px solid #E3C477;
+    border-radius: 0 7px 7px 0;
+}
+
+.sidebar .submenu li {
+    margin: 2px 0;
+}
+
+.sidebar .submenu a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    width: 100%;
+    min-height: 34px;
+
+    padding: 7px 8px;
+
+    box-sizing: border-box;
+
+    color: #C7D2E2;
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    border-radius: 5px;
+    border-left: 3px solid transparent;
+}
+
+.sidebar .submenu a:hover {
+    color: #F4D58D;
+    background: #263A58;
+    border-left-color: #E3C477;
+}
+
+.sidebar .submenu a:hover .submenu-icon {
+    color: #F4D58D;
+}
+
+/* Active links */
+.sidebar a.active {
+    background: #E3C477;
+    color: #14233E;
+    font-weight: 700;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        flex-basis: 220px;
+
+        padding: 15px 8px;
+    }
+
+    .sidebar-menu > li > a,
+    .sidebar .menu-title {
+        font-size: 12px;
+        padding: 9px 8px;
+    }
+
+    .sidebar .submenu a {
+        font-size: 11px;
+    }
+}

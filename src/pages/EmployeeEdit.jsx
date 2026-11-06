@@ -336,6 +336,9 @@ function EditEmployee() {
                             <option value="Local">
                                 Local Member
                             </option>
+                             <option value="Supplier">
+                                Supplier
+                            </option>
                         </select>
 
                         {errors.memberType && (
