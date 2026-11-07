@@ -2,10 +2,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getVendors, deleteVendor } from "../api/vendorApi";
+import "../CSS/Employees.css";
 
 function Vendors() {
 
     const navigate = useNavigate();
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     const [vendors, setVendors] = useState([]);
     const [searchText, setSearchText] = useState("");
@@ -87,9 +93,9 @@ function Vendors() {
 
             await deleteVendor(vendorId);
 
-            alert("Vendor deleted successfully.");
-
-            loadVendors(pageNumber);
+            showPopup("Success!", "Vendor deleted successfully.", async () => {
+                await loadVendors(pageNumber);
+            });
 
         } catch (error) {
 
@@ -336,6 +342,34 @@ function Vendors() {
 
             </div>
 
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

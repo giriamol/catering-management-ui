@@ -8,6 +8,7 @@ import {
     getHotelRates,
     deleteHotelRate
 } from "../api/hotelRateHistoryApi";
+import { getHotels } from "../api/hotelApi";
 
 const getDateText = (value) => {
     if (!value) return "—";
@@ -26,6 +27,7 @@ const HotelRateHistory = () => {
     const navigate = useNavigate();
 
     const [rates, setRates] = useState([]);
+    const [hotels, setHotels] = useState([]);
     const [loading, setLoading] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [error, setError] = useState("");
@@ -66,7 +68,70 @@ const HotelRateHistory = () => {
 
     useEffect(() => {
         loadRates();
+        loadHotels();
     }, [loadRates]);
+
+    const loadHotels = useCallback(async () => {
+        try {
+            const response = await getHotels(1, 2000);
+            const data = response?.data;
+
+            const list = Array.isArray(data)
+                ? data
+                : data?.items ??
+                  data?.Items ??
+                  data?.data ??
+                  data?.$values ??
+                  [];
+
+            setHotels(Array.isArray(list) ? list : []);
+        } catch (err) {
+            console.error(
+                "Error loading hotels:",
+                err?.response?.data ?? err
+            );
+            setHotels([]);
+        }
+    }, []);
+
+    const getHotelName = (hotelId) => {
+        if (hotelId === null || hotelId === undefined || hotelId === "") {
+            return "—";
+        }
+
+        const match = hotels.find(item => {
+            const id =
+                item?.hotelId ??
+                item?.HotelId ??
+                item?.id ??
+                item?.Id;
+
+            return String(id) === String(hotelId);
+        });
+
+        if (!match) {
+            return `Hotel ${hotelId}`;
+        }
+
+        return (
+            match?.hotelName ??
+            match?.HotelName ??
+            match?.name ??
+            match?.Name ??
+            `Hotel ${hotelId}`
+        );
+    };
+
+    const getShiftName = (shiftId) => {
+        switch (Number(shiftId)) {
+            case 1:
+                return "Half Day";
+            case 2:
+                return "Full Day";
+            default:
+                return "—";
+        }
+    };
 
     const handleDelete = async (rate) => {
         const id =
@@ -126,14 +191,14 @@ const HotelRateHistory = () => {
                 </div>
 
                 <div className="hotel-rate-header-actions">
-                    <button
+                    {/* <button
                         type="button"
                         className="hotel-rate-refresh"
                         onClick={loadRates}
                         disabled={loading}
                     >
                         {loading ? "Loading..." : "Refresh"}
-                    </button>
+                    </button> */}
 
                     <button
                         type="button"
@@ -181,7 +246,7 @@ const HotelRateHistory = () => {
                         <thead>
                             <tr>
                                 <th>Rate ID</th>
-                                <th>Caterer ID</th>
+                                <th>Caterer Name</th>
                                 <th>Half Shift ID</th>
                                 <th>Half Day Rate</th>
                                 <th>Full Shift ID</th>
@@ -221,13 +286,17 @@ const HotelRateHistory = () => {
                                             <td>{id}</td>
 
                                             <td>
-                                                {rate.hotelId ??
-                                                    rate.HotelId}
+                                                {getHotelName(
+                                                    rate.hotelId ??
+                                                    rate.HotelId
+                                                )}
                                             </td>
 
                                             <td>
-                                                {rate.halfDShiftId ??
-                                                    rate.HalfDShiftId}
+                                                {getShiftName(
+                                                    rate.halfDShiftId ??
+                                                    rate.HalfDShiftId
+                                                )}
                                             </td>
 
                                             <td>
@@ -239,8 +308,10 @@ const HotelRateHistory = () => {
                                             </td>
 
                                             <td>
-                                                {rate.fullDShiftId ??
-                                                    rate.FullDShiftId}
+                                                {getShiftName(
+                                                    rate.fullDShiftId ??
+                                                    rate.FullDShiftId
+                                                )}
                                             </td>
 
                                             <td>

@@ -1,28 +1,45 @@
+import { Navigate, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AppRoutes from "./routes/AppRoutes";
-import EmployeeEdit from "./pages/EmployeeEdit";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
-    return (
-        <div>
+    const { isAuthenticated } = useAuth();
+    const location = useLocation();
 
+    // Not logged in: show login page only
+    if (!isAuthenticated) {
+        if (location.pathname !== "/login") {
+            return <Navigate to="/login" replace />;
+        }
+
+        return <AppRoutes />;
+    }
+
+    // Already logged in: don't show login page again
+    if (location.pathname === "/login" || location.pathname === "/") {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return (
+        <div className="app-shell">
             <Header />
 
             <div className="main-container">
-
                 <Sidebar />
 
                 <main className="content">
                     <AppRoutes />
-                    
                 </main>
-
             </div>
 
+            <footer className="app-footer">
+                <span>.</span>
+                 <h3>Balaji Enterprises © 2026 Copyright.All Rights Reserved.</h3>
+            </footer>
         </div>
     );
 }
-
 
 export default App;

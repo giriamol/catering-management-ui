@@ -9,6 +9,7 @@ import "../CSS/AddEmployee.css";
 
 function AddEmployee() {
     const [errors, setErrors] = useState({});
+    const [popup, setPopup] = useState(null);
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -24,6 +25,10 @@ function AddEmployee() {
     });
 
     const navigate = useNavigate();
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     // Handle text inputs, dropdowns, and checkboxes
     const handleChange = (event) => {
@@ -128,13 +133,14 @@ function AddEmployee() {
 
             console.log("Employee created:", response.data);
 
-            alert("Employee created successfully!");
-
-            navigate("/employees");
+            showPopup("Success!", "Employee created successfully!", () => {
+                navigate("/employees");
+            });
         } catch (error) {
             console.error("Error creating employee:", error);
 
-            alert(
+            showPopup(
+                "Error",
                 error.response?.data?.message ||
                 "Failed to create employee."
             );
@@ -363,7 +369,7 @@ function AddEmployee() {
                     )}
 
                     {/* Form Actions */}
-                    <div className="form-actions">
+                   <div className="form-actions">
                         <button
                             type="button"
                             className="cancel-btn"
@@ -381,6 +387,35 @@ function AddEmployee() {
                     </div>
                 </form>
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

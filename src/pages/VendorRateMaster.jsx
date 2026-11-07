@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import "../CSS/EmployeeRateMaster.css";
 import { getVendors } from "../api/vendorApi";
-import { getVendorRates } from "../api/vendorRateMaster";
+import {
+    deleteVendorRate,
+    getVendorRates
+} from "../api/vendorRateMaster";
 
 // Format API dates as DD/MM/YYYY without timezone conversion.
 const formatDate = (dateValue) => {
@@ -40,6 +43,9 @@ const formatDate = (dateValue) => {
 
 const VendorRateMaster = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const [popup, setPopup] = useState(null);
 
     // VENDORS
     const [vendors, setVendors] = useState([]);
@@ -54,6 +60,18 @@ const VendorRateMaster = () => {
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
+
+    useEffect(() => {
+        if (location.state?.message) {
+            showPopup("Success!", location.state.message, () => {
+                navigate(location.pathname, { replace: true, state: {} });
+            });
+        }
+    }, [location.key]);
 
     // INITIAL LOAD
     useEffect(() => {
@@ -184,6 +202,35 @@ const VendorRateMaster = () => {
         });
     };
 
+    const handleDelete = async (item) => {
+        const id =
+            item.vendorRateHistoryId ??
+            item.VendorRateHistoryId ??
+            item.rateHistoryId ??
+            item.id;
+
+        if (id == null || id === "") {
+            alert("Vendor rate ID not found.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete vendor rate ${id}?`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteVendorRate(id);
+            showPopup("Success!", "Vendor rate deleted successfully.", () => {
+                loadRateMasters();
+            });
+        } catch (error) {
+            console.error("Error deleting vendor rate:", error);
+            showPopup("Error", "Unable to delete vendor rate.");
+        }
+    };
+
     // PAGINATION
     const handlePrevious = () => {
         if (pageNumber > 1 && !loading) {
@@ -214,14 +261,8 @@ const VendorRateMaster = () => {
 
                 <button
                     type="button"
-                    className="save-btn"
+                    className="add-btn"
                     onClick={handleAddVendorRate}
-                    style={{
-                        position: "relative",
-                        zIndex: 10,
-                        cursor: "pointer",
-                        pointerEvents: "auto"
-                    }}
                 >
                     + Add Vendor Rate
                 </button>
@@ -355,16 +396,23 @@ const VendorRateMaster = () => {
                                             <td>{formatDate(toDate)}</td>
 
                                             <td>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/RateMasters/vendor/edit/${item.vendorRateHistoryId}`
-                                                        )
-                                                    }
-                                                >
-                                                    Edit
-                                                </button>
+                                                <div className="employee-rate-row-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="edit-btn"
+                                                        onClick={() => handleEdit(item)}
+                                                    >
+                                                        Edit
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="delete-btn"
+                                                        onClick={() => handleDelete(item)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -418,6 +466,35 @@ const VendorRateMaster = () => {
                     </div>
                 </div>
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -40,12 +40,13 @@ import AddEditHotelRateHistory from "../pages/AddEditHotelRateHistory";
 import ReportsOverview from "../pages/ReportsOverview";
 import EditVendorRate from "../pages/EditVendorRate";
 import HotelPayment from "../pages/HotelPayment";
+import Login from "../pages/Login";
 
 
 function AppRoutes() {
     return (
         <Routes>
-
+            <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
 
             <Route path="/employees" element={<Employees />} />

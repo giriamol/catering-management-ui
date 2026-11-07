@@ -539,8 +539,8 @@ const AddEditHotelRateHistory = () => {
                                 {saving
                                     ? "Saving..."
                                     : isEditMode
-                                        ? "Update Hotel Rate"
-                                        : "Save Hotel Rate"}
+                                        ? "Update Rate"
+                                        : "Save Rate"}
                             </button>
                         </div>
                     </form>

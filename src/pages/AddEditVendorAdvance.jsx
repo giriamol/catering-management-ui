@@ -34,8 +34,13 @@ function AddEditVendorAdvance() {
     const [vendors, setVendors] = useState([]);
     const [loadingVendors, setLoadingVendors] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [popup, setPopup] = useState(null);
 
     const submittingRef = useRef(false);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     const [formData, setFormData] = useState({
         vendorId: "",
@@ -222,14 +227,16 @@ function AddEditVendorAdvance() {
             if (isEdit) {
                 await updateVendorAdvance(id, payload);
 
-                alert("Vendor advance updated successfully.");
+                showPopup("Success!", "Vendor advance updated successfully.", () => {
+                    navigate("/advances/vendor");
+                });
             } else {
                 await createVendorAdvance(payload);
 
-                alert("Vendor advance created successfully.");
+                showPopup("Success!", "Vendor advance created successfully.", () => {
+                    navigate("/advances/vendor");
+                });
             }
-
-            navigate("/advances/vendor");
         } catch (error) {
             console.error(
                 "Save vendor advance error:",
@@ -405,6 +412,35 @@ function AddEditVendorAdvance() {
                     </form>
                 )}
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

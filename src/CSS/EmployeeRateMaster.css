@@ -149,7 +149,9 @@
 }
 
 .save-btn,
-.cancel-btn {
+.cancel-btn,
+.save-rate-btn,
+.cancel-rate-btn {
     min-width: 120px;
     min-height: 42px;
     padding: 10px 20px;
@@ -158,34 +160,113 @@
     font-size: 14px;
     font-weight: 600;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen-popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    padding: 20px;
+}
+
+.screen-popup-modal {
+    width: min(420px, 100%);
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 20px 46px rgba(15, 23, 42, 0.22);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    text-align: center;
+}
+
+.screen-popup-modal h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    color: #111827;
+}
+
+.screen-popup-modal p {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.screen-popup-ok {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #1f9d55;
+    color: white;
+    min-width: 90px;
 }
 
 /* Save */
 
-.save-btn {
-    background: linear-gradient(135deg, #14233E, #263A58);
-    color: #FFFFFF;
-    border: 1px solid #14233E;
+.save-btn,
+.save-rate-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #14233E, #263A58) !important;
+    color: #FFFFFF !important;
+    border: 1px solid #14233E !important;
     box-shadow: 0 3px 7px rgba(20, 35, 62, 0.15);
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-.save-btn:hover {
-    background: linear-gradient(135deg, #263A58, #344B6B);
+.save-btn:hover,
+.save-rate-btn:hover {
+    background: linear-gradient(135deg, #263A58, #344B6B) !important;
     box-shadow: 0 5px 10px rgba(20, 35, 62, 0.20);
     transform: translateY(-1px);
 }
 
 /* Cancel */
 
-.cancel-btn {
-    background: #FFFFFF;
-    color: #263A58;
-    border: 1px solid #C8D1DE;
+.cancel-btn,
+.cancel-rate-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 10px 20px;
+    background: #FFFFFF !important;
+    color: #263A58 !important;
+    border: 1px solid #C8D1DE !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-.cancel-btn:hover {
-    background: #F1F4F8;
-    border-color: #263A58;
+.cancel-btn:hover,
+.cancel-rate-btn:hover {
+    background: #F1F4F8 !important;
+    border-color: #263A58 !important;
+}
+
+.employee-rate-page .form-actions .save-btn,
+.employee-rate-page .form-actions .cancel-btn,
+.employee-rate-page .form-actions .save-rate-btn,
+.employee-rate-page .form-actions .cancel-rate-btn {
+    display: inline-flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative;
+    z-index: 2;
 }
 
 /* =========================================================
@@ -199,6 +280,43 @@
     border: 1px solid #E5EAF1;
     box-shadow: 0 3px 12px rgba(20, 35, 62, 0.06);
     overflow: hidden;
+}
+
+.employee-rate-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.employee-rate-search {
+    display: flex;
+    justify-content: center;
+    min-width: min(420px, 60vw);
+}
+
+.employee-rate-search input {
+    width: min(420px, 100%);
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+    background: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    font-size: 15px;
+    color: #1F2937;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.employee-rate-search input:focus {
+    border-color: #D6B66D;
+    box-shadow: 0 0 0 3px rgba(214, 182, 109, 0.16);
+}
+
+.employee-rate-search input::placeholder {
+    color: #6B7280;
 }
 
 /* =========================================================
@@ -266,6 +384,13 @@
 
 .employee-rate-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.employee-rate-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* =========================================================
@@ -400,4 +525,27 @@
     .employee-rate-table {
         min-width: 850px;
     }
+}
+
+.employee-rate-page .employee-rate-header .add-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    min-height: 42px;
+    padding: 10px 20px;
+    background: #D6B66D !important;
+    color: #26364F !important;
+    border: 1px solid #C5A45D !important;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.employee-rate-page .employee-rate-header .add-btn:hover {
+    background: #C5A45D !important;
+    color: #26364F !important;
 }

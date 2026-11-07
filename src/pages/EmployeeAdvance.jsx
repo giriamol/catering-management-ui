@@ -13,10 +13,15 @@ function EmployeeAdvance() {
     const navigate = useNavigate();
 
     const [advances, setAdvances] = useState([]);
+    const [popup, setPopup] = useState(null);
 
     const [searchText, setSearchText] =   useState("");
 
     const [loading, setLoading] =  useState(false);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     // =========================================================
     // LOAD DATA
@@ -116,11 +121,9 @@ function EmployeeAdvance() {
 
             await deleteEmployeeAdvance(id);
 
-            alert(
-                "Employee advance deleted successfully."
-            );
-
-            await loadAdvances();
+            showPopup("Success!", "Employee advance deleted successfully.", async () => {
+                await loadAdvances();
+            });
 
         } catch (error) {
 
@@ -198,40 +201,34 @@ function EmployeeAdvance() {
 
                 </div>
 
+                <div className="employee-advance-header-actions">
 
-                <button
-                    type="button"
-                    className="add-advance-btn"
-                    onClick={handleAdd}
-                >
-                    + Add Employee Advance
-                </button>
+                    <div className="advance-search">
 
-            </div>
+                        <label>
+                            Search
+                        </label>
 
+                        <input
+                            type="text"
+                            placeholder="Search employee, ID or description"
+                            value={searchText}
+                            onChange={(e) =>
+                                setSearchText(
+                                    e.target.value
+                                )
+                            }
+                        />
 
-            {/* =================================================
-                FILTER
-            ================================================= */}
+                    </div>
 
-            <div className="advance-filter-card">
-
-                <div className="advance-search">
-
-                    <label>
-                        Search
-                    </label>
-
-                    <input
-                        type="text"
-                        placeholder="Search employee, ID or description"
-                        value={searchText}
-                        onChange={(e) =>
-                            setSearchText(
-                                e.target.value
-                            )
-                        }
-                    />
+                    <button
+                        type="button"
+                        className="add-advance-btn"
+                        onClick={handleAdd}
+                    >
+                        + Add Employee Advance
+                    </button>
 
                 </div>
 

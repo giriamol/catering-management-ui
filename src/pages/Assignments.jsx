@@ -11,7 +11,7 @@ import { addSupplierAssignment } from "../api/dailySupplierAssignmentToVendorApi
 import DatePicker from "../components/DatePicker";
 import "../CSS/EmployeeHotelAssignment.css";
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 20;
 
 const getTodayDate = () => {
     const today = new Date();

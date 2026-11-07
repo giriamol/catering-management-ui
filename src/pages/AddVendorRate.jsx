@@ -13,6 +13,11 @@ const AddVendorRate = () => {
     const [loadingVendors, setLoadingVendors] = useState(false);
     const [saving, setSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     const [formData, setFormData] = useState({
         vendorId: "",
@@ -173,10 +178,8 @@ const AddVendorRate = () => {
 
             await createVendorRate(payload);
 
-            navigate("/RateMasters/vendor", {
-                state: {
-                    message: "Vendor rate saved successfully.",
-                },
+            showPopup("Success!", "Vendor rate saved successfully.", () => {
+                navigate("/RateMasters/vendor");
             });
         } catch (error) {
             console.error(
@@ -386,6 +389,35 @@ const AddVendorRate = () => {
                     </div>
                 </form>
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

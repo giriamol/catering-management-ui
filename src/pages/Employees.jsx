@@ -12,8 +12,13 @@ function Employees() {
     const [totalPages, setTotalPages] = useState(0);
     const [totalRecords, setTotalRecords] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [popup, setPopup] = useState(null);
 
     const navigate = useNavigate();
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     const handleEdit = (employeeId) => {
         navigate(`/employees/edit/${employeeId}`);
@@ -31,13 +36,14 @@ function Employees() {
         try {
             await deleteEmployee(employeeId);
 
-            alert("Employee deleted successfully.");
-
-            loadEmployees(pageNumber);
+            showPopup("Success!", "Employee deleted successfully.", () => {
+                loadEmployees(pageNumber);
+            });
         } catch (error) {
             console.error("Error deleting employee:", error);
 
-            alert(
+            showPopup(
+                "Error",
                 error.response?.data?.message ||
                 "Failed to delete employee."
             );
@@ -316,6 +322,35 @@ function Employees() {
                 </div>
 
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );
