@@ -354,3 +354,48 @@
         width: 100%;
     }
 }
+/* FORCE SAVE AND CANCEL BUTTONS TO REMAIN VISIBLE */
+.add-employee-page .form-actions {
+    display: flex !important;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.add-employee-page .form-actions .save-btn,
+.add-employee-page .form-actions .cancel-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    min-width: 125px;
+    height: 43px;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.add-employee-page .form-actions .save-btn {
+    background: #1e3558 !important;
+    color: #ffffff !important;
+    border: 1px solid #1e3558 !important;
+}
+
+.add-employee-page .form-actions .cancel-btn {
+    background: #ffffff !important;
+    color: #1e3558 !important;
+    border: 1px solid #1e3558 !important;
+}
+
+.add-employee-page .form-actions .save-btn:hover,
+.add-employee-page .form-actions .cancel-btn:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+}

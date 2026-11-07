@@ -363,7 +363,7 @@ function AddEmployee() {
                     )}
 
                     {/* Form Actions */}
-                    <div className="form-actions">
+                   <div className="form-actions">
                         <button
                             type="button"
                             className="cancel-btn"
