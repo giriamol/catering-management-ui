@@ -1,38 +1,7 @@
-// import Header from "./components/Header";
-// import Sidebar from "./components/Sidebar";
-// import AppRoutes from "./routes/AppRoutes";
-// import EmployeeEdit from "./pages/EmployeeEdit";
-
-// function App() {
-//     return (
-//         <div>
-
-//             <Header />
-
-//             <div className="main-container">
-
-//                 <Sidebar />
-
-//                 <main className="content">
-//                     <AppRoutes />
-                    
-//                 </main>
-
-//             </div>
-
-//         </div>
-//     );
-// }
-
-
-// export default App;
-
 import { Navigate, useLocation } from "react-router-dom";
-
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AppRoutes from "./routes/AppRoutes";
-
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -54,7 +23,7 @@ function App() {
     }
 
     return (
-        <div>
+        <div className="app-shell">
             <Header />
 
             <div className="main-container">
@@ -64,6 +33,11 @@ function App() {
                     <AppRoutes />
                 </main>
             </div>
+
+            <footer className="app-footer">
+                <span>.</span>
+                 <h3>Balaji Enterprises © 2026 Copyright.All Rights Reserved.</h3>
+            </footer>
         </div>
     );
 }

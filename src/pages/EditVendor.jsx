@@ -18,6 +18,11 @@ function EditVendor() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     useEffect(() => {
         loadVendor();
@@ -87,9 +92,9 @@ function EditVendor() {
 
             await updateVendor(id, vendor);
 
-            alert("Vendor updated successfully!");
-
-            navigate("/vendors");
+            showPopup("Success!", "Vendor updated successfully!", () => {
+                navigate("/vendors");
+            });
 
         } catch (error) {
 
@@ -221,6 +226,34 @@ function EditVendor() {
 
             </div>
 
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { getHotels } from "../api/hotelApi";
 import { getVendors } from "../api/vendorApi";
 import { getEmployees } from "../api/employeeApi";
-import { getAssignmentsByDate } from "../api/dailyHotelAssignmentApi";
+import {
+    getAssignmentsByDate,
+    getVendorsByDate,
+} from "../api/dailyHotelAssignmentApi";
+import { getSupplierAssignmentsByDate } from "../api/dailySupplierAssignmentToVendorApi";
 
 import "../CSS/dashboard.css";
 
@@ -67,6 +71,60 @@ const isActive = (item) => {
     );
 };
 
+const isCancelled = (item) => {
+    const value =
+        item?.isCancelled ??
+        item?.IsCancelled ??
+        item?.cancelled ??
+        item?.Cancelled ??
+        item?.isCanceled ??
+        item?.IsCanceled;
+
+    return (
+        value === true ||
+        value === 1 ||
+        String(value).toLowerCase() === "true"
+    );
+};
+
+const getAssignmentQuantity = (item) => {
+    const candidates = [
+        item?.emp_Quantity,
+        item?.Emp_Quantity,
+        item?.employeeCount,
+        item?.EmployeeCount,
+        item?.employeeQuantity,
+        item?.EmployeeQuantity,
+        item?.quantity,
+        item?.Quantity,
+    ];
+
+    for (const candidate of candidates) {
+        const parsed = Number(candidate);
+        if (Number.isFinite(parsed) && parsed >= 0) {
+            return parsed;
+        }
+    }
+
+    return null;
+};
+
+const getTotalAssignmentCount = (items = []) => {
+    return items.reduce((total, item) => {
+        if (isCancelled(item)) {
+            return total;
+        }
+
+        const quantity = getAssignmentQuantity(item);
+
+        if (quantity !== null) {
+            return total + quantity;
+        }
+
+        return total + 1;
+    }, 0);
+};
+
 function Dashboard() {
     const navigate = useNavigate();
 
@@ -93,6 +151,8 @@ function Dashboard() {
                 getVendors(1, 2000),
                 getHotels(1, 2000),
                 getAssignmentsByDate(today),
+                getVendorsByDate(today),
+                getSupplierAssignmentsByDate(today),
             ]);
 
             const [
@@ -100,6 +160,8 @@ function Dashboard() {
                 vendorResult,
                 hotelResult,
                 assignmentResult,
+                vendorAssignmentResult,
+                supplierAssignmentResult,
             ] = results;
 
             // Employees
@@ -135,7 +197,7 @@ function Dashboard() {
                     ])
                     : [];
 
-            // Today's assignments
+            // Today's assignments across employee, vendor and supplier allocation types
             const assignments =
                 assignmentResult.status === "fulfilled"
                     ? extractList(assignmentResult.value, [
@@ -146,12 +208,37 @@ function Dashboard() {
                     ])
                     : [];
 
+            const vendorAssignments =
+                vendorAssignmentResult.status === "fulfilled"
+                    ? extractList(vendorAssignmentResult.value, [
+                        "assignments",
+                        "Assignments",
+                        "items",
+                        "Items",
+                    ])
+                    : [];
+
+            const supplierAssignments =
+                supplierAssignmentResult.status === "fulfilled"
+                    ? extractList(supplierAssignmentResult.value, [
+                        "assignments",
+                        "Assignments",
+                        "items",
+                        "Items",
+                    ])
+                    : [];
+
+            const todayAssignmentTotal =
+                getTotalAssignmentCount(assignments) +
+                getTotalAssignmentCount(vendorAssignments) +
+                getTotalAssignmentCount(supplierAssignments);
+
             // Update dashboard values
             setDashboardData({
                 totalEmployees: employees.length,
                 activeVendors: vendors.filter(isActive).length,
                 activeHotels: hotels.filter(isActive).length,
-                todayAssignments: assignments.length,
+                todayAssignments: todayAssignmentTotal,
             });
 
             const failedRequests = results.filter(
@@ -212,14 +299,14 @@ function Dashboard() {
             value: dashboardData.activeHotels,
             icon: "🏨",
             color: "hotels",
-            description: "Registered active hotels",
+            description: "Registered active Caterers",
         },
         {
             title: "Today's Assignments",
             value: dashboardData.todayAssignments,
             icon: "📋",
             color: "assignments",
-            description: "Today's hotel assignments",
+            description: "Today's Caterers assignments",
         },
     ];
 
@@ -275,7 +362,7 @@ function Dashboard() {
                     </span> */}
 
                     <h1>
-                         <span> Balaji ENTERPRISES</span>
+                         <span> BALAJI ENTERPRISES</span>
                     </h1>
 
                     <div className="dashboard-title-divider">
@@ -292,23 +379,7 @@ function Dashboard() {
 
                 </div>
 
-                <button
-                    className="dashboard-refresh-btn"
-                    onClick={loadDashboardData}
-                    disabled={loading}
-                >
-                    <span
-                        className={
-                            loading
-                                ? "refresh-icon spinning"
-                                : "refresh-icon"
-                        }
-                    >
-                        ↻
-                    </span>
-
-                    {loading ? "Refreshing..." : "Refresh Data"}
-                </button>
+                
 
             </div>
 
@@ -426,13 +497,6 @@ function Dashboard() {
                 </div>
 
             </div>
-
-            {/* Dashboard Footer */}
-           <div className="dashboard-footer">
-    {/* <span>Balaji Enterprises</span> */}
-    <span>Catering Management System</span>
-    <span>© 2026 Balaji Enterprises. All Rights Reserved.</span>
-</div>
 
         </div>
     );

@@ -19,6 +19,11 @@ function EditHotel() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     // =========================
     // Load Hotel
@@ -122,9 +127,9 @@ function EditHotel() {
 
             await updateHotel(id, hotel);
 
-            alert("Hotel updated successfully.");
-
-            navigate("/hotels");
+            showPopup("Success!", "Hotel updated successfully.", () => {
+                navigate("/hotels");
+            });
 
         } catch (error) {
 
@@ -357,6 +362,34 @@ function EditHotel() {
 
             </div>
 
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

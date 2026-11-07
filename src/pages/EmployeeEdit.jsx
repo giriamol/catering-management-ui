@@ -10,6 +10,7 @@ function EditEmployee() {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
+    const [popup, setPopup] = useState(null);
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -27,6 +28,10 @@ function EditEmployee() {
     useEffect(() => {
         loadEmployee();
     }, [id]);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     const loadEmployee = async () => {
         try {
@@ -149,13 +154,14 @@ function EditEmployee() {
 
             await updateEmployee(id, employee);
 
-            alert("Employee updated successfully!");
-
-            navigate("/employees");
+            showPopup("Success!", "Employee updated successfully!", () => {
+                navigate("/employees");
+            });
         } catch (error) {
             console.error("Error updating employee:", error);
 
-            alert(
+            showPopup(
+                "Error",
                 error.response?.data?.message ||
                 "Failed to update employee."
             );
@@ -407,6 +413,35 @@ function EditEmployee() {
 
                 </form>
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

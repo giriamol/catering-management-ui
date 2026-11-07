@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
     getHotels,
-    //deleteHotel
+    deleteHotel
 } from "../api/hotelApi";
 
 import { useNavigate } from "react-router-dom";
@@ -12,8 +12,13 @@ function Hotels() {
     const [hotels, setHotels] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
+    const [popup, setPopup] = useState(null);
 
     const navigate = useNavigate();
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     // =========================
     // Load Hotels
@@ -76,9 +81,9 @@ function Hotels() {
         try {
             await deleteHotel(hotelId);
 
-            alert("Hotel deleted successfully.");
-
-            await loadHotels();
+            showPopup("Success!", "Hotel deleted successfully.", async () => {
+                await loadHotels();
+            });
 
         } catch (error) {
             console.error("Error deleting hotel:", error);
@@ -312,6 +317,34 @@ function Hotels() {
 
             </div>
 
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -18,6 +18,11 @@ function VendorAdvance() {
     const [vendors, setVendors] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
 
     // Handles APIs returning either an array or an object containing an array.
     const getArray = (response) => {
@@ -124,8 +129,9 @@ function VendorAdvance() {
 
         try {
             await deleteVendorAdvance(id);
-            alert("Vendor advance deleted successfully.");
-            await loadAdvances();
+            showPopup("Success!", "Vendor advance deleted successfully.", async () => {
+                await loadAdvances();
+            });
         } catch (error) {
             console.error("Delete error:", error);
 
@@ -162,25 +168,24 @@ function VendorAdvance() {
                     <p>Manage vendor advance payments.</p>
                 </div>
 
-                <button
-                    type="button"
-                    className="add-advance-btn"
-                    onClick={handleAdd}
-                >
-                    + Add Vendor Advance
-                </button>
-            </div>
+                <div className="employee-advance-header-actions">
+                    <div className="advance-search">
+                        <label>Search</label>
+                        <input
+                            type="text"
+                            placeholder="Search vendor, ID or description"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
 
-            <div className="advance-filter-card">
-                <div className="advance-search">
-                    <label>Search</label>
-
-                    <input
-                        type="text"
-                        placeholder="Search vendor, ID or description"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                    />
+                    <button
+                        type="button"
+                        className="add-advance-btn"
+                        onClick={handleAdd}
+                    >
+                        + Add Vendor Advance
+                    </button>
                 </div>
             </div>
 
@@ -295,6 +300,35 @@ function VendorAdvance() {
                     </div>
                 )}
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

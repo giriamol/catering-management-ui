@@ -3,24 +3,26 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 25px;
-    background: #ffffff;
-    border-bottom: 1px solid #e8e2d7;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    min-height: 72px;
+    padding: 16px 25px;
+    background: linear-gradient(90deg, #14233E, #1d3457);
+    border-bottom: 3px solid #d6b76a;
+    box-shadow: 0 4px 12px rgba(20, 35, 62, 0.12);
 }
 
 .header h2 {
     margin: 0;
-    color: #49391f;
-    font-size: 21px;
-    font-weight: 600;
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
 }
 
 .user-info {
     display: flex;
     align-items: center;
     gap: 18px;
-    color: #49391f;
+    color: #edf2ff;
     font-size: 14px;
     font-weight: 600;
 }
@@ -29,14 +31,15 @@
     padding: 9px 18px;
     border: none;
     border-radius: 7px;
-    background: #a67c35;
-    color: #ffffff;
+    background: #d6b76a;
+    color: #14233E;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .logout-button:hover {
-    background: #896326;
+    background: #f0d58e;
+    transform: translateY(-1px);
 }

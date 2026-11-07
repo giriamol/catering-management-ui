@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../CSS/EmployeeRateMaster.css";
 
-import { getEmployeeRateMastersPaged } from "../api/employeeRateMasterApi";
+import {
+    getEmployeeRateMastersPaged,
+    deleteEmployeeRateMaster
+} from "../api/employeeRateMasterApi";
 import { getEmployees } from "../api/employeeApi";
 
 // Formats API date values as DD/MM/YYYY without timezone conversion.
@@ -55,9 +58,11 @@ const EmployeeRateMaster = () => {
 
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
 
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize] = useState(20);
+    const [popup, setPopup] = useState(null);
 
     const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -165,8 +170,48 @@ const EmployeeRateMaster = () => {
         );
     };
 
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
+
     const handleAdd = () => {
         navigate("/RateMasters/employeerate/add");
+    };
+
+    const handleDelete = async (rateMasterId) => {
+        if (
+            rateMasterId === null ||
+            rateMasterId === undefined ||
+            rateMasterId === ""
+        ) {
+            alert("Employee rate history ID not found.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete employee rate record ${rateMasterId}?`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setDeletingId(rateMasterId);
+            await deleteEmployeeRateMaster(rateMasterId);
+            showPopup("Success!", "Employee rate deleted successfully.", () => {
+                loadRateRecords();
+            });
+        } catch (error) {
+            console.error(
+                "Error deleting employee rate record:",
+                error.response?.data || error
+            );
+            showPopup(
+                "Error",
+                "Unable to delete employee rate record."
+            );
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     const handleEdit = (rateMasterId) => {
@@ -207,25 +252,27 @@ const EmployeeRateMaster = () => {
                     <p>Employees added to Rate Master</p>
                 </div>
 
-                <button
-                    type="button"
-                    className="add-rate-btn"
-                    onClick={handleAdd}
-                >
-                    + Add Employee Rate
-                </button>
-            </div>
+                <div className="employee-rate-header-actions">
+                    <div className="employee-rate-search">
+                        <input
+                            type="text"
+                            placeholder="Search employee by name or ID..."
+                            value={searchText}
+                            onChange={(e) => {
+                                setSearchText(e.target.value);
+                                setPageNumber(1);
+                            }}
+                        />
+                    </div>
 
-            <div className="employee-rate-search">
-                <input
-                    type="text"
-                    placeholder="Search employee by name or ID..."
-                    value={searchText}
-                    onChange={(e) => {
-                        setSearchText(e.target.value);
-                        setPageNumber(1);
-                    }}
-                />
+                    <button
+                        type="button"
+                        className="add-btn"
+                        onClick={handleAdd}
+                    >
+                        + Add Employee Rate
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -305,15 +352,33 @@ const EmployeeRateMaster = () => {
                                                 </td>
 
                                                 <td>
-                                                    <button
-                                                        type="button"
-                                                        className="edit-rate-btn"
-                                                        onClick={() =>
-                                                            handleEdit(rateMasterId)
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </button>
+                                                    <div className="employee-rate-row-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="edit-btn"
+                                                            onClick={() =>
+                                                                handleEdit(rateMasterId)
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            className="delete-btn"
+                                                            onClick={() =>
+                                                                handleDelete(rateMasterId)
+                                                            }
+                                                            disabled={
+                                                                deletingId ===
+                                                                rateMasterId
+                                                            }
+                                                        >
+                                                            {deletingId === rateMasterId
+                                                                ? "Deleting..."
+                                                                : "Delete"}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -355,6 +420,35 @@ const EmployeeRateMaster = () => {
                         </button>
                     </div>
                 </>
+            )}
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

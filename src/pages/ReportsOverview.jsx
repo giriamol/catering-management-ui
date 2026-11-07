@@ -15,11 +15,15 @@ import { getVendors } from "../api/vendorApi";
 import { getHotels } from "../api/hotelApi";
 
 import {
-    GetemployeeReportwork ,getCaterersPaymentReport,
-    getAllCaterersPaymentReport,   
+    GetemployeeReportwork,
+    getCaterersPaymentReport,
+    getAllCaterersPaymentReport,
 } from "../api/hotelAssignmentDataApi";
-//import{ 
-//}from "../api/hotelAssignmentData";
+import {
+    getSupplierByDateRange,
+    getAllSupplierSummary,
+} from "../api/dailySupplierAssignmentToVendorApi";
+
 const reportItems = [
     { id: "employee-payment", title: "Employee Payment Statements", implemented: true },
     { id: "all-employee-payment", title: "All Employee Payment Statements", implemented: true },
@@ -355,7 +359,8 @@ function ReportsOverview() {
     useEffect(() => {
         if (
             !isSingleVendorReport &&
-            !isVendorWorkReport
+            !isVendorWorkReport &&
+            !isSingleSupplierReport
         ) {
             return undefined;
         }
@@ -391,7 +396,7 @@ function ReportsOverview() {
         return () => {
             cancelled = true;
         };
-    }, [isSingleVendorReport, isVendorWorkReport]);
+    }, [isSingleVendorReport, isVendorWorkReport, isSingleSupplierReport]);
 
     /* Load hotels for caterer, supplier, employee work, and vendor work reports. */
     useEffect(() => {
@@ -518,8 +523,8 @@ function ReportsOverview() {
             return;
         }
 
-        if (isSingleSupplierReport && !formData.hotelId) {
-            setError("Please select a caterer.");
+        if (isSingleSupplierReport && !formData.vendorId) {
+            setError("Please select a vendor.");
             return;
         }
 
@@ -558,18 +563,15 @@ function ReportsOverview() {
                     formData.toDate
                 );
             } else if (isSingleSupplierReport) {
-                response = await getCaterersPaymentReport(
-                    Number(formData.hotelId),
+                response = await getSupplierByDateRange(
+                    Number(formData.vendorId),
                     formData.fromDate,
-                    formData.toDate,
-                    status
+                    formData.toDate
                 );
-                console.log("response", response);
             } else if (isAllSupplierReport) {
-                response = await getAllCaterersPaymentReport(
+                response = await getAllSupplierSummary(
                     formData.fromDate,
-                    formData.toDate,
-                    status
+                    formData.toDate
                 );
             } else if (isSingleEmployeeReport) {
                 response = await getReportEmployee(
@@ -617,7 +619,7 @@ function ReportsOverview() {
 
             let rows = getResponseRows(response);
 
-            if ((isCatererReport || isSupplierReport) && formData.status !== "All") {
+            if (isCatererReport && formData.status !== "All") {
                 rows = rows.filter((row) =>
                     matchesStatusFilter(row, formData.status)
                 );
@@ -627,8 +629,10 @@ function ReportsOverview() {
                 title: activeReport.title,
                 fromDate: formData.fromDate,
                 toDate: formData.toDate,
-                status:
-                    isEmployeeWorkReport || isVendorWorkReport  ? "" : status || "All",rows,
+                status: isEmployeeWorkReport || isVendorWorkReport || isSupplierReport
+                    ? "N/A"
+                    : status || "All",
+                rows,
             });
 
             if (!rows.length) {
@@ -798,7 +802,8 @@ function ReportsOverview() {
                                         )}
 
                                         {(isSingleVendorReport ||
-                                            isVendorWorkReport) && (
+                                            isVendorWorkReport ||
+                                            isSingleSupplierReport) && (
                                             <label className="report-form-field">
                                                 <span>Vendor Name</span>
 
@@ -835,7 +840,7 @@ function ReportsOverview() {
                                             </label>
                                         )}
 
-                                        {(isSingleCatererReport || isSingleSupplierReport) && (
+                                        {(isSingleCatererReport) && (
                                             <label className="report-form-field">
                                                 <span>Caterer Name</span>
 
@@ -971,7 +976,8 @@ function ReportsOverview() {
                                         </label>
 
                                         {!isEmployeeWorkReport &&
-                                            !isVendorWorkReport && (
+                                            !isVendorWorkReport &&
+                                            !isSupplierReport && (
                                                 <label className="report-form-field">
                                                     <span>Payment Status</span>
 
@@ -1046,8 +1052,8 @@ function ReportsOverview() {
                                         <div className="report-company-header">
                                             <h1>Balaji Enterprises</h1>
                                             <p>
-                                                Address: Godhale Nagar, Near
-                                                Gadital, Hadapsar, Pune - 412300
+                                                Address: S.R.No.19/A Nataraj Colony,Gondhale Nagar, Sawad Road, 
+                                                Hadapsar, Pune - 411028.
                                             </p>
                                             <p>
                                                 GSTIN: 789ABDYDH457KO45621
@@ -1073,7 +1079,8 @@ function ReportsOverview() {
                                             </p>
 
                                             {!isEmployeeWorkReport &&
-                                                !isVendorWorkReport && (
+                                                !isVendorWorkReport &&
+                                                !isSupplierReport && (
                                                     <p>
                                                         Payment Status:{" "}
                                                         {generatedReport.status}
@@ -1082,17 +1089,16 @@ function ReportsOverview() {
 
                                             {(isSingleEmployeeReport ||
                                                 isEmployeeWorkReport) && (
-                                                <p>
-                                                    Employee:{" "}
-                                                    {getEmployeeName(
-                                                        selectedEmployee
-                                                    ) ||
-                                                        `Employee ${formData.employeeId}`}
-                                                </p>
+                                                <p className="employee-name">
+    Employee:{" "}
+    {getEmployeeName(selectedEmployee) ||
+        `Employee ${formData.employeeId}`}
+</p>
                                             )}
 
                                             {(isSingleVendorReport ||
-                                                isVendorWorkReport) && (
+                                                isVendorWorkReport ||
+                                                isSingleSupplierReport) && (
                                                 <p>
                                                     Vendor:{" "}
                                                     {getVendorName(
@@ -1102,7 +1108,7 @@ function ReportsOverview() {
                                                 </p>
                                             )}
 
-                                            {(isSingleCatererReport || isSingleSupplierReport) && (
+                                            {(isSingleCatererReport) && (
                                                 <p>
                                                     Caterer:{" "}
                                                     {getHotelName(

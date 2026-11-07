@@ -25,6 +25,10 @@ export const updateHotel = (id, hotel) => {
     return axiosClient.put(`/Hotels/${id}`, hotel);
 };
 
+// Delete hotel
+export const deleteHotel = (id) => {
+    return axiosClient.delete(`/Hotels/${id}`);
+};
 
 export const GetHotelsWithoutRateHistory = () => {
     return axiosClient.get("/Hotels/without-rate-history");

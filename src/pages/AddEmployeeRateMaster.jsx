@@ -35,6 +35,7 @@ const AddEmployeeRateMaster = () => {
 
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [popup, setPopup] = useState(null);
 
     const [form, setForm] = useState({
         employeeId: "",
@@ -111,6 +112,10 @@ const AddEmployeeRateMaster = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
     };
 
     const handleChange = (e) => {
@@ -190,18 +195,25 @@ const AddEmployeeRateMaster = () => {
 
             if (isEditMode) {
                 await updateEmployeeRateMaster(rateId, payload);
-                alert("Employee rate updated successfully.");
+                showPopup(
+                    "Success!",
+                    "Employee rate updated successfully.",
+                    () => navigate("/RateMasters/employeerate")
+                );
             } else {
                 await createEmployeeRateMaster(payload);
-                alert("Employee rate saved successfully.");
+                showPopup(
+                    "Success!",
+                    "Employee rate saved successfully.",
+                    () => navigate("/RateMasters/employeerate")
+                );
             }
-
-            navigate("/RateMasters/employeerate");
         } catch (error) {
             console.error("Employee rate save error:", error);
             console.error("API Response:", error.response?.data);
 
-            alert(
+            showPopup(
+                "Error",
                 error.response?.data?.message ||
                 error.response?.data?.title ||
                 "Unable to save employee rate."
@@ -370,7 +382,7 @@ const AddEmployeeRateMaster = () => {
                     <div className="form-actions">
                         <button
                             type="submit"
-                            className="save-rate-btn"
+                            className="save-btn"
                             disabled={loading}
                         >
                             {loading
@@ -382,7 +394,7 @@ const AddEmployeeRateMaster = () => {
 
                         <button
                             type="button"
-                            className="cancel-rate-btn"
+                            className="cancel-btn"
                             onClick={handleCancel}
                             disabled={loading}
                         >
@@ -391,6 +403,35 @@ const AddEmployeeRateMaster = () => {
                     </div>
                 </form>
             </div>
+
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={() => {
+                        setPopup(null);
+                        popup.onClose?.();
+                    }}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={() => {
+                                setPopup(null);
+                                popup.onClose?.();
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

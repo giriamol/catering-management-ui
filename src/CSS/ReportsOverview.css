@@ -269,7 +269,7 @@
 .report-company-header p {
     margin: 4px 0;
     color: #333;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
@@ -292,30 +292,32 @@
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 18px;
     width: 100%;
     margin: 20px 0;
-    text-align: center;
+    text-align: left;
 }
 
 .report-output-heading h2 {
     display: inline-block;
     width: auto;
     margin: 0;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
+    text-align: left;
 }
 
 .report-output-heading p {
     display: inline-block;
     width: auto;
     margin: 0;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.4;
     white-space: nowrap;
+    text-align: left;
 }
 
 /* Keep all three items on one line in PDF */
@@ -325,11 +327,11 @@
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
         gap: 12px !important;
         width: 100% !important;
         margin: 12px 0 18px !important;
-        text-align: center !important;
+        text-align: left !important;
     }
 
     .report-output-heading h2,
@@ -342,7 +344,7 @@
         font-size: 10px !important;
         line-height: 1.4 !important;
         white-space: nowrap !important;
-        text-align: center !important;
+        text-align: left !important;
     }
 }
 
@@ -370,13 +372,13 @@
 
 .summary-box span {
     color: #6a6a6a;
-    font-size: 0.76rem;
+    font-size: 0.82rem;
     text-transform: uppercase;
 }
 
 .summary-box strong {
     color: #1a1a1a;
-    font-size: 1rem;
+    font-size: 1.12rem;
 }
 
 /* =========================================
@@ -405,7 +407,7 @@
     padding: 10px 8px;
     border: 1px solid #e3e2df;
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
     vertical-align: middle;
 }
 
@@ -792,3 +794,9 @@
     }
 }
 
+.employee-name {
+    text-align: left !important;
+    width: 100%;
+    display: block;
+    margin: 0;
+}
