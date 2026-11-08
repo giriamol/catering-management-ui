@@ -87,7 +87,7 @@ const HotelPayment = () => {
                     setHotels(normalizedHotels);
 
                     if (normalizedHotels.length === 0) {
-                        setError("No hotels were returned by the hotel API.");
+                        setError("No hotels were returned by the Caters API.");
                     }
                 }
             } catch (err) {
@@ -190,14 +190,14 @@ const HotelPayment = () => {
             const result = data?.data ?? data;
 
             if (!result || typeof result !== "object") {
-                setError("No hotel payment summary was returned.");
+                setError("No Caters payment summary was returned.");
                 return;
             }
 
             setSummary(result);
             setSearched(true);
         } catch (err) {
-            console.error("Get hotel payment summary failed:", err);
+            console.error("Get Caters payment summary failed:", err);
             setError(getErrorMessage(err));
         } finally {
             setLoading(false);
@@ -244,7 +244,7 @@ const HotelPayment = () => {
         setSuccessMessage("");
 
         if (!summary) {
-            setError("Load the hotel payment summary first.");
+            setError("Load the Caters payment summary first.");
             return;
         }
 
@@ -262,7 +262,7 @@ const HotelPayment = () => {
             !Number.isSafeInteger(resolvedHotelId) ||
             resolvedHotelId <= 0
         ) {
-            setError("Invalid Hotel ID.");
+            setError("Invalid Caters ID.");
             return;
         }
 
@@ -303,7 +303,7 @@ const HotelPayment = () => {
 
             setSuccessMessage(
                 response?.data?.message ||
-                    "Hotel payment saved successfully."
+                    "Caters payment saved successfully."
             );
 
             setShowPaymentForm(false);
@@ -339,7 +339,7 @@ const HotelPayment = () => {
                 );
             }
         } catch (err) {
-            console.error("Save hotel payment failed:", err);
+            console.error("Save Caters payment failed:", err);
             setError(getErrorMessage(err));
         } finally {
             setSavingPayment(false);
@@ -355,14 +355,14 @@ const HotelPayment = () => {
     const hotelInformation = summary
         ? [
               {
-                  label: "Hotel Name",
+                  label: "Caters Name",
                   value:
                       summary.hotelName ||
                       selectedHotel?.hotelName ||
                       "—",
               },
               {
-                  label: "Hotel ID",
+                  label: "Caters ID",
                   value: summary.hotelId ?? hotelId,
               },
               {
@@ -419,9 +419,9 @@ const HotelPayment = () => {
         <div className="daily-payment-page">
             <div className="payment-page-header">
                 <div>
-                    <h2>Hotel Payment</h2>
+                    <h2>Caters Payment</h2>
                     <p>
-                        View hotel information and payment details for the
+                        View Caters information and payment details for the
                         selected date range.
                     </p>
                 </div>
@@ -432,7 +432,7 @@ const HotelPayment = () => {
                 onSubmit={handleSearch}
             >
                 <div className="payment-filter-field">
-                    <label htmlFor="hotelId">Hotel Name</label>
+                    <label htmlFor="hotelId">Caters Name</label>
 
                     <select
                         id="hotelId"
@@ -453,10 +453,10 @@ const HotelPayment = () => {
                     >
                         <option value="">
                             {loadingHotels
-                                ? "Loading hotels..."
+                                ? "Loading Caters..."
                                 : hotels.length
-                                  ? "-- Select Hotel Name --"
-                                  : "-- No hotels found --"}
+                                  ? "-- Select Caters Name --"
+                                  : "-- No Caters found --"}
                         </option>
 
                         {hotels.map((hotel) => (
@@ -545,7 +545,7 @@ const HotelPayment = () => {
                 <>
                     <div className="payment-table-card">
                         <div className="payment-table-heading">
-                            <h3>Hotel Payment Details</h3>
+                            <h3>Caterers Payment Details</h3>
                             <span>
                                 {formatDate(summary.fromDate || fromDate)}
                                 {" – "}
@@ -566,7 +566,7 @@ const HotelPayment = () => {
                                 <tbody>
                                     <tr className="payment-section-row">
                                         <td colSpan="3">
-                                            Hotel Information
+                                            Caters Information
                                         </td>
                                     </tr>
 
@@ -639,7 +639,7 @@ const HotelPayment = () => {
                             onSubmit={handleSavePayment}
                         >
                             <div className="payment-table-heading">
-                                <h3>Add Hotel Payment</h3>
+                                <h3>Add Caters Payment</h3>
                                 <span>
                                     Total Payable: ₹{" "}
                                     {formatAmount(totalPayable)}
@@ -747,11 +747,11 @@ const HotelPayment = () => {
             {!searched && !loading && !error && (
                 <div className="payment-table-card">
                     <div className="payment-table-heading">
-                        <h3>Hotel Payment Summary</h3>
+                        <h3>Caters Payment Summary</h3>
                     </div>
 
                     <div className="empty-row">
-                        Select a hotel, choose a date range, and click Get
+                        Select a Caters, choose a date range, and click Get
                         Payment Summary.
                     </div>
                 </div>
@@ -760,7 +760,7 @@ const HotelPayment = () => {
             {loading && (
                 <div className="payment-table-card">
                     <div className="empty-row">
-                        Loading hotel payment summary...
+                        Loading Caters payment summary...
                     </div>
                 </div>
             )}

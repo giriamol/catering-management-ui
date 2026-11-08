@@ -30,7 +30,7 @@ export const getAllSupplierAssignments = () => {
 
 // Get outsourced supplier assignments by date
 export const getSupplierAssignmentsByDate = (date) => {
-    return axiosClient.get(`${API_URL}/date/${date}`);
+    return axiosClient.get(`${API_URL}/${date}`);
 };
  
 

@@ -1127,7 +1127,7 @@ function ReportsOverview() {
                                                             <tr>
                                                                 <th>Sr. No.</th>
                                                                 {/* <th>Caterer ID</th> */}
-                                                                <th>Caterer Name</th>
+                                                                <th>Caters Name</th>
                                                                 <th>InHouse Half Day</th>
                                                                 <th>InHouse Full Day</th>
                                                                 <th>Local Half Day</th>
@@ -1176,7 +1176,7 @@ function ReportsOverview() {
                                                                     Employee Name
                                                                 </th>
                                                                 <th>
-                                                                    Caterers Name
+                                                                    Caters Name
                                                                 </th>
                                                                 <th>Venue</th>
                                                                 <th>Shift</th>
@@ -1186,22 +1186,20 @@ function ReportsOverview() {
                                                         ) : isCatererReport ? (
                                                             <tr>
                                                                 <th>Sr. No.</th>
-                                                                {/* <th>Caterer ID</th> */}
-                                                                <th>Caterer Name</th>
-                                                                <th>
-                                                                    Opening
-                                                                    Pending
-                                                                </th>
+                                                                <th>Caters Name</th>
+                                                                <th>InHouse Half Day</th>
+                                                                <th>InHouse Full Day</th>
+                                                                <th>Local Half Day</th>
+                                                                <th>Local Full Day</th>
+                                                                <th>Vendor Half Day</th>
+                                                                <th>Vendor Full Day</th>
+                                                                <th>Payment Date</th>
+                                                                <th>Opening Pending</th>
                                                                 <th>Gross Amount</th>
                                                                 <th>Total Payable</th>
                                                                 <th>Amount Paid</th>
-                                                                <th>
-                                                                    Closing
-                                                                    Pending
-                                                                </th>
-                                                                <th>
-                                                                    Payment Status
-                                                                </th>
+                                                                <th>Closing Pending</th>
+                                                                <th>Payment Status</th>
                                                             </tr>
                                                         ) : isVendorReport ? (
                                                             <tr>
@@ -1535,16 +1533,6 @@ function ReportsOverview() {
                                                                         </>
                                                                     ) : isCatererReport ? (
                                                                         <>
-                                                                            {/* <td>
-                                                                                {getField(
-                                                                                    row,
-                                                                                    "CaterersId",
-                                                                                    "caterersId",
-                                                                                    "HotelId",
-                                                                                    "hotelId"
-                                                                                ) || "--"}
-                                                                            </td> */}
-
                                                                             <td>
                                                                                 {getField(
                                                                                     row,
@@ -1555,6 +1543,66 @@ function ReportsOverview() {
                                                                                     "CatersName",
                                                                                     "catersName"
                                                                                 ) || "--"}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "InHouseHalfDay",
+                                                                                    "inHouseHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "InHouseFullDay",
+                                                                                    "inHouseFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "LocalHalfDay",
+                                                                                    "localHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "LocalFullDay",
+                                                                                    "localFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorHalfDay",
+                                                                                    "vendorHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorFullDay",
+                                                                                    "vendorFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatDate(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "PaymentMonth",
+                                                                                        "paymentMonth",
+                                                                                        "PaymentDate",
+                                                                                        "paymentDate"
+                                                                                    )
+                                                                                )}
                                                                             </td>
 
                                                                             <td>
@@ -1616,8 +1664,7 @@ function ReportsOverview() {
                                                                                     "status",
                                                                                     "HotelPaymentStatus",
                                                                                     "hotelPaymentStatus"
-                                                                                ) ||
-                                                                                    "Pending"}
+                                                                                ) || "Pending"}
                                                                             </td>
                                                                         </>
                                                                     ) : isVendorReport ? (
