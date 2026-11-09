@@ -169,6 +169,13 @@ function Sidebar() {
                                 <span>Caterers Payment</span>
                             </Link>
                         </li>
+
+                        <li>
+                            <Link to="/supplier-payment">
+                                <FaTruck className="submenu-icon" />
+                                <span>Supplier Payment</span>
+                            </Link>
+                        </li>
                     </ul>
                 </li>
 

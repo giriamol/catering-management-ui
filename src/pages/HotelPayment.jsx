@@ -116,9 +116,11 @@ const HotelPayment = () => {
         });
 
     const formatDate = (date) => {
-        if (!date) return "—";
+        if (!date || String(date).trim().toLowerCase() === "null") return "—";
 
         const datePart = String(date).split("T")[0];
+        if (datePart === "0001-01-01") return "—";
+
         const [year, month, day] = datePart.split("-");
 
         return year && month && day

@@ -117,8 +117,11 @@ const VendorPayment = () => {
         });
 
     const formatDate = (date) => {
-        if (!date) return "—";
+        if (!date || String(date).trim().toLowerCase() === "null") return "—";
+
         const datePart = String(date).split("T")[0];
+        if (datePart === "0001-01-01") return "—";
+
         const [year, month, day] = datePart.split("-");
         return year && month && day ? `${day}/${month}/${year}` : datePart;
     };
@@ -285,8 +288,16 @@ const VendorPayment = () => {
                     fromDate,
                     toDate
                 );
-                if (refreshedResponse?.data) {
-                    setSummary(refreshedResponse.data);
+
+                const refreshedData = refreshedResponse?.data ?? refreshedResponse;
+                const refreshedSummary = Array.isArray(refreshedData)
+                    ? refreshedData[0] ?? null
+                    : refreshedData?.data && Array.isArray(refreshedData.data)
+                        ? refreshedData.data[0] ?? null
+                        : refreshedData;
+
+                if (refreshedSummary) {
+                    setSummary(refreshedSummary);
                 }
             } catch (refreshError) {
                 console.error("Summary refresh failed:", refreshError);
