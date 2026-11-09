@@ -146,3 +146,14 @@ export const getAllSupplierSummary = (fromDate, toDate, status) => {
 export const SaveSupplierPayment = (data) => {
     return axiosClient.post(`${API_URL}/SavePayment`, data);
 };
+
+// Get supplier work history
+export const getSupplierWorkHistory = (vendorId, fromDate, toDate) => {
+    return axiosClient.get(`${API_URL}/GetReportHistory`, {
+        params: {
+            vendorId,
+            fromDate,
+            toDate
+        }
+    });
+};
