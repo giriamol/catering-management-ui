@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "../CSS/DailyEmployeePayment.css";
 
-import { getHotelPaymentSummary, SaveHotelPayment,} from "../api/hotelAssignmentDataApi";
+import { getCaterersPaymentReport, SaveHotelPayment,} from "../api/hotelAssignmentDataApi";
 
 import { getHotels } from "../api/hotelapi";
 import DatePicker from "../components/DatePicker";
@@ -182,7 +182,7 @@ const HotelPayment = () => {
         try {
             setLoading(true);
 
-            const response = await getHotelPaymentSummary(
+            const response = await getCaterersPaymentReport(
                 id,
                 fromDate,
                 toDate
@@ -313,7 +313,7 @@ const HotelPayment = () => {
 
             // Refresh the summary after saving.
             try {
-                const refreshedResponse = await getHotelPaymentSummary(
+                const refreshedResponse = await getCaterersPaymentReport(
                     resolvedHotelId,
                     fromDate,
                     toDate

@@ -45,15 +45,15 @@ export const GetemployeeReportwork = ( employeeId,fromDate, toDate) => {
 };
 
 //--
-export const getCaterersPaymentReport = (hotelId, fromDate, toDate, status = null) => {
-    return axiosClient.get("/HotelAssignmentData/summaryReport", {
-        params: { hotelId, fromDate, toDate, status },
+export const getCaterersPaymentReport = (hotelId, fromDate, toDate) => {
+    return axiosClient.get("/HotelAssignmentData/summary", {
+        params: { hotelId, fromDate, toDate },
     });
 };
 
 // Get all hotels/caterers payment report
-export const getAllCaterersPaymentReport = (fromDate, toDate, status = null) => {
-    return axiosClient.get("/HotelAssignmentData/AllReport", {
-        params: { fromDate, toDate, status },
+export const getAllCaterersPaymentReport = (fromDate, toDate) => {
+    return axiosClient.get("/HotelAssignmentData/All", {
+        params: { fromDate, toDate },
     });
 };
