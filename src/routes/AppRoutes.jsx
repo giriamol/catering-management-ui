@@ -41,6 +41,7 @@ import ReportsOverview from "../pages/ReportsOverview";
 import EditVendorRate from "../pages/EditVendorRate";
 import HotelPayment from "../pages/HotelPayment";
 import Login from "../pages/Login";
+import SupplierPayment from "../pages/SupplierPayment";
 
 
 function AppRoutes() {
@@ -97,6 +98,7 @@ function AppRoutes() {
            {/* <Route  path="/reports/employee" element={<EmployeePaymentReports />} /> */}
            <Route  path="/RateMasters/vendor/edit/:id" element={<EditVendorRate />}/>
             <Route path="/hotel-payment"  element={<HotelPayment />}  />
+            <Route path="/supplier-payment" element={<SupplierPayment />} />
             
         </Routes> 
     );

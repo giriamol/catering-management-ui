@@ -16,8 +16,23 @@ import "./DatePicker.css";
  * />
  */
 
+const isSentinelDate = (value) => {
+    if (value === null || value === undefined || value === "") return true;
+
+    const text = String(value).trim();
+    if (!text || text.toLowerCase() === "null") return true;
+
+    const isoMatch = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch && isoMatch[1] === "0001-01-01") return true;
+
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes("0001-01-01")) return true;
+
+    return false;
+};
+
 const toISODate = (value) => {
-    if (!value) return "";
+    if (isSentinelDate(value)) return "";
 
     const text = String(value).trim();
 

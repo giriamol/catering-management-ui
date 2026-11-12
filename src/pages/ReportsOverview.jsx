@@ -9,19 +9,18 @@ import {
     getAllReportEmployee,
 } from "../api/dailyEmployeePaymentApi";
 
-import { getVendorReport,getAllVendorReport, getVendorWorkReportSummary } from "../api/vendorPaymentApi";
+import { getVendorReport,getAllVendorReport,
+     getVendorWorkReportSummary } from "../api/vendorPaymentApi";
 
 import { getVendors } from "../api/vendorApi";
 import { getHotels } from "../api/hotelApi";
 
 import {
-    GetemployeeReportwork,
-    getCaterersPaymentReport,
-    getAllCaterersPaymentReport,
+    getHotelPaymentSummary,getAllHotelPaymentSummary ,//GetemployeeReportwork, getCaterersPaymentReport,    getAllCaterersPaymentReport,
 } from "../api/hotelAssignmentDataApi";
 import {
     getSupplierByDateRange,
-    getAllSupplierSummary,
+    getAllSupplierSummary,getSupplierWorkHistory
 } from "../api/dailySupplierAssignmentToVendorApi";
 
 const reportItems = [
@@ -34,9 +33,10 @@ const reportItems = [
     { id: "vendor-work-report", title: "Vendor Work Statements", implemented: true },
     { id: "caterer-payment", title: "Caterers Payment Statements", implemented: true },
     { id: "all-caterer-payment", title: "All Caterers Payment Statements", implemented: true },
-    { id: "employee-work-Report", title: "Statements", implemented: false },
+    { id: "statement-work-Report", title: "Statements", implemented: false },
     { id: "supplier-work-report", title: "Supplier Work Report", implemented: true },
     { id: "all-supplier-work-report", title: "All Supplier Work Report", implemented: true },
+    { id: "supplier-work-History", title: "Supplier Work History ", implemented: true },
    
 ];
 
@@ -278,6 +278,7 @@ function ReportsOverview() {
 
     const isSingleSupplierReport = selectedReport === "supplier-work-report";
     const isAllSupplierReport = selectedReport === "all-supplier-work-report";
+    const isSupplierHistoryReport = selectedReport === "supplier-work-History";
     const isSupplierReport = isSingleSupplierReport || isAllSupplierReport;
 
     const isSingleCatererReport = selectedReport === "caterer-payment";
@@ -360,7 +361,8 @@ function ReportsOverview() {
         if (
             !isSingleVendorReport &&
             !isVendorWorkReport &&
-            !isSingleSupplierReport
+            !isSingleSupplierReport &&
+            !isSupplierHistoryReport
         ) {
             return undefined;
         }
@@ -396,7 +398,12 @@ function ReportsOverview() {
         return () => {
             cancelled = true;
         };
-    }, [isSingleVendorReport, isVendorWorkReport, isSingleSupplierReport]);
+    }, [
+        isSingleVendorReport,
+        isVendorWorkReport,
+        isSingleSupplierReport,
+        isSupplierHistoryReport,
+    ]);
 
     /* Load hotels for caterer, supplier, employee work, and vendor work reports. */
     useEffect(() => {
@@ -523,7 +530,10 @@ function ReportsOverview() {
             return;
         }
 
-        if (isSingleSupplierReport && !formData.vendorId) {
+        if (
+            (isSingleSupplierReport || isSupplierHistoryReport) &&
+            !formData.vendorId
+        ) {
             setError("Please select a vendor.");
             return;
         }
@@ -562,16 +572,24 @@ function ReportsOverview() {
                     formData.fromDate,
                     formData.toDate
                 );
-            } else if (isSingleSupplierReport) {
-                response = await getSupplierByDateRange(
+            } else if (isSupplierHistoryReport) {
+                response = await getSupplierWorkHistory(
                     Number(formData.vendorId),
                     formData.fromDate,
                     formData.toDate
                 );
+            } else if (isSingleSupplierReport) {
+                response = await getSupplierByDateRange(
+                    Number(formData.vendorId),
+                    formData.fromDate,
+                    formData.toDate,
+                    status
+                );
             } else if (isAllSupplierReport) {
                 response = await getAllSupplierSummary(
                     formData.fromDate,
-                    formData.toDate
+                    formData.toDate,
+                    status
                 );
             } else if (isSingleEmployeeReport) {
                 response = await getReportEmployee(
@@ -600,14 +618,14 @@ function ReportsOverview() {
                     status
                 );
             } else if (isSingleCatererReport) {
-                response = await getCaterersPaymentReport(
+                response = await getHotelPaymentSummary(
                     Number(formData.hotelId),
                     formData.fromDate,
                     formData.toDate,
                     status
                 );
             } else if (isAllCatererReport) {
-                response = await getAllCaterersPaymentReport(
+                response = await getAllHotelPaymentSummary(
                     formData.fromDate,
                     formData.toDate,
                     status
@@ -629,9 +647,7 @@ function ReportsOverview() {
                 title: activeReport.title,
                 fromDate: formData.fromDate,
                 toDate: formData.toDate,
-                status: isEmployeeWorkReport || isVendorWorkReport || isSupplierReport
-                    ? "N/A"
-                    : status || "All",
+                status: status || "All",
                 rows,
             });
 
@@ -641,9 +657,11 @@ function ReportsOverview() {
                         ? "No employee work records were found for the selected date range."
                         : isVendorWorkReport
                             ? "No vendor work records were found for the selected vendor and date range."
-                            : isSupplierReport
-                                ? "No supplier work records were found for the selected filters and date range."
-                                : "No payment records were found for the selected filters."
+                            : isSupplierHistoryReport
+                                ? "No supplier work history records were found for the selected vendor and date range."
+                                : isSupplierReport
+                                    ? "No supplier work records were found for the selected filters and date range."
+                                    : "No payment records were found for the selected filters."
                 );
             }
         } catch (err) {
@@ -803,7 +821,8 @@ function ReportsOverview() {
 
                                         {(isSingleVendorReport ||
                                             isVendorWorkReport ||
-                                            isSingleSupplierReport) && (
+                                            isSingleSupplierReport ||
+                                            isSupplierHistoryReport) && (
                                             <label className="report-form-field">
                                                 <span>Vendor Name</span>
 
@@ -977,7 +996,7 @@ function ReportsOverview() {
 
                                         {!isEmployeeWorkReport &&
                                             !isVendorWorkReport &&
-                                            !isSupplierReport && (
+                                            !isSupplierHistoryReport && (
                                                 <label className="report-form-field">
                                                     <span>Payment Status</span>
 
@@ -1080,7 +1099,7 @@ function ReportsOverview() {
 
                                             {!isEmployeeWorkReport &&
                                                 !isVendorWorkReport &&
-                                                !isSupplierReport && (
+                                                !isSupplierHistoryReport && (
                                                     <p>
                                                         Payment Status:{" "}
                                                         {generatedReport.status}
@@ -1098,7 +1117,8 @@ function ReportsOverview() {
 
                                             {(isSingleVendorReport ||
                                                 isVendorWorkReport ||
-                                                isSingleSupplierReport) && (
+                                                isSingleSupplierReport ||
+                                                isSupplierHistoryReport) && (
                                                 <p>
                                                     Vendor:{" "}
                                                     {getVendorName(
@@ -1123,24 +1143,31 @@ function ReportsOverview() {
                                             <div className="report-table-wrapper">
                                                 <table className="report-results-table">
                                                     <thead>
-                                                        {isSupplierReport ? (
+                                                        {isSupplierHistoryReport ? (
                                                             <tr>
                                                                 <th>Sr. No.</th>
-                                                                {/* <th>Caterer ID</th> */}
-                                                                <th>Caterer Name</th>
-                                                                <th>InHouse Half Day</th>
-                                                                <th>InHouse Full Day</th>
-                                                                <th>Local Half Day</th>
-                                                                <th>Local Full Day</th>
-                                                                <th>Vendor Half Day</th>
-                                                                <th>Vendor Full Day</th>
+                                                                <th>Assignment Date</th>
+                                                                <th>Vendor Name</th>
+                                                                <th>Employee Quantity</th>
+                                                                <th>Venue</th>
+                                                                <th>Shift</th>
+                                                                <th>Work Type</th>
+                                                            </tr>
+                                                        ) : isSupplierReport ? (
+                                                            <tr>
+                                                                <th>Sr. No.</th>
+                                                                {/* <th>Vendor ID</th> */}
                                                                 <th>Payment Date</th>
+                                                                <th>Vendor Name</th>
+                                                                {/* <th>Half Day Quantity</th>
+                                                                <th>Full Day Quantity</th> */}
                                                                 <th>Opening Pending</th>
                                                                 <th>Gross Amount</th>
+                                                                <th>Advance Deducted</th>
                                                                 <th>Total Payable</th>
                                                                 <th>Amount Paid</th>
                                                                 <th>Closing Pending</th>
-                                                                <th>Payment Status</th>
+                                                                
                                                             </tr>
                                                         ) : isVendorWorkReport ? (
                                                             <tr>
@@ -1176,7 +1203,7 @@ function ReportsOverview() {
                                                                     Employee Name
                                                                 </th>
                                                                 <th>
-                                                                    Caterers Name
+                                                                    Caters Name
                                                                 </th>
                                                                 <th>Venue</th>
                                                                 <th>Shift</th>
@@ -1186,22 +1213,20 @@ function ReportsOverview() {
                                                         ) : isCatererReport ? (
                                                             <tr>
                                                                 <th>Sr. No.</th>
-                                                                {/* <th>Caterer ID</th> */}
-                                                                <th>Caterer Name</th>
-                                                                <th>
-                                                                    Opening
-                                                                    Pending
-                                                                </th>
+                                                                <th>Caters Name</th>
+                                                                <th>InHouse Half Day</th>
+                                                                <th>InHouse Full Day</th>
+                                                                <th>Local Half Day</th>
+                                                                <th>Local Full Day</th>
+                                                                <th>Vendor Half Day</th>
+                                                                <th>Vendor Full Day</th>
+                                                                <th>Payment Date</th>
+                                                                <th>Opening Pending</th>
                                                                 <th>Gross Amount</th>
                                                                 <th>Total Payable</th>
                                                                 <th>Amount Paid</th>
-                                                                <th>
-                                                                    Closing
-                                                                    Pending
-                                                                </th>
-                                                                <th>
-                                                                    Payment Status
-                                                                </th>
+                                                                <th>Closing Pending</th>
+                                                                <th>Payment Status</th>
                                                             </tr>
                                                         ) : isVendorReport ? (
                                                             <tr>
@@ -1282,23 +1307,200 @@ function ReportsOverview() {
                                                                             1}
                                                                     </td>
 
-                                                                    {isSupplierReport ? (
+                                                                    {isSupplierHistoryReport ? (
                                                                         <>
-                                                                            {/* <td>{getField(row, "CaterersId", "caterersId", "HotelId", "hotelId") || "--"}</td> */}
-                                                                            <td>{getField(row, "CaterersName", "catersName", "HotelName", "hotelName") || "--"}</td>
-                                                                            <td>{getField(row, "InHouseHalfDay", "inHouseHalfDay") || 0}</td>
-                                                                            <td>{getField(row, "InHouseFullDay", "inHouseFullDay") || 0}</td>
-                                                                            <td>{getField(row, "LocalHalfDay", "localHalfDay") || 0}</td>
-                                                                            <td>{getField(row, "LocalFullDay", "localFullDay") || 0}</td>
-                                                                            <td>{getField(row, "VendorHalfDay", "vendorHalfDay") || 0}</td>
-                                                                            <td>{getField(row, "VendorFullDay", "vendorFullDay") || 0}</td>
-                                                                            <td>{formatDate(getField(row, "PaymentMonth", "paymentMonth", "PaymentDate", "paymentDate"))}</td>
-                                                                            <td>{formatAmount(getField(row, "OpeningPendingAmount", "openingPendingAmount"))}</td>
-                                                                            <td>{formatAmount(getField(row, "GrossAmount", "grossAmount"))}</td>
-                                                                            <td>{formatAmount(getField(row, "TotalPayable", "totalPayable"))}</td>
-                                                                            <td>{formatAmount(getField(row, "AmountPaid", "amountPaid"))}</td>
-                                                                            <td>{formatAmount(getField(row, "ClosingPendingAmount", "closingPendingAmount"))}</td>
-                                                                            <td>{getField(row, "PaymentStatus", "paymentStatus", "Status", "status") || "--"}</td>
+                                                                            <td>
+                                                                                {formatDate(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "AssignmentDate",
+                                                                                        "assignmentDate",
+                                                                                        "AssignDate",
+                                                                                        "assignDate"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorName",
+                                                                                    "vendorName"
+                                                                                ) ||
+                                                                                    getVendorName(
+                                                                                        selectedVendor
+                                                                                    ) ||
+                                                                                    "--"}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "Emp_Quantity",
+                                                                                    "emp_Quantity",
+                                                                                    "empQuantity",
+                                                                                    "EmployeeQuantity"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "Venue",
+                                                                                    "venue"
+                                                                                ) || "--"}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {(() => {
+                                                                                    const shiftId = Number(
+                                                                                        getField(
+                                                                                            row,
+                                                                                            "ShiftId",
+                                                                                            "shiftId"
+                                                                                        )
+                                                                                    );
+
+                                                                                    if (shiftId === 1)
+                                                                                        return "Morning";
+
+                                                                                    if (shiftId === 2)
+                                                                                        return "Evening";
+
+                                                                                    if (shiftId === 3)
+                                                                                        return "TwoHalfDay";
+
+                                                                                    return (
+                                                                                        getField(
+                                                                                            row,
+                                                                                            "ShiftName",
+                                                                                            "shiftName"
+                                                                                        ) ||
+                                                                                        "--"
+                                                                                    );
+                                                                                })()}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "WorkType",
+                                                                                    "workType"
+                                                                                ) || "--"}
+                                                                            </td>
+                                                                        </>
+                                                                    ) : isSupplierReport ? (
+                                                                        <>
+                                                                            {/* <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorId",
+                                                                                    "vendorId"
+                                                                                ) || "--"}
+                                                                            </td> */}
+                                                                            <td>
+                                                                                {formatDate(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "PaymentDate",
+                                                                                        "paymentDate",
+                                                                                        "PaymentMonth",
+                                                                                        "paymentMonth"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorName",
+                                                                                    "vendorName"
+                                                                                ) || "--"}
+                                                                            </td>
+
+                                                                            {/* <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "HalfDayShiftCount",
+                                                                                    "halfDayShiftCount",
+                                                                                    "HalfDayCount",
+                                                                                    "halfDayCount"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "FullDayShiftCount",
+                                                                                    "fullDayShiftCount",
+                                                                                    "FullDayCount",
+                                                                                    "fullDayCount"
+                                                                                ) || 0}
+                                                                            </td> */}
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "OpeningPendingAmount",
+                                                                                        "openingPendingAmount"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "GrossAmount",
+                                                                                        "grossAmount"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "AdvanceDeducted",
+                                                                                        "advanceDeducted"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "TotalPayable",
+                                                                                        "totalPayable",
+                                                                                        "TotalBeforeDeductions",
+                                                                                        "totalBeforeDeductions"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "AmountPaid",
+                                                                                        "amountPaid"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatAmount(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "ClosingPendingAmount",
+                                                                                        "closingPendingAmount"
+                                                                                    )
+                                                                                )}
+                                                                            </td>
+
+                                                                            
                                                                         </>
                                                                     ) : isVendorWorkReport ? (
                                                                         <>
@@ -1535,16 +1737,6 @@ function ReportsOverview() {
                                                                         </>
                                                                     ) : isCatererReport ? (
                                                                         <>
-                                                                            {/* <td>
-                                                                                {getField(
-                                                                                    row,
-                                                                                    "CaterersId",
-                                                                                    "caterersId",
-                                                                                    "HotelId",
-                                                                                    "hotelId"
-                                                                                ) || "--"}
-                                                                            </td> */}
-
                                                                             <td>
                                                                                 {getField(
                                                                                     row,
@@ -1555,6 +1747,66 @@ function ReportsOverview() {
                                                                                     "CatersName",
                                                                                     "catersName"
                                                                                 ) || "--"}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "InHouseHalfDay",
+                                                                                    "inHouseHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "InHouseFullDay",
+                                                                                    "inHouseFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "LocalHalfDay",
+                                                                                    "localHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "LocalFullDay",
+                                                                                    "localFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorHalfDay",
+                                                                                    "vendorHalfDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {getField(
+                                                                                    row,
+                                                                                    "VendorFullDay",
+                                                                                    "vendorFullDay"
+                                                                                ) || 0}
+                                                                            </td>
+
+                                                                            <td>
+                                                                                {formatDate(
+                                                                                    getField(
+                                                                                        row,
+                                                                                        "PaymentMonth",
+                                                                                        "paymentMonth",
+                                                                                        "PaymentDate",
+                                                                                        "paymentDate"
+                                                                                    )
+                                                                                )}
                                                                             </td>
 
                                                                             <td>
@@ -1616,8 +1868,7 @@ function ReportsOverview() {
                                                                                     "status",
                                                                                     "HotelPaymentStatus",
                                                                                     "hotelPaymentStatus"
-                                                                                ) ||
-                                                                                    "Pending"}
+                                                                                ) || "Pending"}
                                                                             </td>
                                                                         </>
                                                                     ) : isVendorReport ? (
