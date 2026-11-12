@@ -16,9 +16,7 @@ import { getVendors } from "../api/vendorApi";
 import { getHotels } from "../api/hotelApi";
 
 import {
-    GetemployeeReportwork,
-    getCaterersPaymentReport,
-    getAllCaterersPaymentReport,
+    getHotelPaymentSummary,getAllHotelPaymentSummary ,//GetemployeeReportwork, getCaterersPaymentReport,    getAllCaterersPaymentReport,
 } from "../api/hotelAssignmentDataApi";
 import {
     getSupplierByDateRange,
@@ -620,14 +618,14 @@ function ReportsOverview() {
                     status
                 );
             } else if (isSingleCatererReport) {
-                response = await getCaterersPaymentReport(
+                response = await getHotelPaymentSummary(
                     Number(formData.hotelId),
                     formData.fromDate,
                     formData.toDate,
                     status
                 );
             } else if (isAllCatererReport) {
-                response = await getAllCaterersPaymentReport(
+                response = await getAllHotelPaymentSummary(
                     formData.fromDate,
                     formData.toDate,
                     status
