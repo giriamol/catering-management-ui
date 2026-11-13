@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -8,33 +9,37 @@ import {
     getVendorRates
 } from "../api/vendorRateMaster";
 
+const PAGE_SIZE = 20;
+
 // Format API dates as DD/MM/YYYY without timezone conversion.
 const formatDate = (dateValue) => {
     if (!dateValue) return "-";
 
     const value = String(dateValue).trim();
 
-    // Already formatted as DD/MM/YYYY.
-    const displayMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const displayMatch = value.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+    );
+
     if (displayMatch) {
         const [, day, month, year] = displayMatch;
         return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
     }
 
-    // ISO date or ISO datetime: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.
     const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
     if (isoMatch) {
         const [, year, month, day] = isoMatch;
         return `${day}/${month}/${year}`;
     }
 
-    // Handle common SQL datetime format: M/D/YYYY or MM/DD/YYYY.
-    // This fallback is only used when the value is not ISO.
     const parsed = new Date(value);
+
     if (!Number.isNaN(parsed.getTime())) {
         const day = String(parsed.getDate()).padStart(2, "0");
         const month = String(parsed.getMonth() + 1).padStart(2, "0");
         const year = parsed.getFullYear();
+
         return `${day}/${month}/${year}`;
     }
 
@@ -57,7 +62,6 @@ const VendorRateMaster = () => {
 
     // PAGINATION
     const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
 
@@ -65,10 +69,14 @@ const VendorRateMaster = () => {
         setPopup({ title, message, onClose });
     };
 
+    // SUCCESS MESSAGE AFTER NAVIGATION
     useEffect(() => {
         if (location.state?.message) {
             showPopup("Success!", location.state.message, () => {
-                navigate(location.pathname, { replace: true, state: {} });
+                navigate(location.pathname, {
+                    replace: true,
+                    state: {}
+                });
             });
         }
     }, [location.key]);
@@ -78,9 +86,9 @@ const VendorRateMaster = () => {
         loadVendors();
     }, []);
 
+    // LOAD RATES WHEN PAGE CHANGES
     useEffect(() => {
         loadRateMasters();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageNumber]);
 
     // LOAD VENDORS
@@ -89,12 +97,18 @@ const VendorRateMaster = () => {
             setVendorLoading(true);
 
             const response = await getVendors(1, 2000);
-            console.log("Vendor API Response:", response.data);
 
             const data = response.data;
-            const vendorList = data?.items ?? data?.data ?? data ?? [];
+            const vendorList =
+                data?.items ??
+                data?.data?.items ??
+                data?.data ??
+                data ??
+                [];
 
-            setVendors(Array.isArray(vendorList) ? vendorList : []);
+            setVendors(
+                Array.isArray(vendorList) ? vendorList : []
+            );
         } catch (error) {
             console.error("Error loading vendors:", error);
             setVendors([]);
@@ -108,34 +122,66 @@ const VendorRateMaster = () => {
         try {
             setLoading(true);
 
-            console.log("Loading Vendor Rates...", pageNumber, pageSize);
+            const response = await getVendorRates(
+                pageNumber,
+                PAGE_SIZE
+            );
 
-            const response = await getVendorRates(pageNumber, pageSize);
             console.log("Vendor Rate API Response:", response.data);
 
-            const data = response.data;
-            const rateList = data?.items ?? data?.data ?? data ?? [];
+            const responseData = response.data;
+            const data = responseData?.data ?? responseData;
 
-            setRateMasters(Array.isArray(rateList) ? rateList : []);
+            const rateList =
+                data?.items ??
+                data?.records ??
+                data?.data ??
+                data ??
+                [];
+
+            const validRateList = Array.isArray(rateList)
+                ? rateList
+                : [];
 
             const count = Number(
                 data?.totalCount ??
                 data?.totalItems ??
+                data?.totalRecords ??
                 data?.count ??
+                responseData?.totalCount ??
+                responseData?.totalItems ??
+                responseData?.totalRecords ??
                 0
             );
 
-            setTotalCount(count);
-
-            const pages = Number(
-                data?.totalPages ??
-                (count > 0 ? Math.ceil(count / pageSize) : 1)
+            const pages = Math.max(
+                1,
+                Number(
+                    data?.totalPages ??
+                    responseData?.totalPages ??
+                    (count > 0
+                        ? Math.ceil(count / PAGE_SIZE)
+                        : 1)
+                )
             );
 
-            setTotalPages(pages || 1);
+            setTotalCount(count);
+            setTotalPages(pages);
+
+            // If the current page becomes invalid after deletion,
+            // move to the previous available page.
+            if (pageNumber > pages) {
+                setRateMasters([]);
+                setPageNumber(pages);
+                return;
+            }
+
+            setRateMasters(validRateList);
+
         } catch (error) {
             console.error("Error loading vendor rates:", error);
             console.error("Response:", error?.response?.data);
+
             setRateMasters([]);
             setTotalCount(0);
             setTotalPages(1);
@@ -184,13 +230,19 @@ const VendorRateMaster = () => {
         navigate("/RateMasters/vendor/add");
     };
 
-    // EDIT VENDOR RATE
-    const handleEdit = (item) => {
-        const id =
+    // GET RATE ID
+    const getRateId = (item) => {
+        return (
             item.vendorRateHistoryId ??
             item.VendorRateHistoryId ??
             item.rateHistoryId ??
-            item.id;
+            item.id
+        );
+    };
+
+    // EDIT VENDOR RATE
+    const handleEdit = (item) => {
+        const id = getRateId(item);
 
         if (id == null || id === "") {
             alert("Vendor rate ID not found.");
@@ -202,12 +254,9 @@ const VendorRateMaster = () => {
         });
     };
 
+    // DELETE VENDOR RATE
     const handleDelete = async (item) => {
-        const id =
-            item.vendorRateHistoryId ??
-            item.VendorRateHistoryId ??
-            item.rateHistoryId ??
-            item.id;
+        const id = getRateId(item);
 
         if (id == null || id === "") {
             alert("Vendor rate ID not found.");
@@ -222,25 +271,49 @@ const VendorRateMaster = () => {
 
         try {
             await deleteVendorRate(id);
-            showPopup("Success!", "Vendor rate deleted successfully.", () => {
-                loadRateMasters();
-            });
+
+            showPopup(
+                "Success!",
+                "Vendor rate deleted successfully.",
+                () => {
+                    loadRateMasters();
+                }
+            );
         } catch (error) {
             console.error("Error deleting vendor rate:", error);
-            showPopup("Error", "Unable to delete vendor rate.");
+
+            showPopup(
+                "Error",
+                "Unable to delete vendor rate."
+            );
         }
     };
 
-    // PAGINATION
+    // PREVIOUS PAGE
     const handlePrevious = () => {
         if (pageNumber > 1 && !loading) {
             setPageNumber((previous) => previous - 1);
         }
     };
 
+    // NEXT PAGE
     const handleNext = () => {
         if (pageNumber < totalPages && !loading) {
             setPageNumber((previous) => previous + 1);
+        }
+    };
+
+    // FIRST PAGE
+    const handleFirst = () => {
+        if (pageNumber > 1 && !loading) {
+            setPageNumber(1);
+        }
+    };
+
+    // LAST PAGE
+    const handleLast = () => {
+        if (pageNumber < totalPages && !loading) {
+            setPageNumber(totalPages);
         }
     };
 
@@ -252,6 +325,7 @@ const VendorRateMaster = () => {
 
     return (
         <div className="employee-rate-page">
+
             {/* HEADER */}
             <div className="employee-rate-header">
                 <div>
@@ -270,6 +344,7 @@ const VendorRateMaster = () => {
 
             {/* TABLE CARD */}
             <div className="employee-rate-card">
+
                 <div
                     style={{
                         display: "flex",
@@ -280,6 +355,7 @@ const VendorRateMaster = () => {
                 >
                     <div>
                         <strong>Vendor Rates</strong>
+
                         <span style={{ marginLeft: "10px" }}>
                             Total: {totalCount}
                         </span>
@@ -290,15 +366,19 @@ const VendorRateMaster = () => {
                         onClick={handleRefresh}
                         disabled={loading || vendorLoading}
                     >
-                        {loading || vendorLoading ? "Loading..." : "Refresh"}
+                        {loading || vendorLoading
+                            ? "Loading..."
+                            : "Refresh"}
                     </button>
                 </div>
 
+                {/* TABLE */}
                 <div className="table-container">
                     <table className="employee-rate-table">
+
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Sr.No</th>
                                 <th>Vendor</th>
                                 <th>Half Day Shift</th>
                                 <th>Half Day Rate</th>
@@ -325,12 +405,7 @@ const VendorRateMaster = () => {
                                 </tr>
                             ) : (
                                 rateMasters.map((item, index) => {
-                                    const id =
-                                        item.vendorRateHistoryId ??
-                                        item.VendorRateHistoryId ??
-                                        item.rateHistoryId ??
-                                        item.id ??
-                                        index;
+                                    const id = getRateId(item);
 
                                     const vendorId =
                                         item.vendorId ??
@@ -370,33 +445,48 @@ const VendorRateMaster = () => {
                                         item.EffectiveTo;
 
                                     return (
-                                        <tr key={id}>
-                                            <td>{id}</td>
+                                        <tr key={id ?? index}>
 
-                                            <td>{getVendorName(vendorId)}</td>
+                                            {/* CONTINUOUS SR.NO */}
+                                            <td>
+                                                {(pageNumber - 1) * PAGE_SIZE + index + 1}
+                                            </td>
+
+                                            <td>
+                                                {getVendorName(vendorId)}
+                                            </td>
 
                                             <td>
                                                 {halfShiftId != null
-                                                    ? `${getShiftName(halfShiftId)}`
+                                                    ? getShiftName(halfShiftId)
                                                     : "-"}
                                             </td>
 
-                                            <td>{halfDayRate ?? "-"}</td>
+                                            <td>
+                                                {halfDayRate ?? "-"}
+                                            </td>
 
                                             <td>
                                                 {fullShiftId != null
-                                                    ? `${getShiftName(fullShiftId)}`
+                                                    ? getShiftName(fullShiftId)
                                                     : "-"}
                                             </td>
 
-                                            <td>{fullDayRate ?? "-"}</td>
+                                            <td>
+                                                {fullDayRate ?? "-"}
+                                            </td>
 
-                                            <td>{formatDate(fromDate)}</td>
+                                            <td>
+                                                {formatDate(fromDate)}
+                                            </td>
 
-                                            <td>{formatDate(toDate)}</td>
+                                            <td>
+                                                {formatDate(toDate)}
+                                            </td>
 
                                             <td>
                                                 <div className="employee-rate-row-actions">
+
                                                     <button
                                                         type="button"
                                                         className="edit-btn"
@@ -412,6 +502,7 @@ const VendorRateMaster = () => {
                                                     >
                                                         Delete
                                                     </button>
+
                                                 </div>
                                             </td>
                                         </tr>
@@ -428,22 +519,46 @@ const VendorRateMaster = () => {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "12px",
                         marginTop: "20px",
                         padding: "10px 0"
                     }}
                 >
                     <div>
-                        Showing page <strong>{pageNumber}</strong> of{" "}
-                        <strong>{totalPages}</strong>
+                        Showing{" "}
+                        <strong>
+                            {totalCount === 0
+                                ? 0
+                                : (pageNumber - 1) * PAGE_SIZE + 1}
+                        </strong>
+                        {" "}to{" "}
+                        <strong>
+                            {Math.min(
+                                pageNumber * PAGE_SIZE,
+                                totalCount
+                            )}
+                        </strong>
+                        {" "}of{" "}
+                        <strong>{totalCount}</strong> records
                     </div>
 
                     <div
                         style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: "10px"
+                            gap: "8px",
+                            flexWrap: "wrap"
                         }}
                     >
+                        <button
+                            type="button"
+                            onClick={handleFirst}
+                            disabled={pageNumber === 1 || loading}
+                        >
+                            First
+                        </button>
+
                         <button
                             type="button"
                             onClick={handlePrevious}
@@ -453,7 +568,8 @@ const VendorRateMaster = () => {
                         </button>
 
                         <span>
-                            Page <strong>{pageNumber}</strong>
+                            Page <strong>{pageNumber}</strong> of{" "}
+                            <strong>{totalPages}</strong>
                         </span>
 
                         <button
@@ -463,10 +579,19 @@ const VendorRateMaster = () => {
                         >
                             Next
                         </button>
+
+                        <button
+                            type="button"
+                            onClick={handleLast}
+                            disabled={pageNumber >= totalPages || loading}
+                        >
+                            Last
+                        </button>
                     </div>
                 </div>
             </div>
 
+            {/* POPUP */}
             {popup && (
                 <div
                     className="screen-popup-backdrop"
@@ -495,6 +620,7 @@ const VendorRateMaster = () => {
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

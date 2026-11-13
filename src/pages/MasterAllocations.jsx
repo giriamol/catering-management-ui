@@ -1,4 +1,5 @@
 
+
 import React, {
 
     useEffect,
@@ -38,7 +39,9 @@ const ALLOCATION_TYPES = {
     local: "Local",
 
     vendor: "Vendor",
+
     hotel: "Caterers",
+
     supplier: "Supplier",
 
 };
@@ -142,12 +145,19 @@ const TABLE_COLUMNS = {
     ],
 
     supplier: [
+
         { key: "assignmentId", label: "Sr. No." },
+
         { key: "assignmentDate", label: "Assignment Date" },
+
         { key: "vendorName", label: "Vendor Name" },
+
         { key: "venueName", label: "Venue" },
+
         { key: "shiftName", label: "Shift" },
+
         { key: "workType", label: "Work Type" },
+
     ],
 
 };
@@ -243,9 +253,7 @@ const normalizeMemberType = (value) => {
         return "inhouse";
 
     }
-
     return normalized;
-
 };
 
 const getMemberType = (record) =>
@@ -273,9 +281,7 @@ const formatDate = (value) => {
         return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
 
     }
-
     return text;
-
 };
 
 const getShiftName = (shiftId) => {
@@ -369,7 +375,6 @@ const getVendorName = (record, vendors) => {
         getValue(vendor, "name") ??
 
         `Vendor ID: ${vendorId}`
-
     );
 
 };
@@ -381,7 +386,6 @@ const getHotelName = (record, hotels) => {
     if (directName != null && String(directName).trim() !== "") {
 
         return directName;
-
     }
 
     const hotelId =
@@ -411,7 +415,6 @@ const getHotelName = (record, hotels) => {
     const name = getValue(hotel, "hotelName") ?? getValue(hotel, "name");
 
     return name || `Hotel ID: ${hotelId}`;
-
 };
 
 const getVenueName = (record, hotels) => {
@@ -532,6 +535,8 @@ const getVenueName = (record, hotels) => {
 
 };
 
+const RECORDS_PER_PAGE = 20;
+
 const MasterAllocations = () => {
 
     const [allocationType, setAllocationType] = useState("employee");
@@ -539,6 +544,7 @@ const MasterAllocations = () => {
     const [allocationDate, setAllocationDate] = useState(getTodayDate);
 
     const [searchText, setSearchText] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Stores the API records before tab-specific filtering.
 
@@ -693,7 +699,6 @@ const MasterAllocations = () => {
         return () => {
 
             isCurrent = false;
-
         };
 
     }, []);
@@ -724,34 +729,40 @@ const MasterAllocations = () => {
 
         if (type === "employee" || type === "local") {
 
-            console.log(
+            // console.log(
 
-                "Calling employee assignment endpoint:",
+            //     "Calling employee assignment endpoint:",
 
-                `/DailyHotelAssignment/date/${dateToSend}`
+            //     `/DailyHotelAssignment/date/${dateToSend}`
 
-            );
+            // );
 
             response = await getAssignmentsByDate(dateToSend);
 
         } else if (type === "vendor") {
 
-            console.log(
+            // console.log(
 
-                "Calling vendor assignment endpoint:",
+            //     "Calling vendor assignment endpoint:",
 
-                `/DailyHotelAssignment/vendor/date/${dateToSend}`
+            //     `/DailyHotelAssignment/vendor/date/${dateToSend}`
 
-            );
+            // );
 
             response = await getVendorsByDate(dateToSend);
 
         } else if (type === "supplier") {
+
             // Supplier tab: fetch outsourced supplier assignments for selected date.
-            console.log(
-                "Calling supplier assignment endpoint:",
-                `/DailySupplierAssignmentToVendor/date/${dateToSend}`
-            );
+
+            // console.log(
+
+            //     "Calling supplier assignment endpoint:",
+
+            //     `/DailySupplierAssignmentToVendor/date/${dateToSend}`
+
+            // );
+
             response = await getSupplierAssignmentsByDate(dateToSend);
 
         } else if (type === "hotel") {
@@ -1016,9 +1027,9 @@ const MasterAllocations = () => {
 
         const list = extractList(response);
 
-        console.log(`${type} assignments response:`, response?.data ?? response);
+        //console.log(`${type} assignments response:`, response?.data ?? response);
 
-        console.log(`${type} assignments parsed list:`, list);
+        //console.log(`${type} assignments parsed list:`, list);
 
         return list;
 
@@ -1199,6 +1210,25 @@ const MasterAllocations = () => {
         });
 
     }, [tabRecords, searchText, employees, vendors, hotels]);
+
+    // Reset pagination whenever the selected tab, date, or search changes.
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [allocationType, allocationDate, searchText]);
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredRecords.length / RECORDS_PER_PAGE)
+    );
+    const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+    const endIndex = Math.min(
+        startIndex + RECORDS_PER_PAGE,
+        filteredRecords.length
+    );
+    const paginatedRecords = useMemo(
+        () => filteredRecords.slice(startIndex, endIndex),
+        [filteredRecords, startIndex, endIndex]
+    );
 
     const handleTypeChange = (event) => {
 
@@ -1495,9 +1525,7 @@ const MasterAllocations = () => {
                         </h3>
 
                         <p>
-
                             Assignments for {formatDate(allocationDate)}
-
                         </p>
 
                     </div>
@@ -1600,7 +1628,7 @@ const MasterAllocations = () => {
 
                             ) : (
 
-                                filteredRecords.map((record, index) => (
+                                paginatedRecords.map((record, index) => (
 
                                     <tr
 
@@ -1608,7 +1636,7 @@ const MasterAllocations = () => {
 
                                             getValue(record, "assignmentId") ??
 
-                                            `${allocationType}-${index}`
+                                            `${allocationType}-${startIndex + index}`
 
                                         }
 
@@ -1634,7 +1662,7 @@ const MasterAllocations = () => {
 
                                                 // Show sequential row numbers.
 
-                                                displayValue = index + 1;
+                                                displayValue = startIndex + index + 1;
 
                                             } else if (
 
@@ -1794,7 +1822,48 @@ const MasterAllocations = () => {
 
                 </div>
 
-                <div className="master-allocations-table-footer">
+            {!loading && !error && filteredRecords.length > 0 && (
+                <div className="allocation-pagination">
+                    <div className="pagination-info">
+                        Showing {startIndex + 1} to {endIndex} of {filteredRecords.length} records
+                    </div>
+                    <div className="pagination-buttons">
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(1)}
+                            disabled={currentPage === 1}
+                        >
+                            First
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </button>
+                        <span className="pagination-current">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                            disabled={currentPage >= totalPages}
+                        >
+                            Next
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage >= totalPages}
+                        >
+                            Last
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="master-allocations-table-footer">
 
                     <span>
 

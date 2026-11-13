@@ -8,19 +8,36 @@ import {
     getHotelRates,
     deleteHotelRate
 } from "../api/hotelRateHistoryApi";
+
 import { getHotels } from "../api/hotelApi";
+
+const PAGE_SIZE = 20;
 
 const getDateText = (value) => {
     if (!value) return "—";
 
-    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+    const dateValue = String(value).trim();
+
+    // ISO date: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss
+    const match = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
     if (match) {
-        const [year, month, day] = match[1].split("-");
+        const [, year, month, day] = match;
         return `${day}-${month}-${year}`;
     }
 
-    return String(value);
+    // Already formatted date: DD-MM-YYYY
+    const displayMatch = dateValue.match(
+        /^(\d{1,2})-(\d{1,2})-(\d{4})$/
+    );
+
+    if (displayMatch) {
+        const [, day, month, year] = displayMatch;
+
+        return `${day.padStart(2, "0")}-${month.padStart(2, "0")}-${year}`;
+    }
+
+    return dateValue;
 };
 
 const HotelRateHistory = () => {
@@ -28,11 +45,39 @@ const HotelRateHistory = () => {
 
     const [rates, setRates] = useState([]);
     const [hotels, setHotels] = useState([]);
+
     const [loading, setLoading] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
+    // PAGINATION
+    const [pageNumber, setPageNumber] = useState(1);
+
+    // TOTAL PAGES
+    const totalRecords = rates.length;
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(totalRecords / PAGE_SIZE)
+    );
+
+    // CURRENT PAGE RECORDS
+    const startIndex = (pageNumber - 1) * PAGE_SIZE;
+
+    const paginatedRates = rates.slice(
+        startIndex,
+        startIndex + PAGE_SIZE
+    );
+
+    // ACTIVE RECORDS
+    const activeRecords = rates.filter(
+        rate =>
+            (rate.isActive ?? rate.IsActive) === true
+    ).length;
+
+    // LOAD HOTEL RATES
     const loadRates = useCallback(async () => {
         try {
             setLoading(true);
@@ -45,11 +90,13 @@ const HotelRateHistory = () => {
                 ? data
                 : data?.items ??
                   data?.Items ??
+                  data?.data?.items ??
                   data?.data ??
                   data?.$values ??
                   [];
 
             setRates(Array.isArray(list) ? list : []);
+
         } catch (err) {
             console.error(
                 "Error loading Caterer rates:",
@@ -61,16 +108,14 @@ const HotelRateHistory = () => {
                 err?.response?.data?.title ??
                 "Unable to load Caterer rate history."
             );
+
+            setRates([]);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        loadRates();
-        loadHotels();
-    }, [loadRates]);
-
+    // LOAD HOTELS
     const loadHotels = useCallback(async () => {
         try {
             const response = await getHotels(1, 2000);
@@ -80,22 +125,43 @@ const HotelRateHistory = () => {
                 ? data
                 : data?.items ??
                   data?.Items ??
+                  data?.data?.items ??
                   data?.data ??
                   data?.$values ??
                   [];
 
             setHotels(Array.isArray(list) ? list : []);
+
         } catch (err) {
             console.error(
                 "Error loading hotels:",
                 err?.response?.data ?? err
             );
+
             setHotels([]);
         }
     }, []);
 
+    // INITIAL LOAD
+    useEffect(() => {
+        loadRates();
+        loadHotels();
+    }, [loadRates, loadHotels]);
+
+    // ADJUST PAGE WHEN RECORDS ARE DELETED OR RELOADED
+    useEffect(() => {
+        if (pageNumber > totalPages) {
+            setPageNumber(totalPages);
+        }
+    }, [pageNumber, totalPages]);
+
+    // GET HOTEL NAME
     const getHotelName = (hotelId) => {
-        if (hotelId === null || hotelId === undefined || hotelId === "") {
+        if (
+            hotelId === null ||
+            hotelId === undefined ||
+            hotelId === ""
+        ) {
             return "—";
         }
 
@@ -122,23 +188,33 @@ const HotelRateHistory = () => {
         );
     };
 
+    // SHIFT NAME
     const getShiftName = (shiftId) => {
         switch (Number(shiftId)) {
             case 1:
                 return "Half Day";
+
             case 2:
                 return "Full Day";
+
             default:
                 return "—";
         }
     };
 
-    const handleDelete = async (rate) => {
-        const id =
+    // GET RATE HISTORY ID
+    const getRateId = (rate) => {
+        return (
             rate.hotelRateHistoryId ??
-            rate.HotelRateHistoryId;
+            rate.HotelRateHistoryId
+        );
+    };
 
-        if (!id) {
+    // DELETE RATE
+    const handleDelete = async (rate) => {
+        const id = getRateId(rate);
+
+        if (id === null || id === undefined || id === "") {
             setError("Caterer rate history ID is missing.");
             return;
         }
@@ -158,14 +234,12 @@ const HotelRateHistory = () => {
 
             setRates(previous =>
                 previous.filter(item =>
-                    String(
-                        item.hotelRateHistoryId ??
-                        item.HotelRateHistoryId
-                    ) !== String(id)
+                    String(getRateId(item)) !== String(id)
                 )
             );
 
-            setMessage("Hotel rate deleted successfully.");
+            setMessage("Caterer rate deleted successfully.");
+
         } catch (err) {
             console.error(
                 "Error deleting Caterer rate:",
@@ -177,13 +251,50 @@ const HotelRateHistory = () => {
                 err?.response?.data?.title ??
                 "Unable to delete Caterer rate."
             );
+
         } finally {
             setDeletingId(null);
         }
     };
 
+    // FIRST PAGE
+    const handleFirst = () => {
+        if (pageNumber > 1 && !loading) {
+            setPageNumber(1);
+        }
+    };
+
+    // PREVIOUS PAGE
+    const handlePrevious = () => {
+        if (pageNumber > 1 && !loading) {
+            setPageNumber(previous => previous - 1);
+        }
+    };
+
+    // NEXT PAGE
+    const handleNext = () => {
+        if (pageNumber < totalPages && !loading) {
+            setPageNumber(previous => previous + 1);
+        }
+    };
+
+    // LAST PAGE
+    const handleLast = () => {
+        if (pageNumber < totalPages && !loading) {
+            setPageNumber(totalPages);
+        }
+    };
+
+    // REFRESH
+    const handleRefresh = () => {
+        loadRates();
+        loadHotels();
+    };
+
     return (
         <div className="hotel-rate-page">
+
+            {/* HEADER */}
             <div className="hotel-rate-header">
                 <div>
                     <h1>Caterer Rate History</h1>
@@ -191,14 +302,15 @@ const HotelRateHistory = () => {
                 </div>
 
                 <div className="hotel-rate-header-actions">
-                    {/* <button
+
+                    <button
                         type="button"
                         className="hotel-rate-refresh"
-                        onClick={loadRates}
+                        onClick={handleRefresh}
                         disabled={loading}
                     >
                         {loading ? "Loading..." : "Refresh"}
-                    </button> */}
+                    </button>
 
                     <button
                         type="button"
@@ -209,43 +321,49 @@ const HotelRateHistory = () => {
                     >
                         + Add Caterer Rate
                     </button>
+
                 </div>
             </div>
 
+            {/* ERROR MESSAGE */}
             {error && (
                 <div className="hotel-rate-alert error">
                     {error}
                 </div>
             )}
 
+            {/* SUCCESS MESSAGE */}
             {message && (
                 <div className="hotel-rate-alert success">
                     {message}
                 </div>
             )}
 
+            {/* SUMMARY */}
             <div className="hotel-rate-summary">
+
                 <div>
                     <span>Total Records</span>
-                    <strong>{rates.length}</strong>
+                    <strong>{totalRecords}</strong>
                 </div>
 
                 <div>
                     <span>Active Records</span>
-                    <strong>
-                        {rates.filter(rate =>
-                            (rate.isActive ?? rate.IsActive) === true
-                        ).length}
-                    </strong>
+                    <strong>{activeRecords}</strong>
                 </div>
+
             </div>
 
+            {/* TABLE CARD */}
             <div className="hotel-rate-table-card">
+
                 <div className="hotel-rate-table-wrapper">
+
                     <table className="hotel-rate-table">
+
                         <thead>
                             <tr>
-                                <th>Rate ID</th>
+                                <th>Sr.No</th>
                                 <th>Caterer Name</th>
                                 <th>Half Shift ID</th>
                                 <th>Half Day Rate</th>
@@ -259,32 +377,39 @@ const HotelRateHistory = () => {
                         </thead>
 
                         <tbody>
+
                             {loading ? (
                                 <tr>
                                     <td colSpan="10" className="empty-row">
                                         Loading Caterer rates...
                                     </td>
                                 </tr>
-                            ) : rates.length === 0 ? (
+
+                            ) : paginatedRates.length === 0 ? (
                                 <tr>
                                     <td colSpan="10" className="empty-row">
                                         No Caterer rate records found.
                                     </td>
                                 </tr>
+
                             ) : (
-                                rates.map(rate => {
-                                    const id =
-                                        rate.hotelRateHistoryId ??
-                                        rate.HotelRateHistoryId;
+                                paginatedRates.map((rate, index) => {
+
+                                    const id = getRateId(rate);
 
                                     const isActive =
                                         rate.isActive ??
                                         rate.IsActive;
 
                                     return (
-                                        <tr key={id}>
-                                            <td>{id}</td>
+                                        <tr key={id ?? index}>
 
+                                            {/* CONTINUOUS SR.NO */}
+                                            <td>
+                                                {startIndex + index + 1}
+                                            </td>
+
+                                            {/* CATERER NAME */}
                                             <td>
                                                 {getHotelName(
                                                     rate.hotelId ??
@@ -292,6 +417,7 @@ const HotelRateHistory = () => {
                                                 )}
                                             </td>
 
+                                            {/* HALF SHIFT */}
                                             <td>
                                                 {getShiftName(
                                                     rate.halfDShiftId ??
@@ -299,6 +425,7 @@ const HotelRateHistory = () => {
                                                 )}
                                             </td>
 
+                                            {/* HALF DAY RATE */}
                                             <td>
                                                 {Number(
                                                     rate.halfDayRate ??
@@ -307,6 +434,7 @@ const HotelRateHistory = () => {
                                                 ).toFixed(2)}
                                             </td>
 
+                                            {/* FULL SHIFT */}
                                             <td>
                                                 {getShiftName(
                                                     rate.fullDShiftId ??
@@ -314,6 +442,7 @@ const HotelRateHistory = () => {
                                                 )}
                                             </td>
 
+                                            {/* FULL DAY RATE */}
                                             <td>
                                                 {Number(
                                                     rate.fullDayRate ??
@@ -322,6 +451,7 @@ const HotelRateHistory = () => {
                                                 ).toFixed(2)}
                                             </td>
 
+                                            {/* EFFECTIVE FROM */}
                                             <td>
                                                 {getDateText(
                                                     rate.effectiveFrom ??
@@ -329,6 +459,7 @@ const HotelRateHistory = () => {
                                                 )}
                                             </td>
 
+                                            {/* EFFECTIVE TO */}
                                             <td>
                                                 {getDateText(
                                                     rate.effectiveTo ??
@@ -336,6 +467,7 @@ const HotelRateHistory = () => {
                                                 )}
                                             </td>
 
+                                            {/* STATUS */}
                                             <td>
                                                 <span
                                                     className={
@@ -350,8 +482,10 @@ const HotelRateHistory = () => {
                                                 </span>
                                             </td>
 
+                                            {/* ACTIONS */}
                                             <td>
                                                 <div className="hotel-rate-row-actions">
+
                                                     <button
                                                         type="button"
                                                         className="hotel-rate-edit"
@@ -378,16 +512,109 @@ const HotelRateHistory = () => {
                                                             ? "Deleting..."
                                                             : "Delete"}
                                                     </button>
+
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })
                             )}
+
                         </tbody>
+
                     </table>
                 </div>
+
+                {/* PAGINATION */}
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "12px",
+                        marginTop: "20px",
+                        padding: "10px 15px"
+                    }}
+                >
+
+                    {/* RECORD INFORMATION */}
+                    <div>
+                        Showing{" "}
+                        <strong>
+                            {totalRecords === 0
+                                ? 0
+                                : startIndex + 1}
+                        </strong>
+                        {" "}to{" "}
+                        <strong>
+                            {Math.min(
+                                startIndex + PAGE_SIZE,
+                                totalRecords
+                            )}
+                        </strong>
+                        {" "}of{" "}
+                        <strong>{totalRecords}</strong> records
+                    </div>
+
+                    {/* PAGINATION BUTTONS */}
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap"
+                        }}
+                    >
+
+                        <button
+                            type="button"
+                            onClick={handleFirst}
+                            disabled={pageNumber === 1 || loading}
+                        >
+                            First
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handlePrevious}
+                            disabled={pageNumber === 1 || loading}
+                        >
+                            Previous
+                        </button>
+
+                        <span>
+                            Page <strong>{pageNumber}</strong> of{" "}
+                            <strong>{totalPages}</strong>
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={handleNext}
+                            disabled={
+                                pageNumber >= totalPages || loading
+                            }
+                        >
+                            Next
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleLast}
+                            disabled={
+                                pageNumber >= totalPages || loading
+                            }
+                        >
+                            Last
+                        </button>
+
+                    </div>
+
+                </div>
+
             </div>
+
         </div>
     );
 };

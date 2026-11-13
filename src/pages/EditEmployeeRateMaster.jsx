@@ -129,7 +129,7 @@ const EditEmployeeRateMaster = () => {
                 data = data[0];
             }
 
-            console.log("FINAL RATE RECORD:", data);
+           // console.log("FINAL RATE RECORD:", data);
 
             if (!data) {
                 alert("Employee rate record not found.");
@@ -356,33 +356,28 @@ const EditEmployeeRateMaster = () => {
 
             const payload = {
                 employeeId: Number(form.employeeId),
-
                 halfDShiftId: 1,
                 halfDayRate: Number(form.halfDayRate),
-
                 fullDShiftId: 2,
                 fullDayRate: Number(form.fullDayRate),
-
                 twoHDRShiftId:
                     form.twoHalfDayRate !== ""
                         ? 3
                         : null,
-
                 twoHalfDayRate:
                     form.twoHalfDayRate !== ""
                         ? Number(form.twoHalfDayRate)
                         : null,
-
-                effectiveFrom: form.effectiveFrom,
+                effectiveFrom: form.effectiveFrom,               
 
                 effectiveTo: form.effectiveTo || null
             };
 
-            console.log("================================");
-            console.log("UPDATE EMPLOYEE RATE");
-            console.log("EmployeeRateHistoryId:", rateId);
-            console.log("UPDATE PAYLOAD:", payload);
-            console.log("================================");
+            // console.log("================================");
+            // console.log("UPDATE EMPLOYEE RATE");
+            // console.log("EmployeeRateHistoryId:", rateId);
+            // console.log("UPDATE PAYLOAD:", payload);
+            // console.log("================================");
 
             const response = await updateEmployeeRateMaster(
                 Number(rateId),

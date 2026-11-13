@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../CSS/EmployeeRateMaster.css";
@@ -8,8 +9,9 @@ import {
 } from "../api/employeeRateMasterApi";
 import { getEmployees } from "../api/employeeApi";
 
+const PAGE_SIZE = 20;
+
 // Formats API date values as DD/MM/YYYY without timezone conversion.
-// Supports yyyy-MM-dd, ISO datetime, and dd/MM/yyyy.
 const formatDate = (dateValue) => {
     if (
         dateValue === null ||
@@ -21,51 +23,37 @@ const formatDate = (dateValue) => {
 
     const value = String(dateValue).trim();
 
-    // Already formatted as DD/MM/YYYY.
     const displayMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (displayMatch) {
-        return value;
-    }
+    if (displayMatch) return value;
 
-    // ISO date or ISO datetime, e.g. 2026-10-12 or 2026-10-12T00:00:00.
-    // Use the date portion only to avoid timezone shifting the calendar day.
     const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (isoMatch) {
         return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
     }
 
-    // Fallback for other parseable date formats.
     const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-        return value;
-    }
+
+    if (Number.isNaN(parsed.getTime())) return value;
 
     const day = String(parsed.getDate()).padStart(2, "0");
     const month = String(parsed.getMonth() + 1).padStart(2, "0");
-    const year = parsed.getFullYear();
 
-    return `${day}/${month}/${year}`;
+    return `${day}/${month}/${parsed.getFullYear()}`;
 };
 
 const EmployeeRateMaster = () => {
     const navigate = useNavigate();
 
-    // Rate Master records
     const [employees, setEmployees] = useState([]);
-
-    // Employee master list
     const [employeeList, setEmployeeList] = useState([]);
 
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
-
     const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize] = useState(20);
-    const [popup, setPopup] = useState(null);
-
     const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [popup, setPopup] = useState(null);
 
     useEffect(() => {
         loadEmployees();
@@ -73,7 +61,7 @@ const EmployeeRateMaster = () => {
 
     useEffect(() => {
         loadRateRecords();
-    }, [pageNumber, pageSize]);
+    }, [pageNumber]);
 
     const loadEmployees = async () => {
         try {
@@ -98,10 +86,7 @@ const EmployeeRateMaster = () => {
 
             setEmployeeList(employeeData);
         } catch (error) {
-            console.error(
-                "Error loading employees:",
-                error.response?.data || error
-            );
+            console.error("Error loading employees:", error);
             setEmployeeList([]);
         }
     };
@@ -112,16 +97,34 @@ const EmployeeRateMaster = () => {
 
             const response = await getEmployeeRateMastersPaged(
                 pageNumber,
-                pageSize
+                PAGE_SIZE
             );
 
             const data = response.data;
 
             console.log("Rate Master API response:", data);
 
-            setEmployees(Array.isArray(data?.items) ? data.items : []);
-            setTotalRecords(Number(data?.totalRecords) || 0);
-            setTotalPages(Number(data?.totalPages) || 0);
+            const records = Array.isArray(data?.items)
+                ? data.items
+                : Array.isArray(data?.data?.items)
+                    ? data.data.items
+                    : [];
+
+            setEmployees(records);
+
+            const recordsCount = Number(
+                data?.totalRecords ?? data?.data?.totalRecords ?? 0
+            );
+
+            const pagesCount = Number(
+                data?.totalPages ??
+                data?.data?.totalPages ??
+                Math.ceil(recordsCount / PAGE_SIZE)
+            );
+
+            setTotalRecords(recordsCount);
+            setTotalPages(pagesCount);
+
         } catch (error) {
             console.error(
                 "Error fetching Rate Master records:",
@@ -155,9 +158,7 @@ const EmployeeRateMaster = () => {
             return Number(id) === Number(employeeId);
         });
 
-        if (!employee) {
-            return "-";
-        }
+        if (!employee) return "-";
 
         return (
             employee?.fullName ??
@@ -196,15 +197,29 @@ const EmployeeRateMaster = () => {
 
         try {
             setDeletingId(rateMasterId);
+
             await deleteEmployeeRateMaster(rateMasterId);
-            showPopup("Success!", "Employee rate deleted successfully.", () => {
-                loadRateRecords();
-            });
+
+            showPopup(
+                "Success!",
+                "Employee rate deleted successfully.",
+                async () => {
+                    // If the last record on the last page was deleted,
+                    // move to the previous page.
+                    if (employees.length === 1 && pageNumber > 1) {
+                        setPageNumber((previous) => previous - 1);
+                    } else {
+                        await loadRateRecords();
+                    }
+                }
+            );
+
         } catch (error) {
             console.error(
                 "Error deleting employee rate record:",
                 error.response?.data || error
             );
+
             showPopup(
                 "Error",
                 "Unable to delete employee rate record."
@@ -227,6 +242,7 @@ const EmployeeRateMaster = () => {
         navigate(`/RateMasters/employeerate/edit/${rateMasterId}`);
     };
 
+    // Search within the records returned by the current API page.
     const filteredEmployees = employees.filter((employee) => {
         const employeeId =
             employee?.employeeId ??
@@ -244,8 +260,47 @@ const EmployeeRateMaster = () => {
         );
     });
 
+    const handleSearch = (value) => {
+        setSearchText(value);
+        setPageNumber(1);
+    };
+
+    const handleFirst = () => setPageNumber(1);
+
+    const handlePrevious = () => {
+        setPageNumber((previous) => Math.max(previous - 1, 1));
+    };
+
+    const handleNext = () => {
+        setPageNumber((previous) =>
+            Math.min(previous + 1, totalPages)
+        );
+    };
+
+    const handleLast = () => setPageNumber(totalPages);
+
+    const handlePageChange = (page) => setPageNumber(page);
+
+    // Show a maximum of 5 page buttons at a time.
+    const getPageNumbers = () => {
+        const visiblePages = 5;
+
+        let start = Math.max(1, pageNumber - 2);
+        let end = Math.min(totalPages, start + visiblePages - 1);
+
+        if (end - start + 1 < visiblePages) {
+            start = Math.max(1, end - visiblePages + 1);
+        }
+
+        return Array.from(
+            { length: Math.max(0, end - start + 1) },
+            (_, index) => start + index
+        );
+    };
+
     return (
         <div className="employee-rate-page">
+
             <div className="employee-rate-header">
                 <div>
                     <h2>Employee Rate Master List</h2>
@@ -258,10 +313,7 @@ const EmployeeRateMaster = () => {
                             type="text"
                             placeholder="Search employee by name or ID..."
                             value={searchText}
-                            onChange={(e) => {
-                                setSearchText(e.target.value);
-                                setPageNumber(1);
-                            }}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
 
@@ -318,20 +370,32 @@ const EmployeeRateMaster = () => {
                                             employee?.FkEmployeeId;
 
                                         return (
-                                            <tr key={rateMasterId ?? `${employeeId}-${index}`}>
+                                            <tr
+                                                key={
+                                                    rateMasterId ??
+                                                    `${employeeId}-${index}`
+                                                }
+                                            >
                                                 <td>
-                                                    {(pageNumber - 1) * pageSize +
-                                                        index +
-                                                        1}
+                                                    {(pageNumber - 1) * PAGE_SIZE + index + 1}
+                                                    
                                                 </td>
 
-                                                <td>{getEmployeeName(employeeId)}</td>
+                                                <td>
+                                                    {getEmployeeName(employeeId)}
+                                                </td>
 
-                                                <td>{employee?.halfDayRate ?? "-"}</td>
+                                                <td>
+                                                    {employee?.halfDayRate ?? "-"}
+                                                </td>
 
-                                                <td>{employee?.fullDayRate ?? "-"}</td>
+                                                <td>
+                                                    {employee?.fullDayRate ?? "-"}
+                                                </td>
 
-                                                <td>{employee?.twoHalfDayRate ?? "-"}</td>
+                                                <td>
+                                                    {employee?.twoHalfDayRate ?? "-"}
+                                                </td>
 
                                                 <td>
                                                     {formatDate(
@@ -370,8 +434,7 @@ const EmployeeRateMaster = () => {
                                                                 handleDelete(rateMasterId)
                                                             }
                                                             disabled={
-                                                                deletingId ===
-                                                                rateMasterId
+                                                                deletingId === rateMasterId
                                                             }
                                                         >
                                                             {deletingId === rateMasterId
@@ -389,35 +452,78 @@ const EmployeeRateMaster = () => {
                     </div>
 
                     <div className="employee-rate-pagination">
-                        <span>Total Records: {totalRecords}</span>
-
-                        <button
-                            type="button"
-                            disabled={pageNumber <= 1 || loading}
-                            onClick={() =>
-                                setPageNumber((previous) => previous - 1)
-                            }
-                        >
-                            Previous
-                        </button>
 
                         <span>
-                            Page {pageNumber} of {Math.max(totalPages, 1)}
+                            Showing{" "}
+                            {totalRecords === 0
+                                ? 0
+                                : (pageNumber - 1) * PAGE_SIZE + 1}
+                            {" - "}
+                            {Math.min(pageNumber * PAGE_SIZE, totalRecords)}
+                            {" of "}
+                            {totalRecords} records
                         </span>
 
-                        <button
-                            type="button"
-                            disabled={
-                                totalPages === 0 ||
-                                pageNumber >= totalPages ||
-                                loading
-                            }
-                            onClick={() =>
-                                setPageNumber((previous) => previous + 1)
-                            }
-                        >
-                            Next
-                        </button>
+                        <div className="pagination-buttons">
+
+                            <button
+                                type="button"
+                                disabled={pageNumber <= 1}
+                                onClick={handleFirst}
+                            >
+                                First
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={pageNumber <= 1}
+                                onClick={handlePrevious}
+                            >
+                                Previous
+                            </button>
+
+                            {getPageNumbers().map((page) => (
+                                <button
+                                    type="button"
+                                    key={page}
+                                    className={
+                                        page === pageNumber
+                                            ? "active-page"
+                                            : ""
+                                    }
+                                    onClick={() => handlePageChange(page)}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                type="button"
+                                disabled={
+                                    totalPages === 0 ||
+                                    pageNumber >= totalPages
+                                }
+                                onClick={handleNext}
+                            >
+                                Next
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={
+                                    totalPages === 0 ||
+                                    pageNumber >= totalPages
+                                }
+                                onClick={handleLast}
+                            >
+                                Last
+                            </button>
+
+                        </div>
+
+                        <span>
+                            Page {totalPages === 0 ? 0 : pageNumber} of {totalPages}
+                        </span>
                     </div>
                 </>
             )}
@@ -450,6 +556,7 @@ const EmployeeRateMaster = () => {
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

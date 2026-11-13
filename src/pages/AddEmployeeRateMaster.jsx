@@ -360,7 +360,7 @@ const AddEmployeeRateMaster = () => {
                                     handleDateChange("effectiveFrom", dateValue)
                                 }
                                 required
-                                placeholder="DD/MM/YYYY"
+                                placeholder="Please Select Date DD/MM/YYYY"
                             />
                         </div>
 
