@@ -341,7 +341,7 @@ const EmployeeRateMaster = () => {
                                     <th>Employee</th>
                                     <th>Half Day Rate</th>
                                     <th>Full Day Rate</th>
-                                    <th>Two Half Day Rate</th>
+                                    {/* <th>Two Half Day Rate</th> */}
                                     <th>From Date</th>
                                     <th>To Date</th>
                                     <th>Action</th>
@@ -393,9 +393,9 @@ const EmployeeRateMaster = () => {
                                                     {employee?.fullDayRate ?? "-"}
                                                 </td>
 
-                                                <td>
+                                                {/* <td>
                                                     {employee?.twoHalfDayRate ?? "-"}
-                                                </td>
+                                                </td> */}
 
                                                 <td>
                                                     {formatDate(
