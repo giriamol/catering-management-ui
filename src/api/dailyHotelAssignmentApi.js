@@ -1,24 +1,21 @@
 import axiosClient from "./axiosClient";
 
-// Get all assignments for a specific date
-// export const getAssignmentsByDate = (date) => {
-//     return axiosClient.get( `/DailyHotelAssignment/date/${date}`
-//     );
-// };
+//Get all Employee Assignments for a specific date
+export const getAllEmployeeAssignments = () => {
+    return axiosClient.get( `/DailyHotelAssignment/getAll`
+    );
+};
 // Employee hotel assignments by date
 export const getAssignmentsByDate = async (date) => {
-    const response = await axiosClient.get(
-        `/DailyHotelAssignment/date/${date}`
+    const response = await axiosClient.get(`/DailyHotelAssignment/date/${date}`
     );
     return response.data;
 };
 
 
 // Get assignments for a specific employee on a specific date
-export const getAssignmentByEmployeeAndDate = (
-    employeeId,date) => {
-    return axiosClient.get(
-        `${API_URL}/employee/${employeeId}/date/${date}`
+export const getAssignmentByEmployeeAndDate = (employeeId,date) => {
+    return axiosClient.get( `${API_URL}/employee/${employeeId}/date/${date}`
     );
 };
 

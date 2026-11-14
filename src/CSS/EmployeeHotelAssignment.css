@@ -1,3 +1,4 @@
+
 .assignment-page {
     --page-bg: #f5f7fb;
     --page-accent: #2563eb;
@@ -60,7 +61,6 @@
     color: #6b7280;
 }
 
-
 /* Filter */
 
 .assignment-filter-card {
@@ -101,7 +101,6 @@
 .filter-group input:focus {
     border-color: #2563eb;
 }
-
 
 /* Member Type */
 
@@ -160,6 +159,7 @@
     font-size: 14px;
 }
 
+/* Status Banner */
 
 .status-banner {
     position: fixed;
@@ -196,6 +196,8 @@
     border-color: #3b82f6;
     color: #1d4ed8;
 }
+
+/* Modals */
 
 .assignment-success-backdrop,
 .assignment-confirm-backdrop {
@@ -283,7 +285,6 @@
     border-left: 4px solid var(--page-accent);
 }
 
-
 /* Table Card */
 
 .assignment-table-card {
@@ -292,7 +293,6 @@
     overflow-x: auto;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-
 
 /* Table */
 
@@ -341,14 +341,12 @@
     background: rgba(245, 158, 11, 0.06);
 }
 
-
 /* Employee */
 
 .employee-name {
     font-weight: 600;
     color: #1f2937;
 }
-
 
 /* Select */
 
@@ -361,6 +359,7 @@
     background: white;
     outline: none;
 }
+
 .assignment-select-head {
     width: 180px;
     height: 38px;
@@ -370,6 +369,7 @@
     background: white;
     outline: none;
 }
+
 .assignment-select-dscrip {
     width: 300px;
     height: 45px;
@@ -384,6 +384,7 @@
     border-color: #2563eb;
 }
 
+/* Action Buttons */
 
 .action-buttons {
     display: flex;
@@ -428,8 +429,7 @@
     border-radius: 10px;
 }
 
-
-/* No data */
+/* No Data */
 
 .no-data {
     text-align: center;
@@ -437,28 +437,8 @@
     color: #6b7280;
 }
 
+/* Search Box */
 
-/* Responsive */
-
-@media (max-width: 900px) {
-
-    .assignment-filter-card {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-group input[type="date"],
-    .filter-group input[type="text"] {
-        width: 100%;
-    }
-
-    .assignment-info {
-        flex-direction: column;
-        gap: 5px;
-    }
-
-}
-/* Only increase Search Employee / Search Vendor box size */
 .assignment-filter-card .search-group {
     width: 450px;
     min-width: 350px;
@@ -474,6 +454,7 @@
 }
 
 /* Pagination */
+
 .assignment-pagination {
     display: flex;
     justify-content: flex-end;
@@ -538,7 +519,52 @@
     color: #6b7280;
 }
 
-/* Mobile Responsive */
+/* HalfDay Assigned Row - Light Green */
+
+.assignment-table tbody tr.halfday-assigned-row > td {
+    background-color: #c8e6c9 !important;
+    transition: background-color 0.2s ease;
+}
+
+.assignment-table tbody tr.halfday-assigned-row:hover > td {
+    background-color: #a5d6a7 !important;
+}
+
+/* Existing Assignment Status */
+
+.assignment-status {
+    display: block;
+    margin-top: 5px;
+    color: #26733a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Disabled Shift Options */
+
+.assignment-select option:disabled {
+    color: #999;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+    .assignment-filter-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group input[type="date"],
+    .filter-group input[type="text"] {
+        width: 100%;
+    }
+
+    .assignment-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
 @media (max-width: 600px) {
     .assignment-pagination {
         justify-content: flex-end;
@@ -560,5 +586,11 @@
         min-width: 32px;
         height: 34px;
         padding: 0 9px;
+    }
+
+    .assignment-filter-card .search-group {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
     }
 }

@@ -1,20 +1,34 @@
+import React, {
+    useEffect,
+    useMemo,
+    useState,
+    useCallback
+} from "react";
 
-import React, { useEffect, useMemo, useState } from "react";
 import { getAllEmployeeRateMasters } from "../api/employeeRateMasterApi";
 import { getHotels } from "../api/hotelApi";
 import { getVendors } from "../api/vendorApi";
+
 import {
     createAssignment,
-    createVendorAssignment
+    createVendorAssignment,
+    getAllEmployeeAssignments
 } from "../api/dailyHotelAssignmentApi";
+
 import { addSupplierAssignment } from "../api/dailySupplierAssignmentToVendorApi";
+
 import DatePicker from "../components/DatePicker";
 import "../CSS/EmployeeHotelAssignment.css";
 
 const PAGE_SIZE = 20;
 
+// ======================================================
+// DATE HELPERS
+// ======================================================
+
 const getTodayDate = () => {
     const today = new Date();
+
     return [
         today.getFullYear(),
         String(today.getMonth() + 1).padStart(2, "0"),
@@ -41,6 +55,16 @@ const normalizeDateForPayload = (value) => {
     return value;
 };
 
+const getAssignmentDateKey = (value) => {
+    if (!value) return "";
+
+    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+
+    if (match) return match[1];
+
+    return "";
+};
+
 const formatDateForDisplay = (value) => {
     if (!value) return "Not selected";
 
@@ -52,6 +76,10 @@ const formatDateForDisplay = (value) => {
 
     return value;
 };
+
+// ======================================================
+// API RESPONSE HELPERS
+// ======================================================
 
 const extractList = (response) => {
     const data = response?.data ?? response;
@@ -70,6 +98,10 @@ const extractList = (response) => {
         data?.Employees,
         data?.hotels,
         data?.Hotels,
+        data?.assignments,
+        data?.Assignments,
+        data?.dailyHotelAssignments,
+        data?.DailyHotelAssignments,
     ];
 
     return lists.find(Array.isArray) ?? [];
@@ -90,33 +122,60 @@ const getApiErrorMessage = (error, fallback) => {
     );
 };
 
+// ======================================================
+// WORK TYPE HELPER
+// ======================================================
+
+const normalizeWorkType = (value) =>
+    String(value ?? "")
+        .replace(/\s+/g, "")
+        .toLowerCase();
+
+// ======================================================
+// MAIN COMPONENT
+// ======================================================
+
 const Assignments = () => {
+
     const [memberType, setMemberType] = useState("InHouse");
+
     const [assignmentDate, setAssignmentDate] = useState(getTodayDate);
+
     const [searchText, setSearchText] = useState("");
+
     const [savingRowKey, setSavingRowKey] = useState(null);
 
-    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
 
     const [employees, setEmployees] = useState([]);
     const [vendors, setVendors] = useState([]);
     const [hotels, setHotels] = useState([]);
 
+    const [existingAssignments, setExistingAssignments] = useState([]);
+
     const [loadingEmployees, setLoadingEmployees] = useState(false);
     const [loadingVendors, setLoadingVendors] = useState(false);
     const [loadingHotels, setLoadingHotels] = useState(false);
+    const [loadingAssignments, setLoadingAssignments] = useState(false);
 
     const [pageError, setPageError] = useState("");
+
     const [rowData, setRowData] = useState({});
+
     const [successDialog, setSuccessDialog] = useState(null);
 
-    // Reset pagination when tab or search changes.
+    // ======================================================
+    // RESET PAGINATION
+    // ======================================================
+
     useEffect(() => {
         setCurrentPage(1);
     }, [memberType, searchText]);
 
-    // Employee helpers
+    // ======================================================
+    // EMPLOYEE HELPERS
+    // ======================================================
+
     const getEmployeeId = (employee) =>
         employee?.employeeId ??
         employee?.EmployeeId ??
@@ -174,7 +233,10 @@ const Assignments = () => {
         return normalized;
     };
 
-    // Vendor helpers
+    // ======================================================
+    // VENDOR HELPERS
+    // ======================================================
+
     const getVendorObject = (record) =>
         record?.vendor ??
         record?.Vendor ??
@@ -235,7 +297,10 @@ const Assignments = () => {
     const getVendorRowKey = (vendor) =>
         `vendor-${getVendorId(vendor)}`;
 
-    // Hotel helpers
+    // ======================================================
+    // HOTEL HELPERS
+    // ======================================================
+
     const getHotelId = (hotel) =>
         hotel?.hotelId ??
         hotel?.HotelId ??
@@ -251,7 +316,10 @@ const Assignments = () => {
         hotel?.Name ??
         "";
 
-    // Load employees
+    // ======================================================
+    // LOAD EMPLOYEES
+    // ======================================================
+
     const loadEmployees = async () => {
         try {
             setLoadingEmployees(true);
@@ -280,6 +348,7 @@ const Assignments = () => {
             );
 
             setEmployees(uniqueEmployees);
+
         } catch (error) {
             console.error(
                 "Error loading employees:",
@@ -287,15 +356,20 @@ const Assignments = () => {
             );
 
             setEmployees([]);
+
             setPageError(
                 getApiErrorMessage(error, "Unable to load employees.")
             );
+
         } finally {
             setLoadingEmployees(false);
         }
     };
 
-    // Load vendors
+    // ======================================================
+    // LOAD VENDORS
+    // ======================================================
+
     const loadVendors = async () => {
         try {
             setLoadingVendors(true);
@@ -320,6 +394,7 @@ const Assignments = () => {
             );
 
             setVendors(uniqueVendors);
+
         } catch (error) {
             console.error(
                 "Error loading vendors:",
@@ -327,21 +402,28 @@ const Assignments = () => {
             );
 
             setVendors([]);
+
             setPageError(
                 getApiErrorMessage(error, "Unable to load vendors.")
             );
+
         } finally {
             setLoadingVendors(false);
         }
     };
 
-    // Load hotels
+    // ======================================================
+    // LOAD HOTELS
+    // ======================================================
+
     const loadHotels = async () => {
         try {
             setLoadingHotels(true);
 
             const response = await getHotels(1, 2000);
+
             setHotels(extractList(response));
+
         } catch (error) {
             console.error(
                 "Error loading hotels:",
@@ -349,18 +431,173 @@ const Assignments = () => {
             );
 
             setHotels([]);
+
             setPageError(
                 getApiErrorMessage(error, "Unable to load hotels.")
             );
+
         } finally {
             setLoadingHotels(false);
         }
     };
 
+    // ======================================================
+    // LOAD EXISTING EMPLOYEE ASSIGNMENTS
+    // ======================================================
+
+    const loadExistingAssignments = useCallback(async (selectedDate) => {
+        try {
+            setLoadingAssignments(true);
+
+            const response = await getAllEmployeeAssignments();
+            const list = extractList(response);
+
+            const activeAssignments = list.filter((item) => {
+                const date =
+                    item.assignmentDate ??
+                    item.AssignmentDate;
+
+                const cancelled =
+                    item.isCancelled ??
+                    item.IsCancelled;
+
+                // Only assignments for the selected date.
+                if (getAssignmentDateKey(date) !== selectedDate) {
+                    return false;
+                }
+
+                // Ignore cancelled assignments.
+                return (
+                    cancelled !== true &&
+                    Number(cancelled) !== 1
+                );
+            });
+
+            setExistingAssignments(activeAssignments);
+
+            return true;
+
+        } catch (error) {
+            console.error(
+                "Error loading existing assignments:",
+                error?.response?.data ?? error
+            );
+
+            setExistingAssignments([]);
+
+            setPageError(
+                getApiErrorMessage(
+                    error,
+                    "Unable to load existing employee assignments."
+                )
+            );
+
+            return false;
+
+        } finally {
+            setLoadingAssignments(false);
+        }
+    }, []);
+
+    // ======================================================
+    // INITIAL LOAD
+    // ======================================================
+
     useEffect(() => {
         loadEmployees();
         loadHotels();
     }, []);
+
+    // Load assignments whenever selected date changes.
+    useEffect(() => {
+        setExistingAssignments([]);
+        setRowData({});
+        setCurrentPage(1);
+
+        loadExistingAssignments(assignmentDate);
+
+    }, [assignmentDate, loadExistingAssignments]);
+
+    // ======================================================
+    // EXISTING ASSIGNMENT LOOKUP
+    // ======================================================
+
+    const existingAssignmentsByEmployee = useMemo(() => {
+        const result = {};
+
+        existingAssignments.forEach((item) => {
+            const employeeId =
+                item.employeeId ??
+                item.EmployeeId;
+
+            if (employeeId == null) return;
+
+            const key = String(employeeId);
+
+            if (!result[key]) {
+                result[key] = [];
+            }
+
+            result[key].push(item);
+        });
+
+        return result;
+
+    }, [existingAssignments]);
+
+    const getEmployeeAssignments = (employeeId) => {
+        return existingAssignmentsByEmployee[String(employeeId)] ?? [];
+    };
+
+    const getShiftName = (shiftId) => {
+        return Number(shiftId) === 1
+            ? "Morning"
+            : Number(shiftId) === 2
+                ? "Evening"
+                : `Shift ${shiftId}`;
+    };
+
+    const getUsedHalfDayShifts = (employeeId) => {
+        return getEmployeeAssignments(employeeId)
+            .filter((item) => {
+                const workType = normalizeWorkType(
+                    item.workType ?? item.WorkType
+                );
+
+                return workType === "halfday";
+            })
+            .map((item) =>
+                Number(item.shiftId ?? item.ShiftId)
+            );
+    };
+
+    const hasHalfDayAssignment = (employeeId) => {
+        return getUsedHalfDayShifts(employeeId).length > 0;
+    };
+
+    const hasFullDayAssignment = (employeeId) => {
+        return getEmployeeAssignments(employeeId).some((item) => {
+            const workType = normalizeWorkType(
+                item.workType ?? item.WorkType
+            );
+
+            return workType === "fullday";
+        });
+    };
+
+    // Hide FullDay employees and employees with both shifts assigned.
+    const hasNoRemainingShift = (employeeId) => {
+        const usedShifts = getUsedHalfDayShifts(employeeId);
+
+        return (
+            hasFullDayAssignment(employeeId) ||
+            (usedShifts.includes(1) && usedShifts.includes(2))
+        );
+    };
+
+    // ======================================================
+    // MEMBER TYPE
+    // ======================================================
 
     const normalizeMemberType = (type) =>
         type === "Supplier" ? "Outsourced" : type;
@@ -382,7 +619,10 @@ const Assignments = () => {
             loadEmployees();
         }
 
-        if (nextType === "Vendor" || nextType === "Outsourced") {
+        if (
+            nextType === "Vendor" ||
+            nextType === "Outsourced"
+        ) {
             loadVendors();
         }
     };
@@ -392,55 +632,139 @@ const Assignments = () => {
         setPageError("");
     };
 
-    // InHouse employees
+    // ======================================================
+    // INHOUSE EMPLOYEES
+    // ======================================================
+
+    // const currentEmployees = useMemo(() => {
+    //     if (memberType !== "InHouse") return [];
+
+    //     const search = searchText.trim().toLowerCase();
+
+    //     const inHouseEmployees = employees.filter((employee) => {
+    //         const typeValue = getEmployeeMemberType(employee);
+    //         const employeeId = getEmployeeId(employee);
+
+    //         return (
+    //             typeValue !== "local" &&
+    //             typeValue !== "supplier" &&
+    //             typeValue !== "outsourced" &&
+    //             !hasNoRemainingShift(employeeId)
+    //         );
+    //     });
+
+    //     if (!search) return inHouseEmployees;
+
+    //     return inHouseEmployees.filter((employee) => {
+    //         const name = String(
+    //             getEmployeeName(employee)
+    //         ).toLowerCase();
+
+    //         const id = String(
+    //             getEmployeeId(employee)
+    //         ).toLowerCase();
+
+    //         return name.includes(search) || id.includes(search);
+    //     });
+
+    // }, [
+    //     employees,
+    //     memberType,
+    //     searchText,
+    //     existingAssignmentsByEmployee
+    // ]);
     const currentEmployees = useMemo(() => {
-        if (memberType !== "InHouse") return [];
+    if (memberType !== "InHouse") return [];
 
-        const search = searchText.trim().toLowerCase();
+    const search = searchText.trim().toLowerCase();
 
-        const inHouseEmployees = employees.filter((employee) => {
-            const typeValue = getEmployeeMemberType(employee);
+    const inHouseEmployees = employees.filter((employee) => {
+        const typeValue = getEmployeeMemberType(employee);
+        const employeeId = getEmployeeId(employee);
 
-            return (
-                typeValue !== "local" &&
-                typeValue !== "supplier" &&
-                typeValue !== "outsourced"
-            );
-        });
+        return (
+            typeValue !== "local" &&
+            typeValue !== "supplier" &&
+            typeValue !== "outsourced" &&
+            !hasNoRemainingShift(employeeId)
+        );
+    });
 
-        if (!search) return inHouseEmployees;
-
-        return inHouseEmployees.filter((employee) => {
+    const filteredEmployees = !search
+        ? inHouseEmployees
+        : inHouseEmployees.filter((employee) => {
             const name = String(getEmployeeName(employee)).toLowerCase();
             const id = String(getEmployeeId(employee)).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
-    }, [employees, memberType, searchText]);
 
-    // Local employees
+    // HalfDay-assigned employees first
+    return [...filteredEmployees].sort((a, b) => {
+        const aAssigned =
+            getUsedHalfDayShifts(getEmployeeId(a)).length > 0;
+
+        const bAssigned =
+            getUsedHalfDayShifts(getEmployeeId(b)).length > 0;
+
+        return Number(bAssigned) - Number(aAssigned);
+    });
+
+    }, [
+        employees,
+        memberType,
+        searchText,
+        existingAssignmentsByEmployee
+    ]);
+
+    // ======================================================
+    // LOCAL EMPLOYEES
+    // ======================================================
+
     const currentLocalEmployees = useMemo(() => {
         if (memberType !== "Local") return [];
 
         const search = searchText.trim().toLowerCase();
 
-        const localEmployees = employees.filter(
-            (employee) => getEmployeeMemberType(employee) === "local"
-        );
+        const localEmployees = employees.filter((employee) => {
+            const employeeId = getEmployeeId(employee);
+
+            return (
+                getEmployeeMemberType(employee) === "local" &&
+                !hasNoRemainingShift(employeeId)
+            );
+        });
 
         if (!search) return localEmployees;
 
         return localEmployees.filter((employee) => {
-            const name = String(getEmployeeName(employee)).toLowerCase();
-            const id = String(getEmployeeId(employee)).toLowerCase();
+            const name = String(
+                getEmployeeName(employee)
+            ).toLowerCase();
+
+            const id = String(
+                getEmployeeId(employee)
+            ).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
-    }, [employees, memberType, searchText]);
 
-    // Outsourced / Supplier employees
+    }, [
+        employees,
+        memberType,
+        searchText,
+        existingAssignmentsByEmployee
+    ]);
+
+    // ======================================================
+    // OUTSOURCED / SUPPLIER EMPLOYEES
+    // ======================================================
+
     const currentOutsourcedEmployees = useMemo(() => {
-        if (memberType !== "Outsourced" && memberType !== "Supplier") {
+        if (
+            memberType !== "Outsourced" &&
+            memberType !== "Supplier"
+        ) {
             return [];
         }
 
@@ -460,14 +784,23 @@ const Assignments = () => {
         if (!search) return outsourcedEmployees;
 
         return outsourcedEmployees.filter((employee) => {
-            const name = String(getEmployeeName(employee)).toLowerCase();
-            const id = String(getEmployeeId(employee)).toLowerCase();
+            const name = String(
+                getEmployeeName(employee)
+            ).toLowerCase();
+
+            const id = String(
+                getEmployeeId(employee)
+            ).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
+
     }, [employees, memberType, searchText]);
 
-    // Vendors
+    // ======================================================
+    // VENDORS
+    // ======================================================
+
     const currentVendors = useMemo(() => {
         if (memberType !== "Vendor") return [];
 
@@ -476,54 +809,81 @@ const Assignments = () => {
         if (!search) return vendors;
 
         return vendors.filter((vendor) => {
-            const name = String(getVendorName(vendor)).toLowerCase();
-            const id = String(getVendorId(vendor)).toLowerCase();
+            const name = String(
+                getVendorName(vendor)
+            ).toLowerCase();
+
+            const id = String(
+                getVendorId(vendor)
+            ).toLowerCase();
 
             return name.includes(search) || id.includes(search);
         });
+
     }, [vendors, memberType, searchText]);
 
-    // Get total filtered records
+    // ======================================================
+    // TOTAL RECORDS
+    // ======================================================
+
     const displayedCount =
         memberType === "Vendor"
             ? currentVendors.length
             : memberType === "Local"
                 ? currentLocalEmployees.length
-                : memberType === "Outsourced" || memberType === "Supplier"
+                : memberType === "Outsourced" ||
+                    memberType === "Supplier"
                     ? currentOutsourcedEmployees.length
                     : currentEmployees.length;
 
-    // Pagination calculations
+    // ======================================================
+    // PAGINATION
+    // ======================================================
+
     const totalPages = Math.max(
         1,
         Math.ceil(displayedCount / PAGE_SIZE)
     );
 
     const startIndex = (currentPage - 1) * PAGE_SIZE;
-    const endIndex = Math.min(startIndex + PAGE_SIZE, displayedCount);
 
-    // Display only 30 records on the current page
+    const endIndex = Math.min(
+        startIndex + PAGE_SIZE,
+        displayedCount
+    );
+
     const paginatedEmployees = useMemo(
-        () => currentEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        () => currentEmployees.slice(
+            startIndex,
+            startIndex + PAGE_SIZE
+        ),
         [currentEmployees, startIndex]
     );
 
     const paginatedLocalEmployees = useMemo(
-        () => currentLocalEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        () => currentLocalEmployees.slice(
+            startIndex,
+            startIndex + PAGE_SIZE
+        ),
         [currentLocalEmployees, startIndex]
     );
 
     const paginatedOutsourcedEmployees = useMemo(
-        () => currentOutsourcedEmployees.slice(startIndex, startIndex + PAGE_SIZE),
+        () => currentOutsourcedEmployees.slice(
+            startIndex,
+            startIndex + PAGE_SIZE
+        ),
         [currentOutsourcedEmployees, startIndex]
     );
 
     const paginatedVendors = useMemo(
-        () => currentVendors.slice(startIndex, startIndex + PAGE_SIZE),
+        () => currentVendors.slice(
+            startIndex,
+            startIndex + PAGE_SIZE
+        ),
         [currentVendors, startIndex]
     );
 
-    // Keep current page valid when records change
     useEffect(() => {
         if (currentPage > totalPages) {
             setCurrentPage(totalPages);
@@ -531,7 +891,9 @@ const Assignments = () => {
     }, [currentPage, totalPages]);
 
     const handlePreviousPage = () => {
-        setCurrentPage((previous) => Math.max(1, previous - 1));
+        setCurrentPage((previous) =>
+            Math.max(1, previous - 1)
+        );
     };
 
     const handleNextPage = () => {
@@ -546,7 +908,10 @@ const Assignments = () => {
         }
     };
 
-    // Update row values
+    // ======================================================
+    // ROW DATA
+    // ======================================================
+
     const handleRowChange = (rowKey, field, value) => {
         setRowData((previous) => ({
             ...previous,
@@ -565,11 +930,15 @@ const Assignments = () => {
     };
 
     const memberTypeLabel =
-        memberType === "Outsourced" || memberType === "Supplier"
+        memberType === "Outsourced" ||
+        memberType === "Supplier"
             ? "Supplier"
             : memberType;
 
-    // Save InHouse / Local employee assignment
+    // ======================================================
+    // SAVE INHOUSE / LOCAL EMPLOYEE ASSIGNMENT
+    // ======================================================
+
     const handleSubmit = async (employee) => {
         const employeeId = getEmployeeId(employee);
 
@@ -580,6 +949,37 @@ const Assignments = () => {
 
         const rowKey = String(employeeId);
         const row = rowData[rowKey] ?? {};
+
+        if (hasFullDayAssignment(employeeId)) {
+            showDialog(
+                "Error",
+                "This employee already has a FullDay assignment."
+            );
+            return;
+        }
+
+        const selectedShiftId = Number(row.shiftId);
+        const usedShifts = getUsedHalfDayShifts(employeeId);
+
+        if (usedShifts.includes(selectedShiftId)) {
+            showDialog(
+                "Error",
+                "This employee is already assigned to this shift."
+            );
+            return;
+        }
+
+        // Prevent assigning FullDay after a HalfDay assignment.
+        if (
+            usedShifts.length > 0 &&
+            normalizeWorkType(row.workType) === "fullday"
+        ) {
+            showDialog(
+                "Error",
+                "This employee already has a HalfDay assignment. Only the remaining HalfDay shift can be assigned."
+            );
+            return;
+        }
 
         if (!row.hotelId) {
             showDialog("Error", "Please select hotel.");
@@ -627,6 +1027,8 @@ const Assignments = () => {
 
             await createAssignment(payload);
 
+            await loadExistingAssignments(selectedDate);
+
             showDialog(
                 "Success!",
                 `Assignment saved successfully for ${getEmployeeName(employee)} on ${formatDateForDisplay(selectedDate)}.`
@@ -637,6 +1039,7 @@ const Assignments = () => {
                 delete updated[rowKey];
                 return updated;
             });
+
         } catch (error) {
             console.error(
                 "Error saving employee assignment:",
@@ -650,12 +1053,16 @@ const Assignments = () => {
                     "Failed to save employee assignment."
                 )
             );
+
         } finally {
             setSavingRowKey(null);
         }
     };
 
-    // Save vendor assignment
+    // ======================================================
+    // SAVE VENDOR ASSIGNMENT
+    // ======================================================
+
     const handleVendorSubmit = async (vendor) => {
         const vendorId = getVendorId(vendor);
         const rowKey = getVendorRowKey(vendor);
@@ -666,7 +1073,10 @@ const Assignments = () => {
             return;
         }
 
-        const quantityText = String(row.employeeQuantity ?? "").trim();
+        const quantityText = String(
+            row.employeeQuantity ?? ""
+        ).trim();
+
         const quantity = Number(quantityText);
 
         if (
@@ -739,6 +1149,7 @@ const Assignments = () => {
                 delete updated[rowKey];
                 return updated;
             });
+
         } catch (error) {
             console.error(
                 "Error saving vendor assignment:",
@@ -752,17 +1163,24 @@ const Assignments = () => {
                     "Failed to save vendor assignment."
                 )
             );
+
         } finally {
             setSavingRowKey(null);
         }
     };
 
-    // Save outsourced / supplier assignment
+    // ======================================================
+    // SAVE SUPPLIER ASSIGNMENT
+    // ======================================================
+
     const handleSupplierSubmit = async (employee) => {
         const employeeId = getEmployeeId(employee);
 
         if (employeeId == null || employeeId === "") {
-            showDialog("Error", "Supplier employee ID not found.");
+            showDialog(
+                "Error",
+                "Supplier employee ID not found."
+            );
             return;
         }
 
@@ -774,7 +1192,10 @@ const Assignments = () => {
             return;
         }
 
-        const quantityText = String(row.employeeQuantity ?? "").trim();
+        const quantityText = String(
+            row.employeeQuantity ?? ""
+        ).trim();
+
         const quantity = Number(quantityText);
 
         if (
@@ -843,6 +1264,7 @@ const Assignments = () => {
                 delete updated[rowKey];
                 return updated;
             });
+
         } catch (error) {
             console.error(
                 "Error saving outsourced supplier assignment:",
@@ -856,10 +1278,15 @@ const Assignments = () => {
                     "Failed to save supplier assignment."
                 )
             );
+
         } finally {
             setSavingRowKey(null);
         }
     };
+
+    // ======================================================
+    // CANCEL ROW
+    // ======================================================
 
     const handleCancel = (rowKey) => {
         setRowData((previous) => {
@@ -869,12 +1296,19 @@ const Assignments = () => {
         });
     };
 
+    // ======================================================
+    // LOADING STATUS
+    // ======================================================
+
     const isLoading =
         memberType === "Vendor"
             ? loadingVendors
             : loadingEmployees;
 
-    // Reusable employee table rows
+    // ======================================================
+    // EMPLOYEE TABLE ROWS
+    // ======================================================
+
     const renderEmployeeRows = (employeeList) => {
         if (employeeList.length === 0) {
             return (
@@ -883,7 +1317,7 @@ const Assignments = () => {
                         {employees.length === 0
                             ? "No employee records found."
                             : memberType === "Local"
-                                ? "No Local employees found. Check the employee API member/work type field."
+                                ? "No Local employees found."
                                 : "No matching InHouse employees found."}
                     </td>
                 </tr>
@@ -896,14 +1330,48 @@ const Assignments = () => {
             const row = rowData[rowKey] ?? {};
             const isSaving = savingRowKey === rowKey;
 
+            const employeeAssignments =
+                getEmployeeAssignments(employeeId);
+
+            const usedShifts =
+                getUsedHalfDayShifts(employeeId);
+
+            const alreadyAssignedHalfDay =
+                hasHalfDayAssignment(employeeId);
+
+            const assignmentStatus = employeeAssignments
+                .map((item) => {
+                    const shiftId =
+                        item.shiftId ?? item.ShiftId;
+
+                    const workType =
+                        item.workType ?? item.WorkType;
+
+                    return `${getShiftName(shiftId)} - ${workType}`;
+                })
+                .join(", ");
+
             return (
-                <tr key={rowKey}>
+                <tr
+                    key={rowKey}
+                    className={
+                        alreadyAssignedHalfDay
+                            ? "halfday-assigned-row"
+                            : ""
+                    }
+                >
                     <td>{employeeId}</td>
 
                     <td>
                         <div className="employee-name">
                             {getEmployeeName(employee)}
                         </div>
+
+                        {alreadyAssignedHalfDay && (
+                            <small className="assignment-status">
+                                Already assigned: {assignmentStatus}
+                            </small>
+                        )}
                     </td>
 
                     <td>
@@ -964,8 +1432,26 @@ const Assignments = () => {
                             disabled={isSaving}
                         >
                             <option value="">Select Shift Type</option>
-                            <option value="1">Morning</option>
-                            <option value="2">Evening</option>
+
+                            <option
+                                value="1"
+                                disabled={usedShifts.includes(1)}
+                            >
+                                Morning
+                                {usedShifts.includes(1)
+                                    ? " (Already Assigned)"
+                                    : ""}
+                            </option>
+
+                            <option
+                                value="2"
+                                disabled={usedShifts.includes(2)}
+                            >
+                                Evening
+                                {usedShifts.includes(2)
+                                    ? " (Already Assigned)"
+                                    : ""}
+                            </option>
                         </select>
                     </td>
 
@@ -983,8 +1469,17 @@ const Assignments = () => {
                             disabled={isSaving}
                         >
                             <option value="">Select Work Type</option>
-                            <option value="HalfDay">HalfDay</option>
-                            <option value="FullDay">FullDay</option>
+
+                            <option value="HalfDay">
+                                HalfDay
+                            </option>
+
+                            <option
+                                value="FullDay"
+                                disabled={usedShifts.length > 0}
+                            >
+                                FullDay
+                            </option>
                         </select>
                     </td>
 
@@ -1010,7 +1505,11 @@ const Assignments = () => {
                             <button
                                 type="button"
                                 className="btn-submit"
-                                disabled={isSaving || loadingHotels}
+                                disabled={
+                                    isSaving ||
+                                    loadingHotels ||
+                                    loadingAssignments
+                                }
                                 onClick={() => handleSubmit(employee)}
                             >
                                 {isSaving ? "Saving..." : "Submit"}
@@ -1031,7 +1530,10 @@ const Assignments = () => {
         });
     };
 
-    // Supplier table rows
+    // ======================================================
+    // SUPPLIER TABLE ROWS
+    // ======================================================
+
     const renderSupplierRows = (employeeList) => {
         if (employeeList.length === 0) {
             return (
@@ -1186,7 +1688,9 @@ const Assignments = () => {
                                 type="button"
                                 className="btn-submit"
                                 disabled={isSaving || loadingVendors}
-                                onClick={() => handleSupplierSubmit(employee)}
+                                onClick={() =>
+                                    handleSupplierSubmit(employee)
+                                }
                             >
                                 {isSaving ? "Saving..." : "Submit"}
                             </button>
@@ -1206,7 +1710,10 @@ const Assignments = () => {
         });
     };
 
-    // Pagination controls
+    // ======================================================
+    // PAGINATION CONTROLS
+    // ======================================================
+
     const renderPagination = () => {
         if (displayedCount === 0) return null;
 
@@ -1234,19 +1741,21 @@ const Assignments = () => {
                         { length: totalPages },
                         (_, index) => index + 1
                     )
-                        .filter((page) => {
-                            return (
-                                page === 1 ||
-                                page === totalPages ||
-                                Math.abs(page - currentPage) <= 1
-                            );
-                        })
+                        .filter((page) =>
+                            page === 1 ||
+                            page === totalPages ||
+                            Math.abs(page - currentPage) <= 1
+                        )
                         .reduce((result, page, index, array) => {
-                            if (index > 0 && page - array[index - 1] > 1) {
+                            if (
+                                index > 0 &&
+                                page - array[index - 1] > 1
+                            ) {
                                 result.push("...");
                             }
 
                             result.push(page);
+
                             return result;
                         }, [])
                         .map((page, index) =>
@@ -1262,9 +1771,13 @@ const Assignments = () => {
                                     type="button"
                                     key={page}
                                     className={`pagination-btn ${
-                                        currentPage === page ? "active" : ""
+                                        currentPage === page
+                                            ? "active"
+                                            : ""
                                     }`}
-                                    onClick={() => handlePageChange(page)}
+                                    onClick={() =>
+                                        handlePageChange(page)
+                                    }
                                 >
                                     {page}
                                 </button>
@@ -1285,6 +1798,10 @@ const Assignments = () => {
         );
     };
 
+    // ======================================================
+    // MAIN UI
+    // ======================================================
+
     const activeTabClass =
         memberType === "Outsourced"
             ? "supplier"
@@ -1301,6 +1818,8 @@ const Assignments = () => {
                 </div>
             </div>
 
+            {/* FILTERS */}
+
             <div className="assignment-filter-card">
 
                 <div className="filter-group">
@@ -1308,7 +1827,13 @@ const Assignments = () => {
 
                     <div className="member-type-buttons">
 
-                        {["InHouse", "Vendor", "Local", "Outsourced"].map((type) => {
+                        {[
+                            "InHouse",
+                            "Vendor",
+                            "Local",
+                            "Outsourced"
+                        ].map((type) => {
+
                             const normalizedType =
                                 type === "Outsourced"
                                     ? "supplier"
@@ -1381,7 +1906,8 @@ const Assignments = () => {
 
             </div>
 
-            {/* Success / Error Dialog */}
+            {/* SUCCESS / ERROR DIALOG */}
+
             {successDialog && (
                 <div
                     className="assignment-success-backdrop"
@@ -1389,15 +1915,20 @@ const Assignments = () => {
                 >
                     <div
                         className="assignment-success-modal"
-                        onClick={(event) => event.stopPropagation()}
+                        onClick={(event) =>
+                            event.stopPropagation()
+                        }
                     >
                         <h3>{successDialog.title}</h3>
+
                         <p>{successDialog.message}</p>
 
                         <button
                             type="button"
                             className="assignment-success-ok"
-                            onClick={() => setSuccessDialog(null)}
+                            onClick={() =>
+                                setSuccessDialog(null)
+                            }
                         >
                             OK
                         </button>
@@ -1405,13 +1936,16 @@ const Assignments = () => {
                 </div>
             )}
 
+            {/* ERROR MESSAGE */}
+
             {pageError && (
                 <div className="allocation-message allocation-error">
                     {pageError}
                 </div>
             )}
 
-            {/* Assignment Information */}
+            {/* ASSIGNMENT INFORMATION */}
+
             <div className="assignment-info">
 
                 <span>
@@ -1440,11 +1974,15 @@ const Assignments = () => {
 
             </div>
 
-            {isLoading ? (
+            {/* LOADING */}
+
+            {isLoading || loadingAssignments ? (
                 <div className="loading-message">
-                    {memberType === "Vendor"
-                        ? "Loading vendors..."
-                        : "Loading employees..."}
+                    {loadingAssignments
+                        ? "Checking existing assignments..."
+                        : memberType === "Vendor"
+                            ? "Loading vendors..."
+                            : "Loading employees..."}
                 </div>
             ) : (
                 <>
@@ -1496,23 +2034,37 @@ const Assignments = () => {
                             <tbody>
 
                                 {memberType === "Vendor" ? (
+
                                     paginatedVendors.length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="no-data">
+                                            <td
+                                                colSpan={9}
+                                                className="no-data"
+                                            >
                                                 {vendors.length === 0
                                                     ? "No vendor records found."
                                                     : "No matching vendors found."}
                                             </td>
                                         </tr>
                                     ) : (
+
                                         paginatedVendors.map((vendor) => {
-                                            const vendorId = getVendorId(vendor);
-                                            const rowKey = getVendorRowKey(vendor);
-                                            const row = rowData[rowKey] ?? {};
-                                            const isSaving = savingRowKey === rowKey;
+
+                                            const vendorId =
+                                                getVendorId(vendor);
+
+                                            const rowKey =
+                                                getVendorRowKey(vendor);
+
+                                            const row =
+                                                rowData[rowKey] ?? {};
+
+                                            const isSaving =
+                                                savingRowKey === rowKey;
 
                                             return (
                                                 <tr key={rowKey}>
+
                                                     <td>{vendorId}</td>
 
                                                     <td>
@@ -1656,6 +2208,7 @@ const Assignments = () => {
 
                                                     <td>
                                                         <div className="action-buttons">
+
                                                             <button
                                                                 type="button"
                                                                 className="btn-submit"
@@ -1664,7 +2217,9 @@ const Assignments = () => {
                                                                     handleVendorSubmit(vendor)
                                                                 }
                                                             >
-                                                                {isSaving ? "Saving..." : "Submit"}
+                                                                {isSaving
+                                                                    ? "Saving..."
+                                                                    : "Submit"}
                                                             </button>
 
                                                             <button
@@ -1677,18 +2232,33 @@ const Assignments = () => {
                                                             >
                                                                 Cancel
                                                             </button>
+
                                                         </div>
                                                     </td>
+
                                                 </tr>
                                             );
                                         })
                                     )
+
                                 ) : memberType === "Local" ? (
-                                    renderEmployeeRows(paginatedLocalEmployees)
+
+                                    renderEmployeeRows(
+                                        paginatedLocalEmployees
+                                    )
+
                                 ) : memberType === "Outsourced" ? (
-                                    renderSupplierRows(paginatedOutsourcedEmployees)
+
+                                    renderSupplierRows(
+                                        paginatedOutsourcedEmployees
+                                    )
+
                                 ) : (
-                                    renderEmployeeRows(paginatedEmployees)
+
+                                    renderEmployeeRows(
+                                        paginatedEmployees
+                                    )
+
                                 )}
 
                             </tbody>
@@ -1697,7 +2267,8 @@ const Assignments = () => {
 
                     </div>
 
-                    {/* Pagination */}
+                    {/* PAGINATION */}
+
                     {renderPagination()}
                 </>
             )}

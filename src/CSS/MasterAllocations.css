@@ -597,3 +597,72 @@
         align-self: flex-start;
     }
 }
+
+/* =====================================================
+   MASTER ALLOCATIONS PAGINATION
+===================================================== */
+
+.allocation-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 18px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-buttons button {
+    padding: 8px 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-buttons button:hover:not(:disabled) {
+    background: #d49a45;
+    border-color: #d49a45;
+    color: #ffffff;
+}
+
+.pagination-buttons button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+}
+
+@media (max-width: 600px) {
+    .allocation-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pagination-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
