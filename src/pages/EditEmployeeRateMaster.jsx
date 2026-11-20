@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from "react";
 
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import "../CSS/EditEmployeeRate.css";
 
@@ -60,6 +59,8 @@ const EditEmployeeRateMaster = () => {
     const navigate = useNavigate();
 
     const { rateId } = useParams();
+
+    const location = useLocation();
 
     // =========================================================
 
@@ -131,6 +132,194 @@ const EditEmployeeRateMaster = () => {
 
         }
 
+        // Initialize form with router-state rate data, if available.
+
+        const state = location.state;
+
+        if (state && (state.rateData || state.rateRecord)) {
+
+            const rateData = state.rateData ?? state.rateRecord;
+
+            // -------------------------------------------------
+
+            // EMPLOYEE ID
+
+            // -------------------------------------------------
+
+            const employeeId =
+
+                rateData.employeeId ??
+
+                rateData.EmployeeId ??
+
+                rateData.fkEmployeeId ??
+
+                rateData.FkEmployeeId ??
+
+                rateData.fk_EmployeeId ??
+
+                rateData.FK_EmployeeId ??
+
+                "";
+
+            // -------------------------------------------------
+
+            // RATE VALUES
+
+            // -------------------------------------------------
+
+            const halfDayRate =
+
+                rateData.halfDayRate ??
+
+                rateData.HalfDayRate ??
+
+                "";
+
+            const fullDayRate =
+
+                rateData.fullDayRate ??
+
+                rateData.FullDayRate ??
+
+                "";
+
+            const twoHalfDayRate =
+
+                rateData.twoHalfDayRate ??
+
+                rateData.TwoHalfDayRate ??
+
+                "";
+
+            // -------------------------------------------------
+
+            // EFFECTIVE FROM
+
+            // Normalize API date for DatePicker state.
+
+            // State format must be YYYY-MM-DD.
+
+            // -------------------------------------------------
+
+            const effectiveFrom = toISODate(
+
+                rateData.effectiveFrom ??
+
+                rateData.EffectiveFrom ??
+
+                rateData.fromDate ??
+
+                rateData.FromDate ??
+
+                ""
+
+            );
+
+            // -------------------------------------------------
+
+            // EFFECTIVE TO
+
+            // -------------------------------------------------
+
+            const effectiveTo = toISODate(
+
+                rateData.effectiveTo ??
+
+                rateData.EffectiveTo ??
+
+                rateData.toDate ??
+
+                rateData.ToDate ??
+
+                ""
+
+            );
+
+            console.log("EMPLOYEE ID:", employeeId);
+
+            console.log("HALF DAY RATE:", halfDayRate);
+
+            console.log("FULL DAY RATE:", fullDayRate);
+
+            console.log("TWO HALF DAY RATE:", twoHalfDayRate);
+
+            console.log("EFFECTIVE FROM:", effectiveFrom);
+
+            console.log("EFFECTIVE TO:", effectiveTo);
+
+            // -------------------------------------------------
+
+            // SET FORM
+
+            // -------------------------------------------------
+
+            setForm({
+
+                employeeId,
+
+                halfDShiftId: 1,
+
+                halfDayRate,
+
+                fullDShiftId: 2,
+
+                fullDayRate,
+
+                twoHDRShiftId: 3,
+
+                twoHalfDayRate,
+
+                effectiveFrom,
+
+                effectiveTo
+
+            });
+
+            // -------------------------------------------------
+
+            // LOAD EMPLOYEE NAME
+
+            // -------------------------------------------------
+
+            const embeddedEmployeeName =
+
+                rateData.employeeName ??
+
+                rateData.EmployeeName ??
+
+                rateData.fullName ??
+
+                rateData.FullName ??
+
+                rateData.employee?.fullName ??
+
+                rateData.employee?.FullName ??
+
+                rateData.employee?.employeeName ??
+
+                rateData.employee?.EmployeeName ??
+
+                "";
+
+            if (embeddedEmployeeName) {
+
+                setEmployeeName(embeddedEmployeeName);
+
+            }
+
+            if (employeeId) {
+
+                loadEmployee(employeeId);
+
+            }
+
+            setLoading(false);
+
+            return;
+
+        }
+
         loadRate();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,6 +333,65 @@ const EditEmployeeRateMaster = () => {
     // =========================================================
 
     const loadRate = async () => {
+
+        const selectedRecord = location.state?.rateRecord;
+
+        if (selectedRecord) {
+
+            const employeeId =
+                selectedRecord.employeeId ??
+                selectedRecord.EmployeeId ??
+                selectedRecord.fkEmployeeId ??
+                selectedRecord.FkEmployeeId ??
+                selectedRecord.fk_EmployeeId ??
+                "";
+
+            setForm({
+
+                employeeId,
+
+                halfDShiftId: selectedRecord.halfDShiftId ?? selectedRecord.HalfDShiftId ?? 1,
+
+                halfDayRate: selectedRecord.halfDayRate ?? selectedRecord.HalfDayRate ?? "",
+
+                fullDShiftId: selectedRecord.fullDShiftId ?? selectedRecord.FullDShiftId ?? 2,
+
+                fullDayRate: selectedRecord.fullDayRate ?? selectedRecord.FullDayRate ?? "",
+
+                twoHDRShiftId: selectedRecord.twoHDRShiftId ?? selectedRecord.TwoHDRShiftId ?? 3,
+
+                twoHalfDayRate: selectedRecord.twoHalfDayRate ?? selectedRecord.TwoHalfDayRate ?? "",
+
+                effectiveFrom: toISODate(
+                    selectedRecord.effectiveFrom ??
+                    selectedRecord.EffectiveFrom ??
+                    selectedRecord.fromDate ??
+                    selectedRecord.FromDate
+                ),
+
+                effectiveTo: toISODate(
+                    selectedRecord.effectiveTo ??
+                    selectedRecord.EffectiveTo ??
+                    selectedRecord.toDate ??
+                    selectedRecord.ToDate
+                )
+
+            });
+
+            const selectedName =
+                selectedRecord.employeeName ??
+                selectedRecord.EmployeeName ??
+                selectedRecord.fullName ??
+                selectedRecord.FullName ??
+                "";
+
+            if (selectedName) setEmployeeName(selectedName);
+
+            if (employeeId) await loadEmployee(employeeId);
+
+            setLoading(false);
+
+        }
 
         try {
 
@@ -165,27 +413,35 @@ const EditEmployeeRateMaster = () => {
 
             let data = response.data;
 
-            // Handle { data: {...} }
+            // APIs may wrap the record or return it directly.
 
-            if (data?.data) {
+            for (let depth = 0; depth < 3 && data; depth++) {
 
-                data = data.data;
+                if (Array.isArray(data)) {
 
-            }
+                    data = data[0];
 
-            // Handle { result: {...} }
+                    continue;
 
-            if (data?.result) {
+                }
 
-                data = data.result;
+                if (data?.data && typeof data.data === "object") {
 
-            }
+                    data = data.data;
 
-            // Handle array response
+                    continue;
 
-            if (Array.isArray(data)) {
+                }
 
-                data = data[0];
+                if (data?.result && typeof data.result === "object") {
+
+                    data = data.result;
+
+                    continue;
+
+                }
+
+                break;
 
             }
 
@@ -211,7 +467,13 @@ const EditEmployeeRateMaster = () => {
 
                 data.EmployeeId ??
 
+                data.fkEmployeeId ??
+
+                data.FkEmployeeId ??
+
                 data.fk_EmployeeId ??
+
+                data.FK_EmployeeId ??
 
                 "";
 
@@ -335,6 +597,32 @@ const EditEmployeeRateMaster = () => {
 
             // -------------------------------------------------
 
+            const embeddedEmployeeName =
+
+                data.employeeName ??
+
+                data.EmployeeName ??
+
+                data.fullName ??
+
+                data.FullName ??
+
+                data.employee?.fullName ??
+
+                data.employee?.FullName ??
+
+                data.employee?.employeeName ??
+
+                data.employee?.EmployeeName ??
+
+                "";
+
+            if (embeddedEmployeeName) {
+
+                setEmployeeName(embeddedEmployeeName);
+
+            }
+
             if (employeeId) {
 
                 await loadEmployee(employeeId);
@@ -439,7 +727,7 @@ const EditEmployeeRateMaster = () => {
 
             );
 
-            setEmployeeName("");
+            setEmployeeName((currentName) => currentName || "Employee name unavailable");
 
         }
 
