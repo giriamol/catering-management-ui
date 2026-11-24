@@ -1,13 +1,13 @@
-
 import { useEffect, useState } from "react";
 import { getVendorById, updateVendor } from "../api/vendorApi";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "../CSS/AddVendor.css";
 
 function EditVendor() {
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [formData, setFormData] = useState({
         vendorName: "",
@@ -32,15 +32,57 @@ function EditVendor() {
 
         try {
 
+            const selectedVendor = location.state?.vendor;
+
+            if (selectedVendor) {
+                setFormData({
+                    vendorName:
+                        selectedVendor.vendorName ??
+                        selectedVendor.VendorName ??
+                        "",
+                    mobileNumber1:
+                        selectedVendor.mobileNumber1 ??
+                        selectedVendor.MobileNumber1 ??
+                        "",
+                    mobileNumber2:
+                        selectedVendor.mobileNumber2 ??
+                        selectedVendor.MobileNumber2 ??
+                        "",
+                    address:
+                        selectedVendor.address ??
+                        selectedVendor.Address ??
+                        ""
+                });
+
+                setLoading(false);
+            }
+
             const response = await getVendorById(id);
 
-            const vendor = response.data;
+            let vendor = response?.data;
+
+            if (Array.isArray(vendor)) vendor = vendor[0];
+            if (vendor?.data) vendor = vendor.data;
+            if (vendor?.result) vendor = vendor.result;
+            if (Array.isArray(vendor)) vendor = vendor[0];
 
             setFormData({
-                vendorName: vendor.vendorName || "",
-                mobileNumber1: vendor.mobileNumber1 || "",
-                mobileNumber2: vendor.mobileNumber2 || "",
-                address: vendor.address || ""
+                vendorName:
+                    vendor?.vendorName ??
+                    vendor?.VendorName ??
+                    "",
+                mobileNumber1:
+                    vendor?.mobileNumber1 ??
+                    vendor?.MobileNumber1 ??
+                    "",
+                mobileNumber2:
+                    vendor?.mobileNumber2 ??
+                    vendor?.MobileNumber2 ??
+                    "",
+                address:
+                    vendor?.address ??
+                    vendor?.Address ??
+                    ""
             });
 
         } catch (error) {

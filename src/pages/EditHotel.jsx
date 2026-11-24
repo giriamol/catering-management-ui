@@ -127,20 +127,20 @@ function EditHotel() {
 
             await updateHotel(id, hotel);
 
-            showPopup("Success!", "Hotel updated successfully.", () => {
+            showPopup("Success!", "Record updated successfully.", () => {
                 navigate("/hotels");
             });
 
         } catch (error) {
 
             console.error(
-                "Error updating hotel:",
+                "Error updating Cater:",
                 error
             );
 
             alert(
                 error.response?.data?.message ||
-                "Failed to update hotel."
+                "Failed to update Caters."
             );
 
         } finally {
@@ -168,7 +168,7 @@ function EditHotel() {
                 <div className="hotel-form-card">
 
                     <p>
-                        Loading hotel...
+                        Loading Caters...
                     </p>
 
                 </div>
@@ -188,11 +188,11 @@ function EditHotel() {
                 <div>
 
                     <h1>
-                        Edit Hotel
+                        Edit Caters
                     </h1>
 
                     <p>
-                        Update hotel information.
+                        Update Caters information.
                     </p>
 
                 </div>
@@ -214,7 +214,7 @@ function EditHotel() {
                         <div className="hotel-form-group">
 
                             <label>
-                                Hotel Name <span>*</span>
+                                Caters Name <span>*</span>
                             </label>
 
                             <input
@@ -222,7 +222,7 @@ function EditHotel() {
                                 name="hotelName"
                                 value={hotel.hotelName}
                                 onChange={handleChange}
-                                placeholder="Enter hotel name"
+                                placeholder="Enter Caters name"
                                 maxLength="200"
                             />
 
@@ -301,7 +301,7 @@ function EditHotel() {
                                 name="address"
                                 value={hotel.address}
                                 onChange={handleChange}
-                                placeholder="Enter hotel address"
+                                placeholder="Enter Caters address"
                                 rows="4"
                                 maxLength="500"
                             />

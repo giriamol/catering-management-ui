@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -18,9 +19,11 @@ const toInputDate = (dateValue) => {
 
     const value = String(dateValue).trim();
     const isoMatch = value.match(/^(\d{4}-\d{2}-\d{2})/);
+
     if (isoMatch) return isoMatch[1];
 
     const displayMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
     if (displayMatch) {
         return `${displayMatch[3]}-${displayMatch[2]}-${displayMatch[1]}`;
     }
@@ -43,8 +46,12 @@ const AddEmployeeRateMaster = () => {
         halfDayRate: "",
         fullShiftId: 2,
         fullDayRate: "",
+
+        // Retained for preserving existing values in edit mode only.
+        // These fields are not displayed in the form.
         twoHalfDayShiftId: 3,
         twoHalfDayRate: "",
+
         effectiveFrom: "",
         effectiveTo: ""
     });
@@ -80,6 +87,7 @@ const AddEmployeeRateMaster = () => {
                 "Error loading employees:",
                 error.response?.data || error
             );
+
             setEmployees([]);
             alert("Unable to load employees.");
         }
@@ -98,8 +106,11 @@ const AddEmployeeRateMaster = () => {
                 halfDayRate: data.halfDayRate ?? "",
                 fullShiftId: data.fullDShiftId ?? 2,
                 fullDayRate: data.fullDayRate ?? "",
+
+                // Preserve existing Two Half Day values when editing.
                 twoHalfDayShiftId: data.twoHDRShiftId ?? 3,
                 twoHalfDayRate: data.twoHalfDayRate ?? "",
+
                 effectiveFrom: toInputDate(data.effectiveFrom),
                 effectiveTo: toInputDate(data.effectiveTo)
             });
@@ -108,6 +119,7 @@ const AddEmployeeRateMaster = () => {
                 "EDIT API ERROR:",
                 error.response?.data || error
             );
+
             alert("Unable to load employee rate details.");
         } finally {
             setLoading(false);
@@ -131,6 +143,7 @@ const AddEmployeeRateMaster = () => {
         setForm((previous) => ({
             ...previous,
             [name]: dateValue,
+
             // Clear Effective To if it would become earlier than Effective From.
             ...(name === "effectiveFrom" &&
             previous.effectiveTo &&
@@ -171,30 +184,38 @@ const AddEmployeeRateMaster = () => {
             return;
         }
 
-        // Dates stay in yyyy-MM-dd format in state and in the API payload.
+        // Common payload for both Add and Edit.
+        // Two Half Day fields are not included for new records.
         const payload = {
             employeeId: Number(form.employeeId),
             halfDShiftId: Number(form.halfShiftId),
             halfDayRate: Number(form.halfDayRate),
             fullDShiftId: Number(form.fullShiftId),
             fullDayRate: Number(form.fullDayRate),
-            twoHDRShiftId:
-                form.twoHalfDayRate !== ""
-                    ? Number(form.twoHalfDayShiftId)
-                    : null,
-            twoHalfDayRate:
-                form.twoHalfDayRate !== ""
-                    ? Number(form.twoHalfDayRate)
-                    : null,
             effectiveFrom: form.effectiveFrom,
             effectiveTo: form.effectiveTo || null
         };
+
+        // In edit mode, preserve existing Two Half Day values.
+        // They are not visible or editable in this form.
+        if (isEditMode) {
+            payload.twoHDRShiftId =
+                form.twoHalfDayRate !== ""
+                    ? Number(form.twoHalfDayShiftId)
+                    : null;
+
+            payload.twoHalfDayRate =
+                form.twoHalfDayRate !== ""
+                    ? Number(form.twoHalfDayRate)
+                    : null;
+        }
 
         try {
             setLoading(true);
 
             if (isEditMode) {
                 await updateEmployeeRateMaster(rateId, payload);
+
                 showPopup(
                     "Success!",
                     "Employee rate updated successfully.",
@@ -202,6 +223,7 @@ const AddEmployeeRateMaster = () => {
                 );
             } else {
                 await createEmployeeRateMaster(payload);
+
                 showPopup(
                     "Success!",
                     "Employee rate saved successfully.",
@@ -229,20 +251,31 @@ const AddEmployeeRateMaster = () => {
 
     return (
         <div className="employee-rate-page">
+
             <div className="employee-rate-header">
                 <div>
                     <h2>
-                        {isEditMode ? "Edit Employee Rate" : "Add Employee Rate"}
+                        {isEditMode
+                            ? "Edit Employee Rate"
+                            : "Add Employee Rate"}
                     </h2>
+
                     <p>Enter employee rate details</p>
                 </div>
             </div>
 
             <div className="employee-rate-form-card">
+
                 <form onSubmit={handleSubmit}>
+
+                    {/* EMPLOYEE */}
+
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="employeeId">Employee</label>
+                            <label htmlFor="employeeId">
+                                Employee
+                            </label>
+
                             <select
                                 id="employeeId"
                                 name="employeeId"
@@ -251,7 +284,10 @@ const AddEmployeeRateMaster = () => {
                                 disabled={isEditMode || loading}
                                 required
                             >
-                                <option value="">-- Select Employee --</option>
+                                <option value="">
+                                    -- Select Employee --
+                                </option>
+
                                 {employees.map((employee) => (
                                     <option
                                         key={employee.employeeId}
@@ -264,9 +300,15 @@ const AddEmployeeRateMaster = () => {
                         </div>
                     </div>
 
+                    {/* HALF DAY SHIFT ID AND RATE */}
+
                     <div className="form-row">
+
                         <div className="form-group">
-                            <label htmlFor="halfShiftId">Half Day Shift ID</label>
+                            <label htmlFor="halfShiftId">
+                                Half Day Shift ID
+                            </label>
+
                             <input
                                 id="halfShiftId"
                                 type="number"
@@ -277,7 +319,10 @@ const AddEmployeeRateMaster = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="halfDayRate">Half Day Rate</label>
+                            <label htmlFor="halfDayRate">
+                                Half Day Rate
+                            </label>
+
                             <input
                                 id="halfDayRate"
                                 type="number"
@@ -290,11 +335,18 @@ const AddEmployeeRateMaster = () => {
                                 required
                             />
                         </div>
+
                     </div>
 
+                    {/* FULL DAY SHIFT ID AND RATE */}
+
                     <div className="form-row">
+
                         <div className="form-group">
-                            <label htmlFor="fullShiftId">Full Day Shift ID</label>
+                            <label htmlFor="fullShiftId">
+                                Full Day Shift ID
+                            </label>
+
                             <input
                                 id="fullShiftId"
                                 type="number"
@@ -305,7 +357,10 @@ const AddEmployeeRateMaster = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="fullDayRate">Full Day Rate</label>
+                            <label htmlFor="fullDayRate">
+                                Full Day Rate
+                            </label>
+
                             <input
                                 id="fullDayRate"
                                 type="number"
@@ -318,38 +373,13 @@ const AddEmployeeRateMaster = () => {
                                 required
                             />
                         </div>
+
                     </div>
 
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="twoHalfDayShiftId">
-                                Two Half Day Shift ID
-                            </label>
-                            <input
-                                id="twoHalfDayShiftId"
-                                type="number"
-                                name="twoHalfDayShiftId"
-                                value={form.twoHalfDayShiftId}
-                                readOnly
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="twoHalfDayRate">Two Half Day Rate</label>
-                            <input
-                                id="twoHalfDayRate"
-                                type="number"
-                                name="twoHalfDayRate"
-                                value={form.twoHalfDayRate}
-                                onChange={handleChange}
-                                placeholder="Enter Two Half Day Rate"
-                                min="0"
-                                step="0.01"
-                            />
-                        </div>
-                    </div>
+                    {/* EFFECTIVE FROM */}
 
                     <div className="form-row">
+
                         <div className="form-group">
                             <DatePicker
                                 id="effectiveFrom"
@@ -357,29 +387,22 @@ const AddEmployeeRateMaster = () => {
                                 label="Effective From"
                                 value={form.effectiveFrom}
                                 onChange={(dateValue) =>
-                                    handleDateChange("effectiveFrom", dateValue)
+                                    handleDateChange(
+                                        "effectiveFrom",
+                                        dateValue
+                                    )
                                 }
                                 required
                                 placeholder="Please Select Date DD/MM/YYYY"
                             />
                         </div>
 
-                        {/* <div className="form-group">
-                            <DatePicker
-                                id="effectiveTo"
-                                name="effectiveTo"
-                                label="Effective To"
-                                value={form.effectiveTo}
-                                onChange={(dateValue) =>
-                                    handleDateChange("effectiveTo", dateValue)
-                                }
-                                min={form.effectiveFrom || undefined}
-                                placeholder="DD/MM/YYYY"
-                            />
-                        </div> */}
                     </div>
 
+                    {/* BUTTONS */}
+
                     <div className="form-actions">
+
                         <button
                             type="submit"
                             className="save-btn"
@@ -400,9 +423,13 @@ const AddEmployeeRateMaster = () => {
                         >
                             Cancel
                         </button>
+
                     </div>
+
                 </form>
             </div>
+
+            {/* POPUP */}
 
             {popup && (
                 <div
@@ -417,6 +444,7 @@ const AddEmployeeRateMaster = () => {
                         onClick={(event) => event.stopPropagation()}
                     >
                         <h3>{popup.title}</h3>
+
                         <p>{popup.message}</p>
 
                         <button
@@ -432,6 +460,7 @@ const AddEmployeeRateMaster = () => {
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

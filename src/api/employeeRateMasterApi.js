@@ -1,4 +1,3 @@
-
 import axiosClient from "./axiosClient";
 
 export const getAllEmployeeRateMasters = () => {
@@ -50,7 +49,7 @@ export const getEmployeeRateMasters = (
 // NOT EmployeeId
 // =========================================================
 
-export const getEmployeeRateMasterById = (
+export const getEmployeeRateMasterById = async (
     employeeRateHistoryId
 ) => {
 
@@ -59,9 +58,55 @@ export const getEmployeeRateMasterById = (
         employeeRateHistoryId
     );
 
-    return axiosClient.get(
-        `/EmployeeRateHistory/employee/${employeeRateHistoryId}`
-    );
+    const historyId = Number(employeeRateHistoryId);
+
+    try {
+        return await axiosClient.get(`/EmployeeRateHistory/${historyId}`);
+    } catch (historyError) {
+        if (
+            historyError.response?.status !== 404 &&
+            historyError.response?.status !== 405
+        ) {
+            throw historyError;
+        }
+
+        // Compatibility fallback for deployments that do not expose
+        // GET /EmployeeRateHistory/{id}. Find the exact record from the
+        // paged employee-rate list instead of calling an employee route.
+        const pagedResponse = await axiosClient.get("/EmployeeRateHistory", {
+            params: { pageNumber: 1, pageSize: 2000 }
+        });
+
+        let payload = pagedResponse.data;
+        if (payload?.data) payload = payload.data;
+        if (payload?.result) payload = payload.result;
+
+        const records = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.items)
+                ? payload.items
+                : [];
+
+        const record = records.find((item) => {
+            const itemHistoryId =
+                item?.employeeRateHistoryId ??
+                item?.EmployeeRateHistoryId ??
+                item?.employeeRateHistoryID ??
+                item?.EmployeeRateHistoryID ??
+                item?.rateMasterId ??
+                item?.RateMasterId ??
+                item?.id ??
+                item?.Id;
+
+            return Number(itemHistoryId) === historyId;
+        });
+
+        if (!record) {
+            throw historyError;
+        }
+
+        return { ...pagedResponse, data: record };
+    }
 };
 
 
