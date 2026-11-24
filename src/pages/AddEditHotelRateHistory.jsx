@@ -5,7 +5,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../CSS/HotelRateHistory.css";
 import DatePicker from "../components/DatePicker";
 
-import { GetHotelsWithoutRateHistory } from "../api/hotelApi";
+import {
+    GetHotelsWithoutRateHistory,
+    getHotels
+} from "../api/hotelApi";
+
 import {
     getHotelRateById,
     createHotelRate,
@@ -21,37 +25,6 @@ const initialForm = {
     isActive: true
 };
 
-// Convert API date values to YYYY-MM-DD without timezone shifts.
-// The shared DatePicker displays the date as DD/MM/YYYY.
-const formatDateForInput = (value) => {
-    if (!value) return "";
-
-    const text = String(value).trim();
-
-    // Handles YYYY-MM-DD and ISO date-time strings directly.
-    const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (match) return match[1];
-
-    // Handles DD/MM/YYYY values if the API returns that format.
-    const dmyMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (dmyMatch) {
-        const day = dmyMatch[1].padStart(2, "0");
-        const month = dmyMatch[2].padStart(2, "0");
-        const year = dmyMatch[3];
-        return `${year}-${month}-${day}`;
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-
-    return [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, "0"),
-        String(date.getDate()).padStart(2, "0")
-    ].join("-");
-};
-
-// Handle different API response formats.
 const unwrapList = (response) => {
     const data = response?.data ?? response;
 
@@ -67,9 +40,48 @@ const unwrapList = (response) => {
     );
 };
 
+const formatDateForInput = (value) => {
+    if (!value) return "";
+
+    const text = String(value).trim();
+
+    const isoMatch = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) return isoMatch[1];
+
+    const dmyMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+    if (dmyMatch) {
+        return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, "0")}-${dmyMatch[1].padStart(2, "0")}`;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+};
+
+const getHotelId = (hotel) =>
+    hotel?.hotelId ??
+    hotel?.HotelId ??
+    hotel?.id ??
+    hotel?.Id;
+
+const getHotelName = (hotel) =>
+    hotel?.hotelName ??
+    hotel?.HotelName ??
+    hotel?.name ??
+    hotel?.Name ??
+    "";
+
 const AddEditHotelRateHistory = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+
     const isEditMode = Boolean(id);
 
     const [hotels, setHotels] = useState([]);
@@ -80,14 +92,36 @@ const AddEditHotelRateHistory = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
 
-    // Load hotels for the dropdown.
+    // Success popup
+    const [popup, setPopup] = useState(null);
+
+    const showPopup = (title, message, onClose) => {
+        setPopup({ title, message, onClose });
+    };
+
+    const handlePopupClose = () => {
+        const callback = popup?.onClose;
+        setPopup(null);
+
+        if (typeof callback === "function") {
+            callback();
+        }
+    };
+
+    // Load hotels.
+    // Edit mode: load ALL hotels so the existing hotel is available.
+    // Add mode: load only hotels without rate history.
     useEffect(() => {
         let cancelled = false;
 
         const loadHotels = async () => {
             try {
                 setLoadingHotels(true);
-                const response = await GetHotelsWithoutRateHistory();
+
+                const response = isEditMode
+                    ? await getHotels()
+                    : await GetHotelsWithoutRateHistory();
+
                 const list = unwrapList(response);
 
                 if (!cancelled) {
@@ -100,10 +134,13 @@ const AddEditHotelRateHistory = () => {
                 );
 
                 if (!cancelled) {
+                    setHotels([]);
                     setError("Unable to load hotels.");
                 }
             } finally {
-                if (!cancelled) setLoadingHotels(false);
+                if (!cancelled) {
+                    setLoadingHotels(false);
+                }
             }
         };
 
@@ -112,9 +149,9 @@ const AddEditHotelRateHistory = () => {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [isEditMode]);
 
-    // Load the selected hotel rate only in Edit mode.
+    // Load existing hotel rate in Edit mode.
     useEffect(() => {
         if (!isEditMode || !id) return;
 
@@ -128,27 +165,10 @@ const AddEditHotelRateHistory = () => {
                 const response = await getHotelRateById(id);
                 const result = response?.data ?? response;
 
-                // Support either a direct object or a wrapped/list response.
-                const candidates = Array.isArray(result)
-                    ? result
-                    : Array.isArray(result?.items)
-                        ? result.items
-                        : Array.isArray(result?.Items)
-                            ? result.Items
-                            : Array.isArray(result?.$values)
-                                ? result.$values
-                                : null;
-
-                const rate = candidates
-                    ? candidates.find((item) =>
-                        String(
-                            item.hotelRateHistoryId ??
-                            item.HotelRateHistoryId ??
-                            item.id ??
-                            item.Id
-                        ) === String(id)
-                    ) ?? candidates[0]
-                    : result?.data ?? result;
+                const rate =
+                    result?.data ??
+                    result?.Data ??
+                    result;
 
                 if (!rate || typeof rate !== "object") {
                     if (!cancelled) {
@@ -159,21 +179,40 @@ const AddEditHotelRateHistory = () => {
 
                 if (cancelled) return;
 
+                const selectedHotelId =
+                    rate.hotelId ??
+                    rate.HotelId ??
+                    "";
+
                 setFormData({
-                    hotelId: String(rate.hotelId ?? rate.HotelId ?? ""),
+                    hotelId: String(selectedHotelId),
+
                     halfDayRate: String(
-                        rate.halfDayRate ?? rate.HalfDayRate ?? ""
+                        rate.halfDayRate ??
+                        rate.HalfDayRate ??
+                        ""
                     ),
+
                     fullDayRate: String(
-                        rate.fullDayRate ?? rate.FullDayRate ?? ""
+                        rate.fullDayRate ??
+                        rate.FullDayRate ??
+                        ""
                     ),
+
                     effectiveFrom: formatDateForInput(
-                        rate.effectiveFrom ?? rate.EffectiveFrom
+                        rate.effectiveFrom ??
+                        rate.EffectiveFrom
                     ),
+
                     effectiveTo: formatDateForInput(
-                        rate.effectiveTo ?? rate.EffectiveTo
+                        rate.effectiveTo ??
+                        rate.EffectiveTo
                     ),
-                    isActive: rate.isActive ?? rate.IsActive ?? true
+
+                    isActive:
+                        rate.isActive ??
+                        rate.IsActive ??
+                        true
                 });
             } catch (err) {
                 console.error(
@@ -182,12 +221,12 @@ const AddEditHotelRateHistory = () => {
                 );
 
                 if (!cancelled) {
-                    setError(
-                        "Unable to load this hotel rate. Check the GET-by-ID endpoint."
-                    );
+                    setError("Unable to load hotel rate details.");
                 }
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
@@ -198,8 +237,6 @@ const AddEditHotelRateHistory = () => {
         };
     }, [id, isEditMode]);
 
-    // Shared DatePicker returns a YYYY-MM-DD string, which is kept in state
-    // and sent to the API in the same format.
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
 
@@ -216,6 +253,7 @@ const AddEditHotelRateHistory = () => {
             ...previous,
             [name]: value
         }));
+
         setError("");
     };
 
@@ -245,12 +283,6 @@ const AddEditHotelRateHistory = () => {
         }
 
         if (
-            !/^\d{4}-\d{2}-\d{2}$/.test(formData.effectiveFrom)
-        ) {
-            return "Effective From must be a valid date.";
-        }
-
-        if (
             isEditMode &&
             formData.effectiveTo &&
             formData.effectiveTo < formData.effectiveFrom
@@ -266,6 +298,7 @@ const AddEditHotelRateHistory = () => {
         setError("");
 
         const validationError = validate();
+
         if (validationError) {
             setError(validationError);
             return;
@@ -278,35 +311,35 @@ const AddEditHotelRateHistory = () => {
             fullDShiftId: 2,
             fullDayRate: Number(formData.fullDayRate),
             effectiveFrom: formData.effectiveFrom,
-            effectiveTo: isEditMode ? formData.effectiveTo || null : null,
+            effectiveTo: isEditMode
+                ? formData.effectiveTo || null
+                : null,
             isActive: formData.isActive
         };
 
         try {
             setSaving(true);
 
-            console.log("Hotel rate payload:", {
-                id,
-                isEditMode,
-                payload
-            });
-
             if (isEditMode) {
                 await updateHotelRate(id, {
                     ...payload,
                     updatedBy: null
                 });
+
+                showPopup(
+                    "Success!",
+                    "Hotel rate record updated successfully!",
+                    () => navigate("/RateMasters/hotel")
+                );
             } else {
                 await createHotelRate(payload);
-            }
 
-            navigate("/RateMasters/hotel", {
-                state: {
-                    message: isEditMode
-                        ? "Hotel rate updated successfully."
-                        : "Hotel rate created successfully."
-                }
-            });
+                showPopup(
+                    "Success!",
+                    "Hotel rate record created successfully!",
+                    () => navigate("/RateMasters/hotel")
+                );
+            }
         } catch (err) {
             console.error(
                 "Hotel rate save error:",
@@ -314,6 +347,7 @@ const AddEditHotelRateHistory = () => {
             );
 
             const apiError = err?.response?.data;
+
             let message =
                 apiError?.message ??
                 apiError?.title ??
@@ -333,11 +367,7 @@ const AddEditHotelRateHistory = () => {
 
             setError(
                 message ||
-                (err?.response?.status === 404
-                    ? "Hotel rate record or endpoint was not found."
-                    : err?.response?.status === 405
-                        ? "The configured endpoint does not support this HTTP method."
-                        : "Unable to save hotel rate. Check the API response.")
+                "Unable to save hotel rate. Please check the API response."
             );
         } finally {
             setSaving(false);
@@ -346,22 +376,30 @@ const AddEditHotelRateHistory = () => {
 
     return (
         <div className="hotel-rate-page">
+
             <div className="hotel-rate-header">
                 <div>
                     <h1>
-                        {isEditMode ? "Edit Hotel Rate" : "Add Hotel Rate"}
+                        {isEditMode
+                            ? "Edit Hotel Rate"
+                            : "Add Hotel Rate"}
                     </h1>
+
                     <p>
                         {isEditMode
-                            ? `Update rate history record ${id}`
+                            ? "Update hotel rate details"
                             : "Create a new hotel rate record"}
                     </p>
                 </div>
             </div>
 
             <div className="hotel-rate-form-card">
+
                 {error && (
-                    <div className="hotel-rate-alert error" role="alert">
+                    <div
+                        className="hotel-rate-alert error"
+                        role="alert"
+                    >
                         {error}
                     </div>
                 )}
@@ -373,11 +411,14 @@ const AddEditHotelRateHistory = () => {
                         className="hotel-rate-form"
                         onSubmit={handleSubmit}
                     >
+
                         <div className="hotel-rate-form-grid">
+
                             <div className="hotel-rate-field full-width">
                                 <label htmlFor="hotelId">
                                     Hotel <span>*</span>
                                 </label>
+
                                 <select
                                     id="hotelId"
                                     name="hotelId"
@@ -392,19 +433,21 @@ const AddEditHotelRateHistory = () => {
                                             : "-- Select Hotel --"}
                                     </option>
 
-                                    {hotels.map((hotel) => {
-                                        const hotelId =
-                                            hotel.hotelId ?? hotel.HotelId;
-                                        const hotelName =
-                                            hotel.hotelName ??
-                                            hotel.HotelName ??
-                                            hotel.name ??
-                                            hotel.Name;
+                                    {hotels.map((hotel, index) => {
+                                        const hotelId = getHotelId(hotel);
+                                        const hotelName = getHotelName(hotel);
+
+                                        if (
+                                            hotelId === undefined ||
+                                            hotelId === null
+                                        ) {
+                                            return null;
+                                        }
 
                                         return (
                                             <option
-                                                key={hotelId}
-                                                value={hotelId}
+                                                key={hotelId ?? index}
+                                                value={String(hotelId)}
                                             >
                                                 {hotelName || `Hotel ${hotelId}`}
                                             </option>
@@ -414,13 +457,10 @@ const AddEditHotelRateHistory = () => {
                             </div>
 
                             <div className="hotel-rate-field">
-                                <label htmlFor="halfDShiftId">
-                                    Half Day Shift ID
-                                </label>
+                                <label>Half Day Shift ID</label>
                                 <input
-                                    id="halfDShiftId"
                                     type="number"
-                                    value={1}
+                                    value="1"
                                     readOnly
                                 />
                             </div>
@@ -429,6 +469,7 @@ const AddEditHotelRateHistory = () => {
                                 <label htmlFor="halfDayRate">
                                     Half Day Rate <span>*</span>
                                 </label>
+
                                 <input
                                     id="halfDayRate"
                                     name="halfDayRate"
@@ -444,13 +485,10 @@ const AddEditHotelRateHistory = () => {
                             </div>
 
                             <div className="hotel-rate-field">
-                                <label htmlFor="fullDShiftId">
-                                    Full Day Shift ID
-                                </label>
+                                <label>Full Day Shift ID</label>
                                 <input
-                                    id="fullDShiftId"
                                     type="number"
-                                    value={2}
+                                    value="2"
                                     readOnly
                                 />
                             </div>
@@ -459,6 +497,7 @@ const AddEditHotelRateHistory = () => {
                                 <label htmlFor="fullDayRate">
                                     Full Day Rate <span>*</span>
                                 </label>
+
                                 <input
                                     id="fullDayRate"
                                     name="fullDayRate"
@@ -473,14 +512,16 @@ const AddEditHotelRateHistory = () => {
                                 />
                             </div>
 
-                            {/* Shared date picker: displays DD/MM/YYYY */}
                             <div className="hotel-rate-field">
                                 <DatePicker
                                     label="Effective From"
                                     name="effectiveFrom"
                                     value={formData.effectiveFrom}
                                     onChange={(value) =>
-                                        handleDateChange("effectiveFrom", value)
+                                        handleDateChange(
+                                            "effectiveFrom",
+                                            value
+                                        )
                                     }
                                     required
                                     disabled={saving}
@@ -495,15 +536,18 @@ const AddEditHotelRateHistory = () => {
                                         name="effectiveTo"
                                         value={formData.effectiveTo}
                                         onChange={(value) =>
-                                            handleDateChange("effectiveTo", value)
+                                            handleDateChange(
+                                                "effectiveTo",
+                                                value
+                                            )
                                         }
-                                        min={formData.effectiveFrom || undefined}
+                                        min={
+                                            formData.effectiveFrom ||
+                                            undefined
+                                        }
                                         disabled={saving}
                                         placeholder="DD/MM/YYYY"
                                     />
-                                    <small>
-                                        Select the end date for this hotel rate.
-                                    </small>
                                 </div>
                             )}
 
@@ -519,13 +563,17 @@ const AddEditHotelRateHistory = () => {
                                     Active
                                 </label>
                             </div>
+
                         </div>
 
                         <div className="hotel-rate-form-actions">
+
                             <button
                                 type="button"
                                 className="hotel-rate-cancel"
-                                onClick={() => navigate("/RateMasters/hotel")}
+                                onClick={() =>
+                                    navigate("/RateMasters/hotel")
+                                }
                                 disabled={saving}
                             >
                                 Cancel
@@ -542,10 +590,37 @@ const AddEditHotelRateHistory = () => {
                                         ? "Update Rate"
                                         : "Save Rate"}
                             </button>
+
                         </div>
                     </form>
                 )}
             </div>
+
+            {/* Success Popup */}
+            {popup && (
+                <div
+                    className="screen-popup-backdrop"
+                    onClick={handlePopupClose}
+                >
+                    <div
+                        className="screen-popup-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3>{popup.title}</h3>
+
+                        <p>{popup.message}</p>
+
+                        <button
+                            type="button"
+                            className="screen-popup-ok"
+                            onClick={handlePopupClose}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../CSS/EmployeeRateMaster.css";
@@ -239,7 +238,27 @@ const EmployeeRateMaster = () => {
             return;
         }
 
-        navigate(`/RateMasters/employeerate/edit/${rateMasterId}`);
+        const selectedRecord = employees.find((record) => {
+            const recordId =
+                record?.employeeRateHistoryId ??
+                record?.EmployeeRateHistoryId ??
+                record?.employeeRateHistoryID ??
+                record?.EmployeeRateHistoryID ??
+                record?.employeeRateId ??
+                record?.EmployeeRateId ??
+                record?.historyId ??
+                record?.HistoryId ??
+                record?.rateMasterId ??
+                record?.RateMasterId ??
+                record?.id ??
+                record?.Id;
+
+            return Number(recordId) === Number(rateMasterId);
+        });
+
+        navigate(`/RateMasters/employeerate/edit/${rateMasterId}`, {
+            state: { rateRecord: selectedRecord ?? null }
+        });
     };
 
     // Search within the records returned by the current API page.
@@ -359,15 +378,25 @@ const EmployeeRateMaster = () => {
                                     filteredEmployees.map((employee, index) => {
                                         const rateMasterId =
                                             employee?.employeeRateHistoryId ??
+                                            employee?.EmployeeRateHistoryId ??
                                             employee?.employeeRateHistoryID ??
+                                            employee?.EmployeeRateHistoryID ??
+                                            employee?.employeeRateId ??
+                                            employee?.EmployeeRateId ??
+                                            employee?.historyId ??
+                                            employee?.HistoryId ??
                                             employee?.rateMasterId ??
-                                            employee?.id;
+                                            employee?.RateMasterId ??
+                                            employee?.id ??
+                                            employee?.Id;
 
                                         const employeeId =
                                             employee?.employeeId ??
                                             employee?.EmployeeId ??
                                             employee?.fkEmployeeId ??
-                                            employee?.FkEmployeeId;
+                                            employee?.FkEmployeeId ??
+                                            employee?.fk_EmployeeId ??
+                                            employee?.FK_EmployeeId;
 
                                         return (
                                             <tr

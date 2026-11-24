@@ -106,8 +106,21 @@ function Vendors() {
         setPageNumber(1);
     };
 
-    const handleEdit = (vendorId) => {
-        navigate(`/vendors/edit/${vendorId}`);
+    const handleEdit = (vendor) => {
+        const vendorId =
+            vendor?.vendorId ??
+            vendor?.VendorId ??
+            vendor?.id ??
+            vendor?.Id;
+
+        if (vendorId === null || vendorId === undefined || vendorId === "") {
+            showPopup("Error", "Vendor ID not found.");
+            return;
+        }
+
+        navigate(`/vendors/edit/${vendorId}`, {
+            state: { vendor }
+        });
     };
 
     const handleDelete = async (vendorId) => {
@@ -218,7 +231,7 @@ function Vendors() {
                                                     type="button"
                                                     className="edit-btn"
                                                     onClick={() =>
-                                                        handleEdit(vendor.vendorId)
+                                                        handleEdit(vendor)
                                                     }
                                                 >
                                                     Edit

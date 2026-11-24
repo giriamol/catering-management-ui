@@ -43,7 +43,7 @@ function Hotels() {
 
             alert(
                 error.response?.data?.message ||
-                "Failed to load hotels."
+                "Failed to load Caters."
             );
         } finally {
             setLoading(false);
@@ -242,7 +242,7 @@ function Hotels() {
 
                     {loading ? (
 
-                        <p>Loading hotels...</p>
+                        <p>Loading Caters...</p>
 
                     ) : (
 
@@ -340,7 +340,7 @@ function Hotels() {
                                             colSpan="8"
                                             style={{ textAlign: "center" }}
                                         >
-                                            No hotels found.
+                                            No Caters found.
                                         </td>
                                     </tr>
 
