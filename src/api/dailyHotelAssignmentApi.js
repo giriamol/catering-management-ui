@@ -59,3 +59,19 @@ export const getVendorsByDate = (date) => {
     return axiosClient.get( `/DailyHotelAssignment/${encodeURIComponent(date)}` ); 
 
 };
+// 6. Get employee work report
+export const getEmployeeWorkReport = (
+    employeeId,
+    fromDate,
+    toDate
+) => {
+    return axiosClient.get(
+        `/DailyHotelAssignment/employee-report/${employeeId}`,
+        {
+            params: {
+                fromDate,
+                toDate
+            }
+        }
+    );
+};
