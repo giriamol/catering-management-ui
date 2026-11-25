@@ -1,189 +1,281 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import "../CSS/EmployeeRateMaster.css";
 
 import {
-    getEmployeeRateMastersPaged,
+    getAllEmployeeRateMasters,
     deleteEmployeeRateMaster
 } from "../api/employeeRateMasterApi";
-import { getEmployees } from "../api/employeeApi";
 
 const PAGE_SIZE = 20;
 
-// Formats API date values as DD/MM/YYYY without timezone conversion.
+// Format date as DD/MM/YYYY
 const formatDate = (dateValue) => {
-    if (
-        dateValue === null ||
-        dateValue === undefined ||
-        String(dateValue).trim() === ""
-    ) {
-        return "-";
-    }
+    if (!dateValue) return "-";
 
     const value = String(dateValue).trim();
 
+    // Already formatted as DD/MM/YYYY
     const displayMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (displayMatch) return value;
 
+    if (displayMatch) {
+        return value;
+    }
+
+    // ISO date: 2026-11-06T00:00:00
     const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
     if (isoMatch) {
         return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
     }
 
-    const parsed = new Date(value);
+    const date = new Date(value);
 
-    if (Number.isNaN(parsed.getTime())) return value;
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
 
-    const day = String(parsed.getDate()).padStart(2, "0");
-    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
 
-    return `${day}/${month}/${parsed.getFullYear()}`;
+    return `${day}/${month}/${date.getFullYear()}`;
+};
+
+// Get employee rate history ID
+const getRateHistoryId = (employee) => {
+    return (
+        employee?.employeeRateHistoryId ??
+        employee?.EmployeeRateHistoryId ??
+        employee?.employeeRateHistoryID ??
+        employee?.EmployeeRateHistoryID ??
+        employee?.id ??
+        employee?.Id
+    );
+};
+
+// Get employee ID
+const getEmployeeId = (employee) => {
+    return (
+        employee?.employeeId ??
+        employee?.EmployeeId ??
+        employee?.fkEmployeeId ??
+        employee?.FkEmployeeId
+    );
+};
+
+// Get employee name directly from API response
+const getEmployeeName = (employee) => {
+    return (
+        employee?.employeeName ??
+        employee?.EmployeeName ??
+        employee?.fullName ??
+        employee?.FullName ??
+        "-"
+    );
 };
 
 const EmployeeRateMaster = () => {
     const navigate = useNavigate();
 
     const [employees, setEmployees] = useState([]);
-    const [employeeList, setEmployeeList] = useState([]);
-
     const [searchText, setSearchText] = useState("");
+
     const [loading, setLoading] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+
     const [pageNumber, setPageNumber] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+
+    const [isServerPaged, setIsServerPaged] = useState(false);
+
     const [popup, setPopup] = useState(null);
 
-    useEffect(() => {
-        loadEmployees();
-    }, []);
-
+    // Load employee rate records
     useEffect(() => {
         loadRateRecords();
     }, [pageNumber]);
-
-    const loadEmployees = async () => {
-        try {
-            const response = await getEmployees(1, 2000);
-            const data = response.data;
-
-            let employeeData = [];
-
-            if (Array.isArray(data)) {
-                employeeData = data;
-            } else if (Array.isArray(data?.items)) {
-                employeeData = data.items;
-            } else if (Array.isArray(data?.data)) {
-                employeeData = data.data;
-            } else if (Array.isArray(data?.employees)) {
-                employeeData = data.employees;
-            } else if (Array.isArray(data?.result)) {
-                employeeData = data.result;
-            } else if (Array.isArray(data?.data?.items)) {
-                employeeData = data.data.items;
-            }
-
-            setEmployeeList(employeeData);
-        } catch (error) {
-            console.error("Error loading employees:", error);
-            setEmployeeList([]);
-        }
-    };
 
     const loadRateRecords = async () => {
         try {
             setLoading(true);
 
-            const response = await getEmployeeRateMastersPaged(
-                pageNumber,
-                PAGE_SIZE
-            );
+            const response = await getAllEmployeeRateMasters();
 
-            const data = response.data;
+            const data = response?.data;
 
-            console.log("Rate Master API response:", data);
+            console.log("Employee Rate API Response:", data);
 
-            const records = Array.isArray(data?.items)
-                ? data.items
-                : Array.isArray(data?.data?.items)
-                    ? data.data.items
-                    : [];
+            let records = [];
+            let serverPagination = false;
+            let recordsCount = 0;
+            let pagesCount = 0;
+
+            // Case 1: API returns a direct array
+            // Example: [{ employeeRateHistoryId: 10041, ... }]
+            if (Array.isArray(data)) {
+                records = data;
+
+                serverPagination = false;
+                recordsCount = records.length;
+                pagesCount = Math.ceil(recordsCount / PAGE_SIZE);
+            }
+
+            // Case 2: API returns { items: [], totalRecords: 100 }
+            else if (Array.isArray(data?.items)) {
+                records = data.items;
+
+                serverPagination = true;
+
+                recordsCount = Number(
+                    data.totalRecords ?? records.length
+                );
+
+                pagesCount = Number(
+                    data.totalPages ??
+                    Math.ceil(recordsCount / PAGE_SIZE)
+                );
+            }
+
+            // Case 3: API returns { data: { items: [] } }
+            else if (Array.isArray(data?.data?.items)) {
+                records = data.data.items;
+
+                serverPagination = true;
+
+                recordsCount = Number(
+                    data.data.totalRecords ?? records.length
+                );
+
+                pagesCount = Number(
+                    data.data.totalPages ??
+                    Math.ceil(recordsCount / PAGE_SIZE)
+                );
+            }
+
+            // Case 4: API returns { data: [] }
+            else if (Array.isArray(data?.data)) {
+                records = data.data;
+
+                serverPagination = false;
+                recordsCount = records.length;
+                pagesCount = Math.ceil(recordsCount / PAGE_SIZE);
+            }
+
+            // Case 5: API returns { result: [] }
+            else if (Array.isArray(data?.result)) {
+                records = data.result;
+
+                serverPagination = false;
+                recordsCount = records.length;
+                pagesCount = Math.ceil(recordsCount / PAGE_SIZE);
+            }
+
+            console.log("Extracted Employee Rate Records:", records);
+            console.log("Total Records:", recordsCount);
 
             setEmployees(records);
-
-            const recordsCount = Number(
-                data?.totalRecords ?? data?.data?.totalRecords ?? 0
-            );
-
-            const pagesCount = Number(
-                data?.totalPages ??
-                data?.data?.totalPages ??
-                Math.ceil(recordsCount / PAGE_SIZE)
-            );
+            setIsServerPaged(serverPagination);
 
             setTotalRecords(recordsCount);
             setTotalPages(pagesCount);
 
         } catch (error) {
             console.error(
-                "Error fetching Rate Master records:",
+                "Error fetching employee rate records:",
                 error.response?.data || error
             );
 
             setEmployees([]);
             setTotalRecords(0);
             setTotalPages(0);
+
         } finally {
             setLoading(false);
         }
     };
 
-    const getEmployeeName = (employeeId) => {
-        if (
-            employeeId === null ||
-            employeeId === undefined ||
-            employeeId === ""
-        ) {
-            return "-";
+    // Search records
+    const filteredEmployees = useMemo(() => {
+        const search = searchText.trim().toLowerCase();
+
+        if (!search) {
+            return employees;
         }
 
-        const employee = employeeList.find((item) => {
-            const id =
-                item?.employeeId ??
-                item?.EmployeeId ??
-                item?.id ??
-                item?.Id;
+        return employees.filter((employee) => {
+            const employeeName = String(
+                getEmployeeName(employee)
+            ).toLowerCase();
 
-            return Number(id) === Number(employeeId);
+            const employeeId = String(
+                getEmployeeId(employee) ?? ""
+            ).toLowerCase();
+
+            return (
+                employeeName.includes(search) ||
+                employeeId.includes(search)
+            );
         });
+    }, [employees, searchText]);
 
-        if (!employee) return "-";
+    // Client-side pagination is used when API returns a direct array.
+    // Server-side pagination is used when API returns paginated data.
+    const displayedEmployees = useMemo(() => {
+        if (isServerPaged) {
+            return filteredEmployees;
+        }
 
-        return (
-            employee?.fullName ??
-            employee?.FullName ??
-            employee?.employeeName ??
-            employee?.EmployeeName ??
-            employee?.name ??
-            employee?.Name ??
-            "-"
+        const startIndex = (pageNumber - 1) * PAGE_SIZE;
+
+        return filteredEmployees.slice(
+            startIndex,
+            startIndex + PAGE_SIZE
         );
-    };
+    }, [filteredEmployees, isServerPaged, pageNumber]);
 
-    const showPopup = (title, message, onClose) => {
-        setPopup({ title, message, onClose });
-    };
+    // Total count for the current search
+    const currentTotalRecords = isServerPaged
+        ? totalRecords
+        : filteredEmployees.length;
 
+    const currentTotalPages = isServerPaged
+        ? totalPages
+        : Math.ceil(currentTotalRecords / PAGE_SIZE);
+
+    // Add employee rate
     const handleAdd = () => {
         navigate("/RateMasters/employeerate/add");
     };
 
+    // Search
+    const handleSearch = (value) => {
+        setSearchText(value);
+        setPageNumber(1);
+    };
+
+    // Edit employee rate
+    const handleEdit = (rateMasterId, selectedRecord) => {
+        if (!rateMasterId) {
+            alert("Employee rate history ID not found.");
+            return;
+        }
+
+        navigate(
+            `/RateMasters/employeerate/edit/${rateMasterId}`,
+            {
+                state: {
+                    rateRecord: selectedRecord
+                }
+            }
+        );
+    };
+
+    // Delete employee rate
     const handleDelete = async (rateMasterId) => {
-        if (
-            rateMasterId === null ||
-            rateMasterId === undefined ||
-            rateMasterId === ""
-        ) {
+        if (!rateMasterId) {
             alert("Employee rate history ID not found.");
             return;
         }
@@ -199,92 +291,27 @@ const EmployeeRateMaster = () => {
 
             await deleteEmployeeRateMaster(rateMasterId);
 
-            showPopup(
-                "Success!",
-                "Employee rate deleted successfully.",
-                async () => {
-                    // If the last record on the last page was deleted,
-                    // move to the previous page.
-                    if (employees.length === 1 && pageNumber > 1) {
-                        setPageNumber((previous) => previous - 1);
-                    } else {
-                        await loadRateRecords();
-                    }
-                }
-            );
+            alert("Employee rate deleted successfully.");
+
+            await loadRateRecords();
 
         } catch (error) {
             console.error(
-                "Error deleting employee rate record:",
+                "Error deleting employee rate:",
                 error.response?.data || error
             );
 
-            showPopup(
-                "Error",
-                "Unable to delete employee rate record."
-            );
+            alert("Unable to delete employee rate record.");
+
         } finally {
             setDeletingId(null);
         }
     };
 
-    const handleEdit = (rateMasterId) => {
-        if (
-            rateMasterId === null ||
-            rateMasterId === undefined ||
-            rateMasterId === ""
-        ) {
-            alert("Employee rate history ID not found.");
-            return;
-        }
-
-        const selectedRecord = employees.find((record) => {
-            const recordId =
-                record?.employeeRateHistoryId ??
-                record?.EmployeeRateHistoryId ??
-                record?.employeeRateHistoryID ??
-                record?.EmployeeRateHistoryID ??
-                record?.employeeRateId ??
-                record?.EmployeeRateId ??
-                record?.historyId ??
-                record?.HistoryId ??
-                record?.rateMasterId ??
-                record?.RateMasterId ??
-                record?.id ??
-                record?.Id;
-
-            return Number(recordId) === Number(rateMasterId);
-        });
-
-        navigate(`/RateMasters/employeerate/edit/${rateMasterId}`, {
-            state: { rateRecord: selectedRecord ?? null }
-        });
-    };
-
-    // Search within the records returned by the current API page.
-    const filteredEmployees = employees.filter((employee) => {
-        const employeeId =
-            employee?.employeeId ??
-            employee?.EmployeeId ??
-            employee?.fkEmployeeId ??
-            employee?.FkEmployeeId ??
-            "";
-
-        const employeeName = getEmployeeName(employeeId).toLowerCase();
-        const search = searchText.trim().toLowerCase();
-
-        return (
-            employeeName.includes(search) ||
-            String(employeeId).toLowerCase().includes(search)
-        );
-    });
-
-    const handleSearch = (value) => {
-        setSearchText(value);
+    // Pagination
+    const handleFirst = () => {
         setPageNumber(1);
     };
-
-    const handleFirst = () => setPageNumber(1);
 
     const handlePrevious = () => {
         setPageNumber((previous) => Math.max(previous - 1, 1));
@@ -292,20 +319,28 @@ const EmployeeRateMaster = () => {
 
     const handleNext = () => {
         setPageNumber((previous) =>
-            Math.min(previous + 1, totalPages)
+            Math.min(previous + 1, currentTotalPages)
         );
     };
 
-    const handleLast = () => setPageNumber(totalPages);
+    const handleLast = () => {
+        setPageNumber(currentTotalPages);
+    };
 
-    const handlePageChange = (page) => setPageNumber(page);
+    const handlePageChange = (page) => {
+        setPageNumber(page);
+    };
 
-    // Show a maximum of 5 page buttons at a time.
+    // Display maximum 5 page buttons
     const getPageNumbers = () => {
         const visiblePages = 5;
 
         let start = Math.max(1, pageNumber - 2);
-        let end = Math.min(totalPages, start + visiblePages - 1);
+
+        let end = Math.min(
+            currentTotalPages,
+            start + visiblePages - 1
+        );
 
         if (end - start + 1 < visiblePages) {
             start = Math.max(1, end - visiblePages + 1);
@@ -317,25 +352,50 @@ const EmployeeRateMaster = () => {
         );
     };
 
+    // Calculate displayed record numbers
+    const startRecord =
+        currentTotalRecords === 0
+            ? 0
+            : (pageNumber - 1) * PAGE_SIZE + 1;
+
+    const endRecord = isServerPaged
+        ? Math.min(pageNumber * PAGE_SIZE, currentTotalRecords)
+        : Math.min(
+            pageNumber * PAGE_SIZE,
+            currentTotalRecords
+        );
+
     return (
         <div className="employee-rate-page">
 
+            {/* Header */}
             <div className="employee-rate-header">
+
                 <div>
                     <h2>Employee Rate Master List</h2>
-                    <p>Employees added to Rate Master</p>
+
+                    <p>
+                        Employees added to Rate Master
+                    </p>
                 </div>
 
                 <div className="employee-rate-header-actions">
+
+                    {/* Search */}
                     <div className="employee-rate-search">
+
                         <input
                             type="text"
                             placeholder="Search employee by name or ID..."
                             value={searchText}
-                            onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) =>
+                                handleSearch(e.target.value)
+                            }
                         />
+
                     </div>
 
+                    {/* Add Button */}
                     <button
                         type="button"
                         className="add-btn"
@@ -343,154 +403,197 @@ const EmployeeRateMaster = () => {
                     >
                         + Add Employee Rate
                     </button>
+
                 </div>
+
             </div>
 
+            {/* Table */}
             {loading ? (
+
                 <div className="loading-message">
                     Loading employee rate records...
                 </div>
+
             ) : (
+
                 <>
+
                     <div className="employee-rate-table-container">
+
                         <table className="employee-rate-table">
+
                             <thead>
+
                                 <tr>
                                     <th>Sr.No</th>
-                                    <th>Employee</th>
+                                    <th>Employee Name</th>
+                                    <th>Half Day Shift</th>
                                     <th>Half Day Rate</th>
+                                    <th>Full Day Shift</th>
                                     <th>Full Day Rate</th>
-                                    {/* <th>Two Half Day Rate</th> */}
                                     <th>From Date</th>
                                     <th>To Date</th>
                                     <th>Action</th>
                                 </tr>
+
                             </thead>
 
                             <tbody>
-                                {filteredEmployees.length === 0 ? (
+
+                                {displayedEmployees.length === 0 ? (
+
                                     <tr>
-                                        <td colSpan="8" className="no-data">
+                                        <td
+                                            colSpan="9"
+                                            className="no-data"
+                                        >
                                             No employee rate records found.
                                         </td>
                                     </tr>
+
                                 ) : (
-                                    filteredEmployees.map((employee, index) => {
-                                        const rateMasterId =
-                                            employee?.employeeRateHistoryId ??
-                                            employee?.EmployeeRateHistoryId ??
-                                            employee?.employeeRateHistoryID ??
-                                            employee?.EmployeeRateHistoryID ??
-                                            employee?.employeeRateId ??
-                                            employee?.EmployeeRateId ??
-                                            employee?.historyId ??
-                                            employee?.HistoryId ??
-                                            employee?.rateMasterId ??
-                                            employee?.RateMasterId ??
-                                            employee?.id ??
-                                            employee?.Id;
 
-                                        const employeeId =
-                                            employee?.employeeId ??
-                                            employee?.EmployeeId ??
-                                            employee?.fkEmployeeId ??
-                                            employee?.FkEmployeeId ??
-                                            employee?.fk_EmployeeId ??
-                                            employee?.FK_EmployeeId;
+                                    displayedEmployees.map(
+                                        (employee, index) => {
 
-                                        return (
-                                            <tr
-                                                key={
-                                                    rateMasterId ??
-                                                    `${employeeId}-${index}`
-                                                }
-                                            >
-                                                <td>
-                                                    {(pageNumber - 1) * PAGE_SIZE + index + 1}
-                                                    
-                                                </td>
+                                            const rateMasterId =
+                                                getRateHistoryId(employee);
 
-                                                <td>
-                                                    {getEmployeeName(employeeId)}
-                                                </td>
+                                            const employeeId =
+                                                getEmployeeId(employee);
 
-                                                <td>
-                                                    {employee?.halfDayRate ?? "-"}
-                                                </td>
+                                            return (
 
-                                                <td>
-                                                    {employee?.fullDayRate ?? "-"}
-                                                </td>
+                                                <tr
+                                                    key={
+                                                        rateMasterId ??
+                                                        `${employeeId}-${index}`
+                                                    }
+                                                >
 
-                                                {/* <td>
-                                                    {employee?.twoHalfDayRate ?? "-"}
-                                                </td> */}
+                                                    {/* Sr.No */}
+                                                    <td>
+                                                        {(pageNumber - 1) *
+                                                            PAGE_SIZE +
+                                                            index +
+                                                            1}
+                                                    </td>
 
-                                                <td>
-                                                    {formatDate(
-                                                        employee?.effectiveFrom ??
-                                                        employee?.fromDate ??
-                                                        employee?.EffectiveFrom ??
-                                                        employee?.FromDate
-                                                    )}
-                                                </td>
+                                                    {/* Employee Name */}
+                                                    <td>
+                                                        {getEmployeeName(employee)}
+                                                    </td>
 
-                                                <td>
-                                                    {formatDate(
-                                                        employee?.effectiveTo ??
-                                                        employee?.toDate ??
-                                                        employee?.EffectiveTo ??
-                                                        employee?.ToDate
-                                                    )}
-                                                </td>
+                                                    {/* Half Day Shift ID */}
+                                                    <td>
+                                                        {employee?.halfDShiftId ??
+                                                            employee?.HalfDShiftId ??
+                                                            "-"}
+                                                    </td>
 
-                                                <td>
-                                                    <div className="employee-rate-row-actions">
-                                                        <button
-                                                            type="button"
-                                                            className="edit-btn"
-                                                            onClick={() =>
-                                                                handleEdit(rateMasterId)
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </button>
+                                                    {/* Half Day Rate */}
+                                                    <td>
+                                                        {employee?.halfDayRate ??
+                                                            employee?.HalfDayRate ??
+                                                            "-"}
+                                                    </td>
 
-                                                        <button
-                                                            type="button"
-                                                            className="delete-btn"
-                                                            onClick={() =>
-                                                                handleDelete(rateMasterId)
-                                                            }
-                                                            disabled={
-                                                                deletingId === rateMasterId
-                                                            }
-                                                        >
-                                                            {deletingId === rateMasterId
-                                                                ? "Deleting..."
-                                                                : "Delete"}
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
+                                                    {/* Full Day Shift ID */}
+                                                    <td>
+                                                        {employee?.fullDShiftId ??
+                                                            employee?.FullDShiftId ??
+                                                            "-"}
+                                                    </td>
+
+                                                    {/* Full Day Rate */}
+                                                    <td>
+                                                        {employee?.fullDayRate ??
+                                                            employee?.FullDayRate ??
+                                                            "-"}
+                                                    </td>
+
+                                                    {/* From Date */}
+                                                    <td>
+                                                        {formatDate(
+                                                            employee?.effectiveFrom ??
+                                                            employee?.EffectiveFrom ??
+                                                            employee?.fromDate ??
+                                                            employee?.FromDate
+                                                        )}
+                                                    </td>
+
+                                                    {/* To Date */}
+                                                    <td>
+                                                        {formatDate(
+                                                            employee?.effectiveTo ??
+                                                            employee?.EffectiveTo ??
+                                                            employee?.toDate ??
+                                                            employee?.ToDate
+                                                        )}
+                                                    </td>
+
+                                                    {/* Actions */}
+                                                    <td>
+
+                                                        <div className="employee-rate-row-actions">
+
+                                                            <button
+                                                                type="button"
+                                                                className="edit-btn"
+                                                                onClick={() =>
+                                                                    handleEdit(
+                                                                        rateMasterId,
+                                                                        employee
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="delete-btn"
+                                                                onClick={() =>
+                                                                    handleDelete(
+                                                                        rateMasterId
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    deletingId ===
+                                                                    rateMasterId
+                                                                }
+                                                            >
+                                                                {deletingId ===
+                                                                rateMasterId
+                                                                    ? "Deleting..."
+                                                                    : "Delete"}
+                                                            </button>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            );
+                                        }
+                                    )
+
                                 )}
+
                             </tbody>
+
                         </table>
+
                     </div>
 
+                    {/* Pagination */}
                     <div className="employee-rate-pagination">
 
                         <span>
-                            Showing{" "}
-                            {totalRecords === 0
-                                ? 0
-                                : (pageNumber - 1) * PAGE_SIZE + 1}
-                            {" - "}
-                            {Math.min(pageNumber * PAGE_SIZE, totalRecords)}
-                            {" of "}
-                            {totalRecords} records
+                            Showing {startRecord} - {endRecord} of{" "}
+                            {currentTotalRecords} records
                         </span>
 
                         <div className="pagination-buttons">
@@ -512,6 +615,7 @@ const EmployeeRateMaster = () => {
                             </button>
 
                             {getPageNumbers().map((page) => (
+
                                 <button
                                     type="button"
                                     key={page}
@@ -520,17 +624,20 @@ const EmployeeRateMaster = () => {
                                             ? "active-page"
                                             : ""
                                     }
-                                    onClick={() => handlePageChange(page)}
+                                    onClick={() =>
+                                        handlePageChange(page)
+                                    }
                                 >
                                     {page}
                                 </button>
+
                             ))}
 
                             <button
                                 type="button"
                                 disabled={
-                                    totalPages === 0 ||
-                                    pageNumber >= totalPages
+                                    currentTotalPages === 0 ||
+                                    pageNumber >= currentTotalPages
                                 }
                                 onClick={handleNext}
                             >
@@ -540,8 +647,8 @@ const EmployeeRateMaster = () => {
                             <button
                                 type="button"
                                 disabled={
-                                    totalPages === 0 ||
-                                    pageNumber >= totalPages
+                                    currentTotalPages === 0 ||
+                                    pageNumber >= currentTotalPages
                                 }
                                 onClick={handleLast}
                             >
@@ -551,39 +658,15 @@ const EmployeeRateMaster = () => {
                         </div>
 
                         <span>
-                            Page {totalPages === 0 ? 0 : pageNumber} of {totalPages}
+                            Page{" "}
+                            {currentTotalPages === 0 ? 0 : pageNumber}
+                            {" "}of {currentTotalPages}
                         </span>
+
                     </div>
+
                 </>
-            )}
 
-            {popup && (
-                <div
-                    className="screen-popup-backdrop"
-                    onClick={() => {
-                        setPopup(null);
-                        popup.onClose?.();
-                    }}
-                >
-                    <div
-                        className="screen-popup-modal"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <h3>{popup.title}</h3>
-                        <p>{popup.message}</p>
-
-                        <button
-                            type="button"
-                            className="screen-popup-ok"
-                            onClick={() => {
-                                setPopup(null);
-                                popup.onClose?.();
-                            }}
-                        >
-                            OK
-                        </button>
-                    </div>
-                </div>
             )}
 
         </div>

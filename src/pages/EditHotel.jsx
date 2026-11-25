@@ -353,7 +353,7 @@ function EditHotel() {
                         >
                             {saving
                                 ? "Updating..."
-                                : "Update Hotel"}
+                                : "Update Caters"}
                         </button>
 
                     </div>
