@@ -96,7 +96,7 @@ function AddVendor() {
                     <div className="form-group">
 
                         <label>
-                            Vendor Name<span>*</span>
+                            Vendor Name <span className="required-star">*</span>
                         </label>
 
                         <input
@@ -112,7 +112,7 @@ function AddVendor() {
                     <div className="form-group">
 
                         <label>
-                            Mobile Number 1<span>*</span>
+                            Mobile Number 1 <span className="required-star">*</span>
                         </label>
 
                         <input
@@ -151,7 +151,7 @@ function AddVendor() {
                     <div className="form-group full-width">
 
                         <label>
-                            Address<span>*</span>
+                            Address<span className="required-star">*</span>
                         </label>
 
                         <textarea

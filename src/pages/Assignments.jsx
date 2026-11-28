@@ -1483,7 +1483,7 @@ const Assignments = () => {
                         </select>
                     </td>
 
-                    <td>
+                    {/* <td>
                         <input
                             type="text"
                             placeholder="Enter description / note"
@@ -1498,7 +1498,7 @@ const Assignments = () => {
                             className="assignment-select-dscrip"
                             disabled={isSaving}
                         />
-                    </td>
+                    </td> */}
 
                     <td>
                         <div className="action-buttons">
@@ -1665,7 +1665,7 @@ const Assignments = () => {
                         </select>
                     </td>
 
-                    <td>
+                    {/* <td>
                         <input
                             type="text"
                             placeholder="Enter description / note"
@@ -1680,7 +1680,7 @@ const Assignments = () => {
                             className="assignment-select-dscrip"
                             disabled={isSaving}
                         />
-                    </td>
+                    </td> */}
 
                     <td>
                         <div className="action-buttons">
@@ -1828,7 +1828,7 @@ const Assignments = () => {
                     <div className="member-type-buttons">
 
                         {[
-                            "InHouse",
+                            "InHouse Employee",
                             "Vendor",
                             "Local",
                             "Outsourced"
@@ -2001,7 +2001,7 @@ const Assignments = () => {
                                         <th>Caterers_Venue</th>
                                         <th>Shift Type</th>
                                         <th>Work Type</th>
-                                        <th>Description / Note</th>
+                                        {/* <th>Description / Note</th> */}
                                         <th>Action</th>
                                     </tr>
                                 ) : memberType === "Outsourced" ? (
@@ -2013,7 +2013,7 @@ const Assignments = () => {
                                         <th>Vendor_Venue</th>
                                         <th>Shift Type</th>
                                         <th>Work Type</th>
-                                        <th>Description / Note</th>
+                                        {/* <th>Description / Note</th> */}
                                         <th>Action</th>
                                     </tr>
                                 ) : (
@@ -2024,7 +2024,7 @@ const Assignments = () => {
                                         <th>Caterers_Venue</th>
                                         <th>Shift Type</th>
                                         <th>Work Type</th>
-                                        <th>Description / Note</th>
+                                        {/* <th>Description / Note</th> */}
                                         <th>Action</th>
                                     </tr>
                                 )}
@@ -2189,7 +2189,7 @@ const Assignments = () => {
                                                         </select>
                                                     </td>
 
-                                                    <td>
+                                                    {/* <td>
                                                         <input
                                                             type="text"
                                                             placeholder="Enter description / note"
@@ -2204,7 +2204,7 @@ const Assignments = () => {
                                                             className="assignment-select-dscrip"
                                                             disabled={isSaving}
                                                         />
-                                                    </td>
+                                                    </td> */}
 
                                                     <td>
                                                         <div className="action-buttons">

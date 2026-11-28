@@ -72,7 +72,7 @@ function AddHotel() {
 
             await createHotel(hotel);
 
-            showPopup("Success!", "Hotel created successfully.", () => {
+            showPopup("Success!", "Caters created successfully.", () => {
                 navigate("/hotels");
             });
 
@@ -112,7 +112,7 @@ function AddHotel() {
 
                 <div>
 
-                    <h1>Add New Caterer</h1>
+                    <h1>Add Caters</h1>
 
                     <p>
                         Add a new Caterer to the catering system.
@@ -157,7 +157,7 @@ function AddHotel() {
                         <div className="hotel-form-group">
 
                             <label>
-                                Contact Person
+                                Contact Person <span>*</span>
                             </label>
 
                             <input
@@ -206,7 +206,7 @@ function AddHotel() {
                                 name="mobileNumber2"
                                 value={hotel.mobileNumber2}
                                 onChange={handleChange}
-                                 placeholder="Optional -Enter 10  digit Mobile number"
+                                 placeholder="Optional Mobile number"
                                maxLength={10}
                             />
 
@@ -218,7 +218,7 @@ function AddHotel() {
                         <div className="hotel-form-group full-width">
 
                             <label>
-                                Address
+                                Address <span>*</span>
                             </label>
 
                             <textarea

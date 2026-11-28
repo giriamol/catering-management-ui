@@ -500,7 +500,7 @@ const EditVendorRate = () => {
                         <div className="form-group full-width">
 
                             <label htmlFor="vendorName">
-                                Vendor
+                                Vendor Name
                                 <span className="required">*</span>
                             </label>
 
@@ -677,7 +677,7 @@ const EditVendorRate = () => {
                             >
                                 {saving
                                     ? "Updating..."
-                                    : "Update Vendor Rate"}
+                                    : "Update Rate"}
                             </button>
 
                         </div>

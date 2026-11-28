@@ -1,4 +1,427 @@
 
+// import { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import DatePicker from "react-datepicker";
+// import "react-datepicker/dist/react-datepicker.css";
+
+// import { createEmployee } from "../api/employeeApi";
+// import "../CSS/AddEmployee.css";
+
+// function AddEmployee() {
+//     const [errors, setErrors] = useState({});
+//     const [popup, setPopup] = useState(null);
+
+//     const [formData, setFormData] = useState({
+//         fullName: "",
+//         emailId: "",
+//         gender: "",
+//         aadhaarNumber: "",
+//         mobileNumber: "",
+//         panNo: "",
+//         address: "",
+//         memberType: "",
+//         joiningDate: "",
+//         isActive: true
+//     });
+
+//     const navigate = useNavigate();
+
+//     const showPopup = (title, message, onClose) => {
+//         setPopup({ title, message, onClose });
+//     };
+
+//     // Handle text inputs, dropdowns, and checkboxes
+//     const handleChange = (event) => {
+//         const { name, value, type, checked } = event.target;
+
+//         setFormData((prev) => ({
+//             ...prev,
+//             [name]: type === "checkbox" ? checked : value
+//         }));
+//     };
+
+//     // Convert YYYY-MM-DD to a local Date without UTC shifting
+//     const parseDate = (value) => {
+//         if (!value) return null;
+
+//         const datePart = value.substring(0, 10);
+//         const [year, month, day] = datePart.split("-").map(Number);
+
+//         if (!year || !month || !day) return null;
+
+//         const date = new Date(year, month - 1, day);
+
+//         // Reject invalid dates
+//         if (
+//             date.getFullYear() !== year ||
+//             date.getMonth() !== month - 1 ||
+//             date.getDate() !== day
+//         ) {
+//             return null;
+//         }
+
+//         return date;
+//     };
+
+//     // Validate the employee form
+//     const validateForm = () => {
+//         const newErrors = {};
+
+//         if (!formData.fullName.trim()) {
+//             newErrors.fullName = "Full Name is required.";
+//         }
+
+//         if (!formData.gender) {
+//             newErrors.gender = "Please select Gender.";
+//         }
+
+//         if (!formData.aadhaarNumber.trim()) {
+//             newErrors.aadhaarNumber = "Aadhaar Number is required.";
+//         } else if (!/^\d{12}$/.test(formData.aadhaarNumber)) {
+//             newErrors.aadhaarNumber =
+//                 "Aadhaar Number must contain exactly 12 digits.";
+//         }
+
+//         if (!formData.mobileNumber.trim()) {
+//             newErrors.mobileNumber = "Mobile Number is required.";
+//         } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+//             newErrors.mobileNumber =
+//                 "Mobile Number must contain exactly 10 digits.";
+//         }
+
+//         if (!formData.memberType) {
+//             newErrors.memberType = "Please select Member Type.";
+//         }
+
+//         if (!formData.joiningDate) {
+//             newErrors.joiningDate = "Joining Date is required.";
+//         } else if (!parseDate(formData.joiningDate)) {
+//             newErrors.joiningDate = "Please select a valid Joining Date.";
+//         }
+
+//         setErrors(newErrors);
+
+//         return Object.keys(newErrors).length === 0;
+//     };
+
+//     // Save employee
+//     const handleSubmit = async (event) => {
+//         event.preventDefault();
+
+//         if (!validateForm()) {
+//             return;
+//         }
+
+//         try {
+//             const employee = {
+//                 fullName: formData.fullName.trim(),
+//                 emailId: formData.emailId.trim() || null,
+//                 gender: formData.gender,
+//                 aadhaarNumber: formData.aadhaarNumber.trim(),
+//                 mobileNumber: formData.mobileNumber.trim(),
+//                 panNo: formData.panNo.trim() || null,
+//                 address: formData.address.trim() || null,
+//                 memberType: formData.memberType,
+
+//                 // Send ISO date to ASP.NET Core DateTime
+//                 joiningDate: formData.joiningDate,
+
+//                 isActive: formData.isActive
+//             };
+
+//             const response = await createEmployee(employee);
+
+//             console.log("Employee created:", response.data);
+
+//             showPopup("Success!", "Employee created successfully!", () => {
+//                 navigate("/employees");
+//             });
+//         } catch (error) {
+//             console.error("Error creating employee:", error);
+
+//             showPopup(
+//                 "Error",
+//                 error.response?.data?.message ||
+//                 "Failed to create employee."
+//             );
+//         }
+//     };
+
+//     return (
+//         <div className="add-employee-page">
+//             <div className="add-employee-header">
+//                 <h1>Add Employee</h1>
+//                 <p>Create a new employee record.</p>
+//             </div>
+
+//             <div className="employee-form-card">
+//                 <form
+//                     className="employee-form"
+//                     onSubmit={handleSubmit}
+//                 >
+//                     {/* Full Name */}
+//                     <div className="form-group">
+//                         <label>Full Name</label>
+
+//                         <input
+//                             type="text"
+//                             name="fullName"
+//                             value={formData.fullName}
+//                             onChange={handleChange}
+//                             maxLength={200}
+//                         />
+
+//                         {errors.fullName && (
+//                             <span className="error-message">
+//                                 {errors.fullName}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* Email */}
+//                     <div className="form-group">
+//                         <label>Email</label>
+
+//                         <input
+//                             type="text"
+//                             name="emailId"
+//                             value={formData.emailId}
+//                             onChange={handleChange}
+//                             maxLength={50}
+//                         />
+//                     </div>
+
+//                     {/* Gender */}
+//                     <div className="form-group">
+//                         <label>Gender</label>
+
+//                         <select
+//                             name="gender"
+//                             value={formData.gender}
+//                             onChange={handleChange}
+//                         >
+//                             <option value="">Select Gender</option>
+//                             <option value="Male">Male</option>
+//                             <option value="Female">Female</option>
+//                             <option value="Other">Other</option>
+//                         </select>
+
+//                         {errors.gender && (
+//                             <span className="error-message">
+//                                 {errors.gender}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* Aadhaar Number */}
+//                     <div className="form-group">
+//                         <label>Aadhaar Number</label>
+
+//                         <input
+//                             type="text"
+//                             name="aadhaarNumber"
+//                             value={formData.aadhaarNumber}
+//                             onChange={handleChange}
+//                             maxLength={12}
+//                             inputMode="numeric"
+//                         />
+
+//                         {errors.aadhaarNumber && (
+//                             <span className="error-message">
+//                                 {errors.aadhaarNumber}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* Mobile Number */}
+//                     <div className="form-group">
+//                         <label>Mobile Number</label>
+
+//                         <input
+//                             type="text"
+//                             name="mobileNumber"
+//                             value={formData.mobileNumber}
+//                             onChange={handleChange}
+//                             maxLength={10}
+//                             inputMode="numeric"
+//                         />
+
+//                         {errors.mobileNumber && (
+//                             <span className="error-message">
+//                                 {errors.mobileNumber}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* PAN Number */}
+//                     <div className="form-group">
+//                         <label>PAN Number</label>
+
+//                         <input
+//                             type="text"
+//                             name="panNo"
+//                             value={formData.panNo}
+//                             onChange={handleChange}
+//                             maxLength={10}
+//                             style={{ textTransform: "uppercase" }}
+//                         />
+//                     </div>
+
+//                     {/* Address */}
+//                     <div className="form-group full-width">
+//                         <label>Address</label>
+
+//                         <textarea
+//                             name="address"
+//                             value={formData.address}
+//                             onChange={handleChange}
+//                         />
+//                     </div>
+
+//                     {/* Member Type */}
+//                     <div className="form-group">
+//                         <label>Member Type</label>
+
+//                         <select
+//                             name="memberType"
+//                             value={formData.memberType}
+//                             onChange={handleChange}
+//                         >
+//                             <option value="">Select Member Type</option>
+
+//                             <option value="InHouse">
+//                                 InHouse Employee
+//                             </option>
+
+//                             <option value="Local">
+//                                 Local Employee
+//                             </option>
+//                              <option value="Supplier">
+//                                 Supplier
+//                             </option>
+//                         </select>
+
+//                         {errors.memberType && (
+//                             <span className="error-message">
+//                                 {errors.memberType}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* Joining Date */}
+//                     <div className="form-group">
+//                         <label>Joining Date</label>
+
+//                         <DatePicker
+//                             selected={parseDate(formData.joiningDate)}
+//                             onChange={(date) => {
+//                                 // Store the date as YYYY-MM-DD
+//                                 // to avoid timezone conversion issues.
+//                                 const formattedDate = date
+//                                     ? `${date.getFullYear()}-${String(
+//                                           date.getMonth() + 1
+//                                       ).padStart(2, "0")}-${String(
+//                                           date.getDate()
+//                                       ).padStart(2, "0")}`
+//                                     : "";
+                                
+//                                 setFormData((prev) => ({
+//                                     ...prev,
+//                                     joiningDate: formattedDate
+//                                 }));
+
+//                                 setErrors((prev) => ({
+//                                     ...prev,
+//                                     joiningDate: ""
+//                                 }));
+//                             }}
+//                             dateFormat="dd/MM/yyyy"
+//                             placeholderText="Click to select a date"
+//                             className="form-control"
+//                             autoComplete="off"
+//                             isClearable
+//                         />
+
+//                         {errors.joiningDate && (
+//                             <span className="error-message">
+//                                 {errors.joiningDate}
+//                             </span>
+//                         )}
+//                     </div>
+
+//                     {/* Active Status: only shown if an employee ID exists */}
+//                     {formData.employeeId && (
+//                         <div className="form-group">
+//                             <label>Active Status</label>
+
+//                             <div>
+//                                 <label>
+//                                     <input
+//                                         type="checkbox"
+//                                         name="isActive"
+//                                         checked={formData.isActive}
+//                                         onChange={handleChange}
+//                                     />
+//                                     {" "}Active
+//                                 </label>
+//                             </div>
+//                         </div>
+//                     )}
+
+//                     {/* Form Actions */}
+//                    <div className="form-actions">
+//                         <button
+//                             type="button"
+//                             className="cancel-btn"
+//                             onClick={() => navigate("/employees")}
+//                         >
+//                             Cancel
+//                         </button>
+
+//                         <button
+//                             type="submit"
+//                             className="save-btn"
+//                         >
+//                             Save Employee
+//                         </button>
+//                     </div>
+//                 </form>
+//             </div>
+
+//             {popup && (
+//                 <div
+//                     className="screen-popup-backdrop"
+//                     onClick={() => {
+//                         setPopup(null);
+//                         popup.onClose?.();
+//                     }}
+//                 >
+//                     <div
+//                         className="screen-popup-modal"
+//                         onClick={(event) => event.stopPropagation()}
+//                     >
+//                         <h3>{popup.title}</h3>
+//                         <p>{popup.message}</p>
+
+//                         <button
+//                             type="button"
+//                             className="screen-popup-ok"
+//                             onClick={() => {
+//                                 setPopup(null);
+//                                 popup.onClose?.();
+//                             }}
+//                         >
+//                             OK
+//                         </button>
+//                     </div>
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }
+
+// export default AddEmployee;
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -20,27 +443,33 @@ function AddEmployee() {
         panNo: "",
         address: "",
         memberType: "",
-        joiningDate: "",
-        isActive: true
+        joiningDate: ""
     });
 
     const navigate = useNavigate();
 
+    // Show popup
     const showPopup = (title, message, onClose) => {
         setPopup({ title, message, onClose });
     };
 
-    // Handle text inputs, dropdowns, and checkboxes
+    // Handle input changes
     const handleChange = (event) => {
-        const { name, value, type, checked } = event.target;
+        const { name, value } = event.target;
 
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "checkbox" ? checked : value
+            [name]: value
+        }));
+
+        // Clear validation error when user enters value
+        setErrors((prev) => ({
+            ...prev,
+            [name]: ""
         }));
     };
 
-    // Convert YYYY-MM-DD to a local Date without UTC shifting
+    // Convert YYYY-MM-DD to local Date
     const parseDate = (value) => {
         if (!value) return null;
 
@@ -63,36 +492,47 @@ function AddEmployee() {
         return date;
     };
 
-    // Validate the employee form
+    // Validate required fields
     const validateForm = () => {
         const newErrors = {};
 
+        // Full Name
         if (!formData.fullName.trim()) {
             newErrors.fullName = "Full Name is required.";
         }
 
+        // Gender
         if (!formData.gender) {
             newErrors.gender = "Please select Gender.";
         }
 
+        // Aadhaar Number
         if (!formData.aadhaarNumber.trim()) {
             newErrors.aadhaarNumber = "Aadhaar Number is required.";
-        } else if (!/^\d{12}$/.test(formData.aadhaarNumber)) {
+        } else if (!/^\d{12}$/.test(formData.aadhaarNumber.trim())) {
             newErrors.aadhaarNumber =
                 "Aadhaar Number must contain exactly 12 digits.";
         }
 
+        // Mobile Number
         if (!formData.mobileNumber.trim()) {
             newErrors.mobileNumber = "Mobile Number is required.";
-        } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+        } else if (!/^\d{10}$/.test(formData.mobileNumber.trim())) {
             newErrors.mobileNumber =
                 "Mobile Number must contain exactly 10 digits.";
         }
 
+        // Address
+        if (!formData.address.trim()) {
+            newErrors.address = "Address is required.";
+        }
+
+        // Member Type
         if (!formData.memberType) {
             newErrors.memberType = "Please select Member Type.";
         }
 
+        // Joining Date
         if (!formData.joiningDate) {
             newErrors.joiningDate = "Joining Date is required.";
         } else if (!parseDate(formData.joiningDate)) {
@@ -115,27 +555,35 @@ function AddEmployee() {
         try {
             const employee = {
                 fullName: formData.fullName.trim(),
+
+                // Optional fields
                 emailId: formData.emailId.trim() || null,
+                panNo: formData.panNo.trim().toUpperCase() || null,
+
+                // Required fields
                 gender: formData.gender,
                 aadhaarNumber: formData.aadhaarNumber.trim(),
                 mobileNumber: formData.mobileNumber.trim(),
-                panNo: formData.panNo.trim() || null,
-                address: formData.address.trim() || null,
+                address: formData.address.trim(),
                 memberType: formData.memberType,
-
-                // Send ISO date to ASP.NET Core DateTime
                 joiningDate: formData.joiningDate,
 
-                isActive: formData.isActive
+                // Default Active Status
+                isActive: true
             };
 
             const response = await createEmployee(employee);
 
             console.log("Employee created:", response.data);
 
-            showPopup("Success!", "Employee created successfully!", () => {
-                navigate("/employees");
-            });
+            showPopup(
+                "Success!",
+                "Employee created successfully!",
+                () => {
+                    navigate("/employees");
+                }
+            );
+
         } catch (error) {
             console.error("Error creating employee:", error);
 
@@ -149,25 +597,29 @@ function AddEmployee() {
 
     return (
         <div className="add-employee-page">
+
             <div className="add-employee-header">
                 <h1>Add Employee</h1>
                 <p>Create a new employee record.</p>
             </div>
 
             <div className="employee-form-card">
+
                 <form
                     className="employee-form"
                     onSubmit={handleSubmit}
                 >
-                    {/* Full Name */}
+
+                    {/* Full Name - Required */}
                     <div className="form-group">
-                        <label>Full Name</label>
+                        <label>Full Name <span className="required-star">*</span></label>
 
                         <input
                             type="text"
                             name="fullName"
                             value={formData.fullName}
                             onChange={handleChange}
+                            placeholder="Enter Full Name"
                             maxLength={200}
                         />
 
@@ -178,22 +630,23 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Email */}
+                    {/* Email - Optional */}
                     <div className="form-group">
                         <label>Email</label>
 
                         <input
-                            type="text"
+                            type="email"
                             name="emailId"
                             value={formData.emailId}
                             onChange={handleChange}
+                            placeholder="Optional"
                             maxLength={50}
                         />
                     </div>
 
-                    {/* Gender */}
+                    {/* Gender - Required */}
                     <div className="form-group">
-                        <label>Gender</label>
+                        <label>Gender <span className="required-star">*</span></label>
 
                         <select
                             name="gender"
@@ -213,15 +666,16 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Aadhaar Number */}
+                    {/* Aadhaar Number - Required */}
                     <div className="form-group">
-                        <label>Aadhaar Number</label>
+                        <label>Aadhaar Number <span className="required-star">*</span></label>
 
                         <input
                             type="text"
                             name="aadhaarNumber"
                             value={formData.aadhaarNumber}
                             onChange={handleChange}
+                            placeholder="Enter 12-digit Aadhaar Number"
                             maxLength={12}
                             inputMode="numeric"
                         />
@@ -233,15 +687,16 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Mobile Number */}
+                    {/* Mobile Number - Required */}
                     <div className="form-group">
-                        <label>Mobile Number</label>
+                        <label>Mobile Number <span className="required-star">*</span></label>
 
                         <input
                             type="text"
                             name="mobileNumber"
                             value={formData.mobileNumber}
                             onChange={handleChange}
+                            placeholder="Enter 10-digit Mobile Number"
                             maxLength={10}
                             inputMode="numeric"
                         />
@@ -253,7 +708,7 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* PAN Number */}
+                    {/* PAN Number - Optional */}
                     <div className="form-group">
                         <label>PAN Number</label>
 
@@ -262,32 +717,42 @@ function AddEmployee() {
                             name="panNo"
                             value={formData.panNo}
                             onChange={handleChange}
+                            placeholder="Optional"
                             maxLength={10}
                             style={{ textTransform: "uppercase" }}
                         />
                     </div>
 
-                    {/* Address */}
+                    {/* Address - Required */}
                     <div className="form-group full-width">
-                        <label>Address</label>
+                        <label>Address <span className="required-star">*</span></label>
 
                         <textarea
                             name="address"
                             value={formData.address}
                             onChange={handleChange}
+                            placeholder="Enter Address"
                         />
+
+                        {errors.address && (
+                            <span className="error-message">
+                                {errors.address}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Member Type */}
+                    {/* Member Type - Required */}
                     <div className="form-group">
-                        <label>Member Type</label>
+                        <label>Member Type <span className="required-star">*</span></label>
 
                         <select
                             name="memberType"
                             value={formData.memberType}
                             onChange={handleChange}
                         >
-                            <option value="">Select Member Type</option>
+                            <option value="">
+                                Select Member Type
+                            </option>
 
                             <option value="InHouse">
                                 InHouse Employee
@@ -296,7 +761,8 @@ function AddEmployee() {
                             <option value="Local">
                                 Local Employee
                             </option>
-                             <option value="Supplier">
+
+                            <option value="Supplier">
                                 Supplier
                             </option>
                         </select>
@@ -308,23 +774,21 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Joining Date */}
+                    {/* Joining Date - Required */}
                     <div className="form-group">
-                        <label>Joining Date</label>
+                        <label>Joining Date <span className="required-star">*</span></label>
 
                         <DatePicker
                             selected={parseDate(formData.joiningDate)}
                             onChange={(date) => {
-                                // Store the date as YYYY-MM-DD
-                                // to avoid timezone conversion issues.
                                 const formattedDate = date
                                     ? `${date.getFullYear()}-${String(
-                                          date.getMonth() + 1
-                                      ).padStart(2, "0")}-${String(
-                                          date.getDate()
-                                      ).padStart(2, "0")}`
+                                        date.getMonth() + 1
+                                    ).padStart(2, "0")}-${String(
+                                        date.getDate()
+                                    ).padStart(2, "0")}`
                                     : "";
-                                
+
                                 setFormData((prev) => ({
                                     ...prev,
                                     joiningDate: formattedDate
@@ -336,7 +800,7 @@ function AddEmployee() {
                                 }));
                             }}
                             dateFormat="dd/MM/yyyy"
-                            placeholderText="Click to select a date"
+                            placeholderText="Select Joining Date"
                             className="form-control"
                             autoComplete="off"
                             isClearable
@@ -349,27 +813,9 @@ function AddEmployee() {
                         )}
                     </div>
 
-                    {/* Active Status: only shown if an employee ID exists */}
-                    {formData.employeeId && (
-                        <div className="form-group">
-                            <label>Active Status</label>
-
-                            <div>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        name="isActive"
-                                        checked={formData.isActive}
-                                        onChange={handleChange}
-                                    />
-                                    {" "}Active
-                                </label>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Form Actions */}
-                   <div className="form-actions">
+                    <div className="form-actions">
+
                         <button
                             type="button"
                             className="cancel-btn"
@@ -384,10 +830,13 @@ function AddEmployee() {
                         >
                             Save Employee
                         </button>
+
                     </div>
+
                 </form>
             </div>
 
+            {/* Success / Error Popup */}
             {popup && (
                 <div
                     className="screen-popup-backdrop"
@@ -416,6 +865,7 @@ function AddEmployee() {
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

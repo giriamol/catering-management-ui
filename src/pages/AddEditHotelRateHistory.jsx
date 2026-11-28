@@ -564,7 +564,7 @@ const AddEditHotelRateHistory = () => {
                             <div className="hotel-rate-field">
 
                                 <label htmlFor="hotelId">
-                                    Caters <span>*</span>
+                                    Caters Name <span>*</span>
                                 </label>
 
                                 <select
@@ -596,8 +596,8 @@ const AddEditHotelRateHistory = () => {
 
                                             <option value="">
                                                 {loadingHotels
-                                                    ? "Loading Caters..."
-                                                    : "-- Select Caters --"}
+                                                    ? "Loading Caters Name..."
+                                                    : "-- Select Caters Name --"}
                                             </option>
 
                                             {hotels.map((hotel) => {

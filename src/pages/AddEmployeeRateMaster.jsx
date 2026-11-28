@@ -273,7 +273,7 @@ const AddEmployeeRateMaster = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="employeeId">
-                                Employee
+                                Employee Name <span className="required-star">*</span>
                             </label>
 
                             <select
@@ -285,7 +285,7 @@ const AddEmployeeRateMaster = () => {
                                 required
                             >
                                 <option value="">
-                                    -- Select Employee --
+                                    -- Select Employee Name--
                                 </option>
 
                                 {employees.map((employee) => (
@@ -306,7 +306,7 @@ const AddEmployeeRateMaster = () => {
 
                         <div className="form-group">
                             <label htmlFor="halfShiftId">
-                                Half Day Shift ID
+                                Half Day Shift ID 
                             </label>
 
                             <input
@@ -320,7 +320,7 @@ const AddEmployeeRateMaster = () => {
 
                         <div className="form-group">
                             <label htmlFor="halfDayRate">
-                                Half Day Rate
+                                Half Day Rate <span className="required-star">*</span>
                             </label>
 
                             <input
@@ -358,7 +358,7 @@ const AddEmployeeRateMaster = () => {
 
                         <div className="form-group">
                             <label htmlFor="fullDayRate">
-                                Full Day Rate
+                                Full Day Rate <span className="required-star">*</span>
                             </label>
 
                             <input

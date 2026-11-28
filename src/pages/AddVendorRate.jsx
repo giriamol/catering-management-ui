@@ -238,7 +238,7 @@ const AddVendorRate = () => {
 
                     <div className="form-group full-width">
                         <label htmlFor="vendorId">
-                            Vendor <span className="required">*</span>
+                            Vendor Name<span className="required">*</span>
                         </label>
 
                         <select
@@ -252,7 +252,7 @@ const AddVendorRate = () => {
                             <option value="">
                                 {loadingVendors
                                     ? "Loading vendors..."
-                                    : "-- Select Vendor --"}
+                                    : "-- Select Vendor Name --"}
                             </option>
 
                             {vendors.map((vendor) => {
@@ -384,7 +384,7 @@ const AddVendorRate = () => {
                             className="save-btn"
                             disabled={saving || loadingVendors}
                         >
-                            {saving ? "Saving..." : "Save Vendor Rate"}
+                            {saving ? "Saving..." : "Save Rate"}
                         </button>
                     </div>
                 </form>

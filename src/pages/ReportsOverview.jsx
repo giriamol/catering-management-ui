@@ -2883,9 +2883,9 @@ function ReportsOverview() {
                                         {report.title}
                                     </span>
 
-                                    <span className="reports-overview-card-description">
+                                    {/* <span className="reports-overview-card-description">
                                         {report.description}
-                                    </span>
+                                    </span> */}
 
                                     <span className="reports-overview-card-arrow">
                                         →
@@ -3349,9 +3349,9 @@ function ReportsOverview() {
                                                                 
                                                                 <th>Shift</th>
                                                                 <th>Work Type</th>
-                                                                <th>
+                                                                {/* <th>
                                                                     Description
-                                                                </th>
+                                                                </th> */}
                                                             </tr>
                                                         ) : isEmployeeWorkReport ? (
                                                             <tr>
@@ -3369,7 +3369,7 @@ function ReportsOverview() {
                                                                 <th>Venue</th>
                                                                 <th>Shift</th>
                                                                 <th>Work Type</th>
-                                                                <th>Description</th>
+                                                                {/* <th>Description</th> */}
                                                             </tr>
                                                         ) : isCatererReport ? (
                                                             <tr>
@@ -3770,14 +3770,14 @@ function ReportsOverview() {
                                                                                     "--"}
                                                                             </td>
 
-                                                                            <td>
+                                                                            {/* <td>
                                                                                 {getField(
                                                                                     row,
                                                                                     "Description",
                                                                                     "description"
                                                                                 ) ||
                                                                                     "--"}
-                                                                            </td>
+                                                                            </td> */}
                                                                         </>
                                                                     ) : isEmployeeWorkReport ? (
                                                                         <>
@@ -3887,14 +3887,14 @@ function ReportsOverview() {
                                                                                     "--"}
                                                                             </td>
 
-                                                                            <td>
+                                                                            {/* <td>
                                                                                 {getField(
                                                                                     row,
                                                                                     "Description",
                                                                                     "description"
                                                                                 ) ||
                                                                                     "--"}
-                                                                            </td>
+                                                                            </td> */}
                                                                         </>
                                                                     ) : isCatererReport ? (
                                                                         <>
